@@ -26,6 +26,7 @@ classifiers = [
 module-name = "pystreammcp._core"
 python-source = "python"
 features = ["pyo3/extension-module"]
+manifest-path = "python/Cargo.toml"
 
 [project.urls]
 Repository = "https://github.com/Mullassery/PyStreamMCP"

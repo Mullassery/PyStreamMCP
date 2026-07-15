@@ -5,7 +5,7 @@ Query optimization, context discovery, and cost reduction for LLM applications.
 Reduces token usage by 60-75% while maintaining quality.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
