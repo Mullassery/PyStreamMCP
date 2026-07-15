@@ -7,6 +7,7 @@ pub mod storage;
 pub mod statguardian;
 pub mod mcp;
 pub mod executor;
+pub mod ml;
 
 pub use error::{Error, Result};
 pub use query::Query;
@@ -17,3 +18,4 @@ pub use storage::Repository;
 pub use statguardian::{ValidationGate, ValidationResult, ValidationStatus};
 pub use mcp::{MCPTool, MCPResource, MCPCapabilities};
 pub use executor::{QueryExecutor, ExecutionResult, ExecutionStatus};
+pub use ml::{LearnedRelevanceModel, TrainingSample, FeedbackType, UserFeedback};
