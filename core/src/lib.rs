@@ -10,6 +10,7 @@ pub mod executor;
 pub mod ml;
 pub mod multi_agent;
 pub mod decomposition;
+pub mod streaming;
 
 pub use error::{Error, Result};
 pub use query::Query;
@@ -23,3 +24,4 @@ pub use executor::{QueryExecutor, ExecutionResult, ExecutionStatus};
 pub use ml::{LearnedRelevanceModel, TrainingSample, FeedbackType, UserFeedback};
 pub use multi_agent::{ContextHub, SharedContext};
 pub use decomposition::{QueryDecomposer, DecomposedQuery, QueryStep, ExecutionPlan};
+pub use streaming::{ContextStream, StreamedContext};
