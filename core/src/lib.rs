@@ -9,6 +9,7 @@ pub mod mcp;
 pub mod executor;
 pub mod ml;
 pub mod multi_agent;
+pub mod decomposition;
 
 pub use error::{Error, Result};
 pub use query::Query;
@@ -21,3 +22,4 @@ pub use mcp::{MCPTool, MCPResource, MCPCapabilities};
 pub use executor::{QueryExecutor, ExecutionResult, ExecutionStatus};
 pub use ml::{LearnedRelevanceModel, TrainingSample, FeedbackType, UserFeedback};
 pub use multi_agent::{ContextHub, SharedContext};
+pub use decomposition::{QueryDecomposer, DecomposedQuery, QueryStep, ExecutionPlan};
