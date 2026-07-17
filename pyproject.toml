@@ -31,3 +31,50 @@ manifest-path = "python/Cargo.toml"
 [project.urls]
 Repository = "https://github.com/Mullassery/PyStreamMCP"
 Issues = "https://github.com/Mullassery/PyStreamMCP/issues"
+
+[project.dependencies]
+pydantic = ">=2.0"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+# REST API and Server
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic-settings>=2.0",
+]
+
+# MCP (Model Context Protocol)
+mcp = [
+    "mcp>=0.1.0",
+]
+
+# LLM Framework Integrations
+langchain = ["langchain>=0.1.0"]
+llamaindex = ["llama-index>=0.9.0"]
+semantic-kernel = ["semantic-kernel>=0.4.0"]
+crewai = ["crewai>=0.1.0"]
+pydantic-ai = ["pydantic-ai>=0.1.0"]
+haystack = ["haystack-ai>=2.0.0"]
+
+# Orchestration Tools
+temporal = ["temporalio>=1.0.0"]
+airflow = ["apache-airflow>=2.7.0"]
+
+# All integrations
+all-integrations = [
+    "langchain>=0.1.0",
+    "llama-index>=0.9.0",
+    "semantic-kernel>=0.4.0",
+    "crewai>=0.1.0",
+    "pydantic-ai>=0.1.0",
+    "haystack-ai>=2.0.0",
+    "temporalio>=1.0.0",
+    "apache-airflow>=2.7.0",
+]
+

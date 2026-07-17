@@ -22,6 +22,17 @@ from .quality import (
     QualityCheck,
 )
 
+# Sprint 1: Framework Integration & Server
+from .adapters import (
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
+    QueryResult as AdapterQueryResult,
+)
+from .mcp_server import PyStreamMCPServer
+from .api import PyStreamMCPAPI, create_app
+
 __all__ = [
     # Core
     "Agent",
@@ -45,4 +56,12 @@ __all__ = [
     "ValidationResult",
     "QualityStatus",
     "QualityCheck",
+    # Sprint 1: Adapters & Servers
+    "AgentFrameworkAdapter",
+    "AdapterConfig",
+    "AdapterRegistry",
+    "FrameworkType",
+    "PyStreamMCPServer",
+    "PyStreamMCPAPI",
+    "create_app",
 ]
