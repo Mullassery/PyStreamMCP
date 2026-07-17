@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # PyStreamMCP API Server
+  api:
+    build: .
+    container_name: pystreammcp-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=info
+    volumes:
+      - ./python:/app/python
+      - ./examples:/app/examples
+    networks:
+      - pystreammcp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: SQLite database (if needed for persistence)
+  # db:
+  #   image: sqlite:latest
+  #   container_name: pystreammcp-db
+  #   volumes:
+  #     - pystreammcp-data:/data
+  #   networks:
+  #     - pystreammcp-network
+
+  # Optional: Redis for caching (for multi-instance deployments)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: pystreammcp-cache
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - pystreammcp-network
+  #   restart: unless-stopped
+
+networks:
+  pystreammcp-network:
+    driver: bridge
+
+volumes:
+  pystreammcp-data:
+    driver: local
+
+# Usage:
+# docker-compose up -d          # Start services
+# docker-compose logs -f api    # View logs
+# docker-compose down           # Stop services
+# curl http://localhost:8000/health  # Check health
