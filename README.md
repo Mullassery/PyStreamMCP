@@ -167,8 +167,8 @@ Reduce without losing quality:
 - Langchain/Llamaindex adapters
 
 ### Persistence
-- SQLite (local)
-- PostgreSQL (enterprise)
+- SQLite (v0.2 - lightweight, no setup required)
+- PostgreSQL (planned for v1.0 - enterprise)
 
 ## Token Reduction Targets
 
