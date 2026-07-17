@@ -163,7 +163,7 @@ Reduce without losing quality:
 
 ### Persistence
 - SQLite (v0.2 - lightweight, no setup required)
-- PostgreSQL (planned for v1.0 - enterprise)
+- PostgreSQL (v1.0+)
 
 ## Token Reduction Targets
 
