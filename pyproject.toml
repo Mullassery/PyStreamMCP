@@ -10,6 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Georgi Mammen Mullassery", email = "mullassery@gmail.com" }]
 requires-python = ">=3.9"
+dependencies = ["pydantic>=2.0"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -31,9 +32,6 @@ manifest-path = "python/Cargo.toml"
 [project.urls]
 Repository = "https://github.com/Mullassery/PyStreamMCP"
 Issues = "https://github.com/Mullassery/PyStreamMCP/issues"
-
-[project.dependencies]
-pydantic = ">=2.0"
 
 [project.optional-dependencies]
 dev = [
