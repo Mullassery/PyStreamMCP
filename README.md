@@ -2,6 +2,10 @@
 
 **Intelligence Layer for AI Agents**
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Version: v0.2.0](https://img.shields.io/badge/Version-v0.2.0-blue)
+![Status: In Development](https://img.shields.io/badge/Status-In%20Development-yellow)
+
 PyStreamMCP is a Rust-powered, Python-extensible platform that optimizes queries and discovers context for AI agents. It delivers 60-75% token reduction while maintaining quality and speed.
 
 ## Philosophy
