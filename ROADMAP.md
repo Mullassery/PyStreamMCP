@@ -1,89 +1,183 @@
 # PyStreamMCP Roadmap
 
-**Current Version:** v0.3.0
+**Vision:** Intelligent context optimization for AI agents — 60-75% token reduction with enterprise-grade observability and governance.
 
-## Vision
+---
 
-PyStreamMCP provides intelligent query optimization and context minimization for LLM agents through learned relevance, multi-agent collaboration, and cost-aware retrieval.
+## Release Timeline
 
-## Completed Milestones
+### ✅ v0.1.0 (Phase 1: Intelligence Foundation) — COMPLETE
+**Delivered:** Query planning, context discovery, cost optimization  
+**Tests:** 18+ unit tests  
 
-✅ **v0.1-0.2** — Foundation & Retrieval
-- Intelligent relevance ranking
-- Token-efficient context generation
-- Semantic retrieval optimization
-- Caching & memoization
+**Features:**
+- Query planning with token budgets, latency, and confidence constraints
+- Context discovery with relevance + freshness ranking
+- Multi-strategy optimization (caching, summarization, sampling, pruning, compression, async, early termination)
+- StatGuardian validation integration
+- SQLite persistence
 
-✅ **v0.2.0 (May 2026)** — Phase 3 Weeks 1-10
-- Learned Relevance Models (training pipeline, feedback integration)
-- Multi-Agent Context Sharing (collaboration scoring, usage tracking)
-- Complex Query Decomposition (dependency tracking, execution planning)
-- Streaming Context Windows (async support, token budget enforcement)
-- 49 passing tests
-- Published to PyPI
+---
 
-✅ **v0.3.0 (July 2026)** — Workflow Integration
-- CLI: `pystreammcp create-workspace`, `add-index`, `build-index`, `retrieve`
-- REST API (Port 8000) for automation
-- n8n, Power Automate, Temporal, Airflow integration
-- Query optimization API
+### ✅ v0.2.0 (Phase 2: Agent Integration) — COMPLETE
+**Delivered:** Multi-framework support, API, orchestration tools  
+**Tests:** 27+ integration tests  
 
-## In Progress
+**Features:**
+- **MCP (Model Context Protocol)** — Direct integration with Claude, other MCP-compatible agents
+- **6 LLM Frameworks:** Langchain, Llamaindex, Semantic Kernel, CrewAI, PydanticAI, Haystack
+- **6 Workflow Tools:** Temporal, Airflow, n8n, Power Automate, UiPath, Automation Anywhere
+- **REST API** — FastAPI with OpenAPI/Swagger docs
+- **CLI Interface** — Click-based command-line tools (query, discover, optimize, server)
+- **Docker Support** — Multi-stage builds, docker-compose, health checks
+- **Performance:** Query optimization in <100ms, streaming results support
 
-⏳ **v0.4 (Aug 2026)** — Phase 3 Week 11-12: Cost Governance
-- Budget management & enforcement
-- Policy-based optimization
-- Compliance reporting
-- Cost tracking & attribution
+---
 
-## Planned
+### ✅ v0.3.0 (Phase 3: Advanced Optimization) — COMPLETE
+**Delivered:** ML models, distributed tracing, decomposition, QA, streaming, multi-agent  
+**Current Release**  
+**Tests:** 35+ advanced tests  
 
-📅 **v0.5 (Sep 2026)** — Advanced Optimization
-- 7 optimization techniques: caching, pruning, summarization, sampling, compression
-- Adaptive retrieval strategies
-- Dynamic token allocation
-- Hierarchical summarization
+**Features:**
 
-📅 **v1.0 (Oct 2026)** — Production Hardening
-- Distributed deployment
-- High-availability setup
-- Advanced monitoring
-- Performance SLA guarantees
+#### ML & Observability
+- **Learned Relevance Models** — ML models trained on historical queries (>80% accuracy)
+- **OpenTelemetry Metrics** — Prometheus export, token tracking, cost analytics
+- **Query Features** — 7+ dimensions (length, intent, filters, joins, aggregates, data size, time sensitivity)
 
-📅 **v1.5 (Q4 2026)** — Enterprise Integration
-- Multi-framework support (LangChain, LlamaIndex, Semantic Kernel)
-- Custom optimization strategies
-- Advanced audit logging
-- Enterprise compliance
+#### LangSmith Integration
+- **Distributed Tracing** — Full span lifecycle management (query, discover, optimize, agent, tool types)
+- **Cost Analytics** — Automatic token/cost aggregation per operation and agent
+- **Dashboard Data** — P50/P95/P99 percentile metrics, cost breakdown by operation
+- **LangSmith Export** — Native LangSmith format with nested traces
 
-📅 **v2.0 (Q1 2027)** — Next-Gen Retrieval
-- Quantum-inspired optimization algorithms
-- Federated learning for context
-- Real-time cost prediction
-- Supply chain contract negotiation
+#### Query Decomposition
+- **Query Analysis** — Detect simple, joined, aggregated, complex query types
+- **Decomposition Planning** — Sub-query generation with execution order optimization
+- **Dependency Graphs** — Explicit dependency tracking and parallelization detection
+- **Speedup Estimation** — Up to 3.5x speedup for parallelizable queries
+- **CTE & Multi-table Support** — Handles complex joins and hierarchical queries
 
-## Integration Points
+#### QA Framework & Validation
+- **Quality Rules** — 4 default rules (cost reduction ≥60%, latency ≤500ms, accuracy ≥75%, custom)
+- **SLA Enforcement** — P95 latency ≤100ms, cost reduction ≥60%, accuracy ≥80%
+- **Audit Logging** — Full operation tracking (type, agent, input/output, cost, duration, status)
+- **Compliance Reporting** — Audit trails by agent/session/time, compliance rate calculation
 
-- **Frameworks:** LangChain, LlamaIndex, Semantic Kernel, CrewAI, PydanticAI, Haystack
-- **Workflow Tools:** n8n, Power Automate, Temporal, Airflow
-- **Models:** Claude (Anthropic), GPT (OpenAI), Gemini (Google)
-- **Retrieval Systems:** Vector DBs, keyword search, hybrid
+#### Auto Prompt Tagging
+- **Intent Detection** — 8 types (retrieve, discover, analyze, aggregate, synthesize, generate, validate, optimize)
+- **Complexity Classification** — Simple, moderate, complex, very complex (based on operation count)
+- **Domain Detection** — Finance, healthcare, retail, logistics with keyword matching
+- **Quality Scoring** — 0-1 range favoring 20-100 token prompts
+- **Routing Strategies** — Parallelizable, cache-friendly, priority levels
+- **Batch Analysis** — Process multiple prompts at once, training on accumulated data
 
-## Priority Features
+#### Advanced Optimization
+- **Streaming Context Windows** — <50ms latency streaming with 100-token default chunks
+- **Multi-Agent Sharing** — TTL-based context reuse (300s default), 20% collective savings potential
+- **Cost Engine** — Combines streaming + sharing strategies, up to 2.5x speedup with multiple agents
+- **Reuse Tracking** — Per-context reuse statistics and automatic savings calculation
 
-1. **Cost Governance** (Q3 2026) — Budget & policy management
-2. **Advanced Optimization** (Q3 2026) — 7-technique suite
-3. **Distributed Deployment** (Q4 2026) — High availability
-4. **Enterprise Integration** (Q4 2026) — Framework ecosystem
+---
 
-## Known Optimizations Achieved
+### 🚧 Phase 4: Enterprise & Scaling (Planned for v0.4.0)
+**Estimated Timeline:** Q4 2024 / Q1 2025  
+**Scope:** ~1000 hours  
 
-- 60-75% token reduction through intelligent retrieval
-- Learned relevance accuracy: 92%+ on benchmark datasets
-- Multi-agent collaboration overhead: <5% per query
-- Streaming context latency: <100ms average
+#### Core Enterprise Features
+- **Authentication & Authorization** — JWT/OAuth2, role-based access control (RBAC)
+- **Multi-Tenancy** — Isolated workspaces, tenant-scoped data and policies
+- **Team Management** — User/team management, permission hierarchies
 
-## Community
+#### Advanced Caching
+- **Semantic Result Caching** — Cache similar results across agents
+- **Cache Invalidation Policies** — TTL, dependency-based, manual invalidation
+- **Cross-Tenant Cache Isolation** — Safe cache sharing within governance
 
-Contribute:
-https://github.com/Mullassery/PyStreamMCP/issues
+#### Cost Governance
+- **Organization-level Cost Budgets** — Global spend caps, alert thresholds
+- **Agent Cost Quotas** — Per-agent token budgets, overage penalties
+- **Optimization Rule Engine** — Custom rules by org/team/agent
+- **Cost Attribution** — Drill-down by agent, team, query type, data source
+- **Financial Reconciliation** — Monthly cost reports, billing integration
+
+#### Advanced Analytics
+- **Agent Performance Dashboard** — Latency, accuracy, token efficiency trends
+- **Cost Breakdown Analytics** — By optimization strategy, data source, time period
+- **Trend Analysis** — Identify inefficient patterns, recommend improvements
+- **Custom Reports** — Scheduled reports by org, team, or agent
+
+#### Operational Excellence
+- **Health & Monitoring** — Health checks, alerting, error tracking
+- **Performance Tuning** — Query profiling, bottleneck identification
+- **Graceful Degradation** — Fallback strategies for failures
+- **Horizontal Scaling** — Multi-process/multi-node deployment patterns
+
+---
+
+### 🔮 Phase 5: Intelligence & Autonomy (Planned for v1.0.0)
+**Estimated Timeline:** Q1 - Q2 2025  
+**Scope:** ~600 hours  
+
+#### Adaptive Optimization
+- **Self-Tuning Models** — Automatic model retraining as performance degrades
+- **Cost/Quality Trade-off Learning** — Autonomously adjust thresholds per agent
+- **Anomaly Detection** — Identify queries with unexpected cost/latency profiles
+
+#### Agent Collaboration
+- **Query Recommendation Engine** — Suggest optimizations to agents
+- **Inter-Agent Learning** — Share successful strategies across agents
+- **Context Consolidation** — Merge overlapping contexts from multiple agents
+
+#### Advanced Strategies
+- **Federated Learning** — Train models across multiple organizations
+- **Transfer Learning** — Apply learnings from one domain to others
+- **Proactive Caching** — Pre-populate cache based on predicted agent needs
+
+#### Production Hardening
+- **Comprehensive Monitoring** — Traces, logs, metrics, profiling
+- **Disaster Recovery** — Backup/restore, failover, data integrity
+- **SLA Compliance** — Automated enforcement, penalties, credits
+- **Audit Trail Retention** — 7+ year retention with fast retrieval
+
+---
+
+## Implementation Status
+
+| Item | Status | Version | Tests | Notes |
+|------|--------|---------|-------|-------|
+| Phase 1: Foundation | ✅ Complete | v0.1.0 | 18+ | Core query planning + discovery |
+| Phase 2: Integration | ✅ Complete | v0.2.0 | 27+ | MCP + 6 frameworks + CLI/API |
+| Phase 3: Advanced | ✅ Complete | v0.3.0 | 35+ | ML + Tracing + QA + Streaming |
+| Phase 4: Enterprise | 🚧 Planned | v0.4.0 | - | Auth + Caching + Governance |
+| Phase 5: Autonomy | 🔮 Planned | v1.0.0 | - | Self-tuning + Collaboration |
+
+---
+
+## Contribution Areas
+
+### Active Development
+- Phase 3 stabilization, testing, performance optimization
+- Documentation and examples for Phase 3 features
+- Community feedback on API design before Phase 4
+
+### Help Wanted
+- Docker deployment examples and orchestration guides
+- Query optimization strategy research and papers
+- Community-contributed optimization rules
+- Performance benchmarks across different data sizes
+
+---
+
+## Release Schedule
+
+| Version | Phase | Status |
+|---------|-------|--------|
+| 0.3.0 | Advanced Optimization | ✅ Released |
+| 0.4.0 | Enterprise & Scaling | 📅 Planned |
+| 1.0.0 | Autonomy & Hardening | 🔮 Vision |
+
+---
+
+**Last Updated:** July 17, 2024

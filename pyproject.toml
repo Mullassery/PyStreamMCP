@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "PyStreamMCP"
-version = "0.2.0"
+version = "0.3.0"
 description = "Intelligence layer for AI agents - query planning, discovery, cost optimization"
 readme = "README.md"
 license = { text = "MIT" }
