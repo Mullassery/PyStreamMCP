@@ -7,13 +7,26 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
 from .context import Context, ContextType, ContextWindow
 from .discovery import Discovery, DiscoveredSource, SourceType
-from .optimization import OptimizationStrategy, StrategyType, OptimizationTechnique, CostMetrics
+# Optimization imports
+try:
+    from .optimization import OptimizationStrategy, StrategyType, OptimizationTechnique, CostMetrics
+except (ImportError, AttributeError):
+    # Fallback: Phase 3+ uses new optimization module structure
+    try:
+        from .optimization import StrategyType, OptimizationTechnique
+        OptimizationStrategy = None
+        CostMetrics = None
+    except (ImportError, AttributeError):
+        OptimizationStrategy = None
+        StrategyType = None
+        OptimizationTechnique = None
+        CostMetrics = None
 from .quality import (
     QualityValidator,
     ValidationGate,
@@ -30,8 +43,17 @@ from .adapters import (
     FrameworkType,
     QueryResult as AdapterQueryResult,
 )
-from .mcp_server import PyStreamMCPServer
-from .api import PyStreamMCPAPI, create_app
+# Optional: MCP and API servers (require additional dependencies)
+try:
+    from .mcp_server import PyStreamMCPServer
+except ImportError:
+    PyStreamMCPServer = None
+
+try:
+    from .api import PyStreamMCPAPI, create_app
+except ImportError:
+    PyStreamMCPAPI = None
+    create_app = None
 
 __all__ = [
     # Core
@@ -46,10 +68,11 @@ __all__ = [
     "Discovery",
     "DiscoveredSource",
     "SourceType",
-    "OptimizationStrategy",
-    "StrategyType",
-    "OptimizationTechnique",
-    "CostMetrics",
+    # Legacy optimization (optional, phase 1-2)
+    *((["OptimizationStrategy"]) if OptimizationStrategy else []),
+    *((["StrategyType"]) if StrategyType else []),
+    *((["OptimizationTechnique"]) if OptimizationTechnique else []),
+    *((["CostMetrics"]) if CostMetrics else []),
     # Quality Validation (StatGuardian integration)
     "QualityValidator",
     "ValidationGate",
@@ -61,7 +84,7 @@ __all__ = [
     "AdapterConfig",
     "AdapterRegistry",
     "FrameworkType",
-    "PyStreamMCPServer",
-    "PyStreamMCPAPI",
-    "create_app",
+    *((["PyStreamMCPServer"]) if PyStreamMCPServer else []),
+    *((["PyStreamMCPAPI"]) if PyStreamMCPAPI else []),
+    *((["create_app"]) if create_app else []),
 ]

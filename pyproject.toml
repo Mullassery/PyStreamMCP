@@ -1,6 +1,6 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
-build-backend = "maturin"
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyStreamMCP"
@@ -22,12 +22,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-
-[tool.maturin]
-module-name = "pystreammcp._core"
-python-source = "python"
-features = ["pyo3/extension-module"]
-manifest-path = "python/Cargo.toml"
 
 [project.urls]
 Repository = "https://github.com/Mullassery/PyStreamMCP"
