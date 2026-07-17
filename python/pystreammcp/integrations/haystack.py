@@ -4,9 +4,76 @@ Enables Haystack pipelines to use PyStreamMCP for optimized retrieval.
 """
 
 from typing import List, Dict, Any, Optional
-from pystreammcp import Agent
+import asyncio
+from pystreammcp import (
+    Agent,
+    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
+    QueryResult as AdapterQueryResult,
+)
 
 
+class HaystackAdapter(AgentFrameworkAdapter):
+    """Haystack adapter for pipeline integration."""
+
+    def __init__(self, config: AdapterConfig):
+        """Initialize Haystack adapter."""
+        super().__init__(config)
+        self.agent = Agent(
+            agent_id=config.agent_id,
+            name=config.name,
+            optimization_strategy=config.optimization_strategy,
+            max_tokens=config.max_tokens,
+        )
+
+    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+        """Execute a query."""
+        result = self.agent.query(text)
+        return AdapterQueryResult(
+            query_id=result.query_id,
+            text=text,
+            intent=intent,
+            baseline_tokens=result.baseline_tokens,
+            optimized_tokens=result.optimized_tokens,
+            cost_reduction_percent=result.cost_reduction_percent,
+            execution_time_ms=result.execution_time_ms,
+            context={"strategy": self.config.optimization_strategy},
+        )
+
+    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+        """Execute query asynchronously."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.query, text, intent)
+
+    def discover(self, context: str, **kwargs) -> Dict[str, Any]:
+        """Discover documents/pipelines."""
+        return {"sources": [{"name": "doc", "relevance": 0.95, "type": "document"}], "total_sources": 1}
+
+    async def discover_async(self, context: str, **kwargs) -> Dict[str, Any]:
+        """Discover asynchronously."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.discover, context)
+
+    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+        """Optimize a query."""
+        result = self.agent.query(query_text)
+        return AdapterQueryResult(
+            query_id=result.query_id,
+            text=query_text,
+            intent="discover",
+            baseline_tokens=result.baseline_tokens,
+            optimized_tokens=result.optimized_tokens,
+            cost_reduction_percent=result.cost_reduction_percent,
+            execution_time_ms=result.execution_time_ms,
+            context={"strategy": strategy or self.config.optimization_strategy},
+        )
+
+    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+        """Optimize asynchronously."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.optimize, query_text, strategy)
+
+
+# Legacy support
 class PyStreamMCPRetriever:
     """Haystack component for PyStreamMCP."""
 
@@ -137,3 +204,6 @@ def create_pystreammcp_retriever_for_haystack(
         agent_id=agent_id,
         max_tokens=max_tokens,
     )
+
+# Register adapter
+AdapterRegistry.register(FrameworkType.HAYSTACK, HaystackAdapter)
