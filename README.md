@@ -7,7 +7,9 @@
 ![OKF: Native](https://img.shields.io/badge/OKF-Native-green)
 ![Status: Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
-PyStreamMCP is a Rust-powered, Python-extensible platform that optimizes queries and discovers context for AI agents. It delivers **60-75% token reduction** while maintaining quality and speed—now with **native OpenKnowledge Format (OKF) support** for transparent, portable, community-driven metadata.
+PyStreamMCP is the **intelligent orchestration layer for LLM systems**. Coordinated query planning, discovery, cost optimization, and quality gating across multiple providers. Delivers **60-75% token reduction** while maintaining quality and speed.
+
+**Architectural Role:** Owns intelligent planning and coordination. Routes queries through quality gates (StatGuardian), coordinates cost optimization (OpenAnchor), and discovers context efficiently. Central nervous system of the platform.
 
 ## Philosophy
 
