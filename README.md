@@ -11,6 +11,13 @@ PyStreamMCP is the **intelligent orchestration layer for LLM systems**. Coordina
 
 **Architectural Role:** Owns intelligent planning and coordination. Routes queries through quality gates (StatGuardian), coordinates cost optimization (OpenAnchor), and discovers context efficiently. Central nervous system of the platform.
 
+## Why Star This?
+
+- **60-75% token reduction without quality loss** — Intelligent query planning + compression + early termination
+- **Open Knowledge Format (OKF) native** — System metadata as git-tracked markdown (no vendor lock-in)
+- **Cost-aware orchestration** — Route queries through optimal systems based on real cost/latency profiles
+- **Quality gates built-in** — Integrated StatGuardian validation; block bad data automatically
+
 ## Philosophy
 
 Rather than agents asking for everything and parsing the response, PyStreamMCP asks: **What does this agent actually need?**
