@@ -24,17 +24,17 @@ Rather than agents asking for everything and parsing the response, PyStreamMCP a
 
 ```
 Agent Query
-        ↓
+ 
 OKF System Discovery (know available systems)
-        ↓
+ 
 Query Planning (token budget)
-        ↓
+ 
 Context Discovery (what's relevant?)
-        ↓
+ 
 Cost-Aware Optimization (60-75% reduction)
-        ↓
+ 
 Optimal Context Window
-        ↓
+ 
 Agent Response (with full transparency)
 ```
 
@@ -42,7 +42,7 @@ The platform sits between agent frameworks and data systems as a **transparent, 
 
 ## Core Capabilities
 
-### 🗂️ Open Knowledge Discovery (OKF-Native)
+### Open Knowledge Discovery (OKF-Native)
 - **Portable System Metadata** — MCP systems defined as git-tracked markdown
 - **Agent-Native Catalog** — Agents discover tools directly from OKF documents
 - **Zero Vendor Lock-in** — Metadata not trapped in any proprietary format
@@ -106,7 +106,7 @@ plan = planner.find_cheapest_path("customer churn risk analysis")
 
 # Execute plan with full transparency
 for step in plan.steps:
-    print(f"System: {step.system_name}, Cost: ${step.cost}, ETA: {step.latency_ms}ms")
+ print(f"System: {step.system_name}, Cost: ${step.cost}, ETA: {step.latency_ms}ms")
 
 # Result: Optimized plan with 60-75% token reduction
 # Bonus: Full audit trail of optimization decisions
@@ -118,10 +118,10 @@ PyStreamMCP now includes native OKF support—your system metadata lives in git,
 
 ```
 mcp_catalog/
-├── systems/              # Postgres, Elasticsearch, BigQuery, etc.
-├── tools/                # Search, Query, Analytics endpoints
-├── query_plans/          # Optimized retrieval plans
-└── interconnections/     # System relationships & data flows
+ systems/ # Postgres, Elasticsearch, BigQuery, etc.
+ tools/ # Search, Query, Analytics endpoints
+ query_plans/ # Optimized retrieval plans
+ interconnections/ # System relationships & data flows
 ```
 
 Each system is a markdown file with cost, latency, and success profiles—**agent-navigable, community-improvable, vendor-agnostic**.
@@ -131,7 +131,7 @@ Each system is a markdown file with cost, latency, and success profiles—**agen
 ### Queries
 What agents need to know:
 - **Retrieve** — Get specific information
-- **Discover** — Explore available data  
+- **Discover** — Explore available data 
 - **Aggregate** — Summarize multiple sources
 - **Synthesize** — Combine information
 - **Analyze** — Statistical analysis
@@ -162,7 +162,7 @@ Reduce without losing quality:
 
 ## Features
 
-### ✅ Phase 1: Intelligence Foundation
+### Phase 1: Intelligence Foundation
 - Query planning with constraints
 - Context discovery and ranking
 - Cost optimization strategies
@@ -170,7 +170,7 @@ Reduce without losing quality:
 - StatGuardian validation
 - 18+ unit tests
 
-### ✅ Phase 2: Agent Integration
+### Phase 2: Agent Integration
 - MCP (Model Context Protocol) support
 - 6 LLM framework integrations (Langchain, Llamaindex, Semantic Kernel, CrewAI, PydanticAI, Haystack)
 - 6 workflow orchestration tools (Temporal, Airflow, n8n, Power Automate, UiPath, Automation Anywhere)
@@ -178,7 +178,7 @@ Reduce without losing quality:
 - Docker deployment support
 - 27+ integration tests
 
-### ✅ Phase 3: Advanced Optimization (Complete)
+### Phase 3: Advanced Optimization (Complete)
 - **ML & Observability** — Learned relevance models (accuracy > 80%), OpenTelemetry metrics
 - **LangSmith Integration** — Distributed tracing, span management, cost analytics, dashboard
 - **Query Decomposition** — Complex query analysis, parallelization detection, 3.5x speedup potential
@@ -186,7 +186,7 @@ Reduce without losing quality:
 - **Auto Prompt Tagging** — Intent/complexity/domain detection, quality scoring, routing strategies
 - **Advanced Optimization** — Streaming context windows (<50ms latency), multi-agent context sharing (+20% savings)
 
-### ✅ Phase 4: Open Knowledge Format (OKF) Integration (NEW)
+### Phase 4: Open Knowledge Format (OKF) Integration (NEW)
 - **Native OKF Catalog** — System metadata stored as portable markdown
 - **Agent Discovery** — LLMs navigate tool definitions directly from GitHub
 - **Cost Transparency** — Every system/tool has auditable cost, latency, cache profiles
@@ -244,9 +244,9 @@ PyStreamMCP aims for 60-75% token reduction:
 
 **Before (Traditional Query):**
 - Query: "Which customers are at churn risk?" (10 tokens)
-- Full customer data: 2,000 rows × 50 tokens = 100,000 tokens
-- Full interaction history: 500 interactions × 20 tokens = 10,000 tokens
-- Similar customers: 100 rows × 50 tokens = 5,000 tokens
+- Full customer data: 2,000 rows  50 tokens = 100,000 tokens
+- Full interaction history: 500 interactions  20 tokens = 10,000 tokens
+- Similar customers: 100 rows  50 tokens = 5,000 tokens
 - **Total: 115,010 tokens**
 
 **After (with PyStreamMCP + OKF):**
@@ -255,7 +255,7 @@ PyStreamMCP aims for 60-75% token reduction:
 - Recent interactions (last 30 days, parallelized): 1,000 tokens
 - Cohort comparison (cached from previous queries): 500 tokens
 - **Total: 2,010 tokens**
-- **Reduction: 98.3% (exceeds 60-75% target)** ✅
+- **Reduction: 98.3% (exceeds 60-75% target)** 
 - **Bonus: Full transparency** — Each decision traced back to OKF system metadata
 
 ## Ecosystem
@@ -272,17 +272,17 @@ PyStreamMCP is part of the data intelligence platform:
 
 PyStreamMCP focuses exclusively on:
 
-✓ Query planning and optimization
-✓ Context discovery
-✓ Cost optimization (token reduction)
-✓ Agent intelligence
+ Query planning and optimization
+ Context discovery
+ Cost optimization (token reduction)
+ Agent intelligence
 
 PyStreamMCP does NOT:
 
-✗ Validate data (StatGuardian)
-✗ Create audiences (ClusterAudienceKit)
-✗ Activate data (PyReverseETL)
-✗ Manage journeys (PyCustomerJourney)
+ Validate data (StatGuardian)
+ Create audiences (ClusterAudienceKit)
+ Activate data (PyReverseETL)
+ Manage journeys (PyCustomerJourney)
 
 ## Documentation
 
