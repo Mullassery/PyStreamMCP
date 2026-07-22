@@ -1,3 +1,8 @@
+pub mod error;
+pub mod traits;
+pub mod metrics;
+pub mod validation;
+
 pub mod intent;
 pub mod capabilities;
 pub mod selection;
