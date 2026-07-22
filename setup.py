@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="PyStreamMCP",
-    version="0.3.0",
-    description="Intelligence layer for AI agents - query planning, discovery, cost optimization",
+    version="1.1.0",
+    description="Intelligent MCP orchestration hub - Intent understanding, capability matching, tool ranking with cohesive foundation",
     author="Georgi Mammen Mullassery",
     author_email="mullassery@gmail.com",
     license="MIT",
@@ -16,7 +16,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Mullassery/PyStreamMCP",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
