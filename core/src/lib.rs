@@ -11,6 +11,10 @@ pub mod ml;
 pub mod multi_agent;
 pub mod decomposition;
 pub mod streaming;
+pub mod metadata;
+pub mod selective_retrieval;
+pub mod quality_gates;
+pub mod observability;
 
 pub use error::{Error, Result};
 pub use query::Query;
@@ -25,3 +29,7 @@ pub use ml::{LearnedRelevanceModel, TrainingSample, FeedbackType, UserFeedback};
 pub use multi_agent::{ContextHub, SharedContext};
 pub use decomposition::{QueryDecomposer, DecomposedQuery, QueryStep, ExecutionPlan};
 pub use streaming::{ContextStream, StreamedContext};
+pub use metadata::{MetadataIntelligence, Metadata, MetadataSource, SourceType};
+pub use selective_retrieval::{SelectiveRetrievalEngine, TokenBudget, BudgetTier, QueryIntent};
+pub use quality_gates::{QualityGatesEngine, ConfidenceScore, FallbackChain, PolicyEnforcer};
+pub use observability::{ObservabilityEngine, DecisionTracer, MetricsCollector, StructuredLogger};

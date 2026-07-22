@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyStreamMCP"
-version = "0.4.0"
-description = "Intelligence layer for AI agents - query planning, discovery, cost optimization"
+version = "1.0.0"
+description = "Four-stage selective intelligence pipeline for AI agents - 90-95% token reduction with production observability"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Georgi Mammen Mullassery", email = "mullassery@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = ["pydantic>=2.0", "python-frontmatter>=1.0.0"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
