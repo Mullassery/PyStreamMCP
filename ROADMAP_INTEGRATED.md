@@ -1,8 +1,14 @@
 # PyStreamMCP Roadmap (v0.3 → v1.0+)
 
-**Intelligence Layer for AI Agents — Query Planning + Cost Optimization + Governance**
+**The Selective Intelligence Layer for AI Agents**
 
-Vision: Become the standard query intelligence layer that optimizes token budgets, enforces quality gates, and orchestrates multi-step agent reasoning.
+**PRIMARY MISSION:** Retrieve minimal data of highest contextual value using metadata-driven filtering and intelligent caching.
+
+**Core Principle:** Never retrieve more than necessary. Decide at metadata level (not data level) what to fetch, from where, and whether to fetch at all.
+
+**Applies to:** Web searches, database queries, MCP tool invocations, cached results, and all external sources.
+
+Vision: Become the standard pre-retrieval intelligence layer that filters with metadata, caches decisions, and orchestrates minimal-yet-comprehensive context for agent reasoning.
 
 ---
 
@@ -49,8 +55,8 @@ PyStreamMCP orchestrates intelligence across:
 
 ---
 
-### 🟡 v0.3.0 (Current, June 2026) — STABILIZATION & FIRST INTEGRATIONS
-**Status:** In development
+### ✅ v0.3.0 (June 2026) — STABILIZATION & FIRST INTEGRATIONS
+**Status:** Complete
 
 **Features:**
 
@@ -78,35 +84,31 @@ PyStreamMCP orchestrates intelligence across:
    - Graceful degradation under budget constraints
 
 **Tests:** 45 unit, 52 integration  
-**Deliverables:**
-- `integration/openanchor.py` — bidirectional bridge
-- `validation/query_planner.py` — feasibility + cost prediction
-- `caching/strategy.py` — intelligent cache management
-- Docs: "Integrating with OpenAnchor" guide
 
 ---
 
-### 🟠 v0.4.0 (August 2026, 8 weeks) — QUALITY GATES & GOVERNANCE
-**Dependencies:** statguardian 2.2+, openanchor 0.2+
+### ✅ v0.4.0 (July 2026, Released) — QUALITY GATES & OKF NATIVE
+**Status:** Complete (Production Ready)
 
 **Features:**
 
-1. **StatGuardian Quality Gates** (new)
+1. **StatGuardian Quality Gates**
    - Validation before retrieval (check schema/format)
    - Validation of retrieved context (ensure quality)
    - Confidence scoring (is this data usable?)
    - Fallback triggers (quality too low, try alternative source)
 
-2. **Cost + Quality Tradeoff**
+2. **OKF Native Support** (NEW)
+   - System metadata as portable markdown (git-tracked)
+   - Agent-native tool discovery
+   - Cost transparency in OKF documents
+   - Community-driven catalog improvements
+   - 39+ OKF tests
+
+3. **Cost + Quality Tradeoff**
    - Pareto frontier: optimal quality at given cost budget
    - User preferences: "prefer quality over cost" vs "prefer speed"
    - Automatic recommendation engine
-
-3. **Budget Enforcement** (enhanced)
-   - Hard budget limits (fail gracefully over limit)
-   - Soft budgets (warn, but allow)
-   - Budget alerts + remediation suggestions
-   - Predictive budget overage warnings
 
 4. **Agent-Aware Optimization**
    - Per-agent token budgets
@@ -114,61 +116,213 @@ PyStreamMCP orchestrates intelligence across:
    - Multi-step reasoning optimization
    - Caching across agent steps
 
-**Tests:** 58 unit, 65 integration  
-**Deliverables:**
-- `quality_gates.py` — StatGuardian bridge
-- `budgets/governance.py` — enforcement + alerts
-- `agents/tool_analyzer.py` — per-tool cost tracking
-- Dashboard: "Query Efficiency Report"
-
-**Integration Maturity:**
-```
-Agent Framework
-    ↓
-PyStreamMCP (v0.4)
-    ├→ OpenAnchor (cost/quality insights)
-    ├→ StatGuardian (pre-flight + post-retrieval validation)
-    ├→ PyTokenCalc (accurate token counts)
-    └→ Data Systems (discovery + fetching)
-    ↓
-LLM Response (optimized for budget + quality)
-```
+**Tests:** 58 unit, 65 integration, 39 OKF integration
 
 ---
 
-### ✅ v1.0.0 (October 2026, 10 weeks) — PRODUCTION-GRADE
-**Dependencies:** openanchor 1.0+, statguardian 2.3+, PyTokenCalc 1.0+
+### 🔵 v0.5.0 (September-October 2026, 8 weeks) — METADATA FILTERING FOUNDATION
+**Status:** Planned (Q4 2026)
+**Dependencies:** statguardian 2.3+
+
+**Scope:** Build metadata-driven filtering layer. Enable selective retrieval across web, databases, and MCP tools. Core mission: minimal data, maximum value.
+
+**Foundation Layers:**
+
+1. **Metadata Filtering Engine** (CORE)
+   - Metadata-first decision tree (decide what to retrieve *before* retrieving)
+   - Candidate ranking by metadata (title, structure, freshness, domain authority, schema stats)
+   - Filter candidates to top-1 or top-3 (not top-10)
+   - Zero false negatives (never miss critical data)
+
+2. **Metadata Caching System** (CORE)
+   - Cache metadata about every source (URL, table, tool)
+   - Cache filtering decisions ("for this query type, column X is always needed")
+   - Cache relationship metadata (which columns link to which)
+   - TTL-based invalidation (respect freshness guarantees)
+   - Reuse across agents (share metadata learnings)
+
+3. **Web Knowledge Foundation** (enables metadata filtering for web)
+   - Web detector (temporal keywords, data freshness, confidence gaps)
+   - SearXNG search (OSS, free, aggregates 10+ engines)
+   - **Metadata extraction:** title, author, publish date, domain authority, word count, structure
+   - **Selective crawling:** Crawl4AI only on highest-value URLs (top 1-3, not top-10)
+   - Trafilatura cleaning (95%+ accuracy)
+   - Domain reputation metadata in OKF catalog
+
+4. **Database Discovery Foundation** (enables metadata filtering for structured data)
+   - Discover databases in environment (connection strings, configs)
+   - Extract schema metadata (tables, columns, types, constraints)
+   - Compute statistics (row counts, cardinality, update frequency)
+   - Build relationship graph (foreign keys, inferred relationships)
+   - Classification metadata (operational vs. analytical, domain type)
+
+5. **MCP Tool Metadata** (enables filtering of tool candidates)
+   - Tool registry: name, description, input/output types, cost, reliability
+   - Tool capability metadata (what does it solve?)
+   - Tool freshness metadata (when was it last used successfully?)
+   - Filter tool candidates before invocation (not after)
+
+6. **OKF Metadata Catalog** (NEW)
+   - 50+ web domains with metadata (authority, freshness patterns)
+   - 25+ database schema examples with entity descriptions
+   - 20+ MCP tools with cost/reliability profiles
+   - Community-driven: PRs to improve metadata quality
+
+**Integration (Metadata-Driven):**
+```
+Agent Query
+    ↓
+Metadata Filter (question: "do we need external data?")
+    ├→ Check cache (have we solved this before?)
+    └→ Check local freshness (is our local data fresh enough?)
+    ↓
+IF external retrieval needed:
+    ├→ Metadata Filter (query type → best source type: web/db/tool?)
+    ├→ Source Ranking (metadata only: no data retrieval yet)
+    └→ Candidate Selection (top-1 or top-3, not top-10)
+    ↓
+Selective Retrieval (ONLY what metadata says is valuable)
+    ├→ Web: Crawl only top-1 URLs (not top-10)
+    ├→ DB: Query only necessary columns (not full table scan)
+    └→ Tools: Invoke only highest-confidence tool (not all)
+    ↓
+Result + Cache Metadata (decisions for reuse)
+    ↓
+Context (minimal, high-value, audit trail in OKF)
+```
+
+**Tests:** 35 unit, 35 integration (total 105+ tests)
+**Deliverables:**
+- `core/src/metadata/` — Metadata filtering engine + cache
+- `core/src/web/` — Web metadata extraction + selective crawling
+- `core/src/database/` — Database discovery + schema metadata
+- `core/src/mcp/` — MCP tool metadata registry
+- `python/pystreammcp/metadata/` — Python bindings
+- `mcp_catalog/metadata/` — Metadata profiles for web domains, DB schemas, MCP tools
+- Docker: optional SearXNG + metadata sidecar
+- Docs: "Metadata Filtering Architecture" guide
+- Backward compatible: opt-in via config
+
+**Impact:** Every retrieval (web/db/tool) now decides at metadata level, reducing unnecessary data transfer by 70-85%.
+
+**No Breaking Changes:** Existing queries unaffected. Metadata filtering opt-in.
+
+---
+
+### 🟠 v1.0.0 (November-January 2026-27, 10 weeks) — SELECTIVE INTELLIGENCE CORE
+**Status:** Planned (Q4 2026 - Q1 2027)
+**Dependencies:** statguardian 2.3+, openanchor 1.0+, PyTokenCalc 1.0+
+
+**Scope:** Production-grade metadata filtering across web, databases, and MCP tools. Core mission: minimal context of maximum value.
 
 **Features:**
 
-1. **Enterprise Observability**
-   - OpenTelemetry export (matching OpenAnchor + StatGuardian)
-   - Distributed tracing across query planning → discovery → LLM
-   - Query lineage (what sources contributed to this answer?)
+1. **Intelligent Metadata Filtering** (CORE)
+   - Pre-retrieval filtering: decide what to fetch before fetching
+   - Source selection via metadata: choose 1 DB table instead of 10
+   - Column selection via metadata: query only necessary columns
+   - Tool selection via metadata: invoke best tool instead of all tools
+   - Cache metadata decisions: reuse across agents + query sessions
 
-2. **Multi-Step Reasoning**
-   - Complex agent workflows (plan → retrieve → reason → retrieve → answer)
-   - Cross-step optimization (reuse context, avoid redundant queries)
-   - Dependency-aware caching (query B depends on result of query A)
+2. **Web Selective Retrieval** (Production)
+   - Metadata ranking: filter candidates by title/domain/freshness (no crawling)
+   - Selective crawling: Crawl4AI only top-1 or top-3 URLs (not top-10)
+   - StatGuardian WebSourceValidator (pre-flight + post-retrieval)
+   - Confidence scoring per source (0-1)
+   - Fallback chains: if primary source fails, try ranked alternatives
+   - Smart caching: cache crawled pages + metadata decisions (70% cache hit)
 
-3. **Fine-Tuning Insights** (OpenAnchor partnership)
-   - Identify expensive queries worth fine-tuning
-   - ROI calculator for fine-tuning vs querying
-   - A/B testing framework (fine-tuned vs querying)
+3. **Database Selective Retrieval** (NEW)
+   - Metadata-only source selection: use statistics, no table scan
+   - Column selection: query only high-value columns (not `SELECT *`)
+   - Row sampling: use cardinality + relevance to limit rows
+   - Relationship awareness: follow only necessary foreign keys
+   - StatGuardian validation: pre-flight schema checks, post-retrieval quality
+   - Freshness metadata: track which tables are stale
 
-4. **Self-Optimizing** (ML)
-   - Learn optimal query plans from history
-   - Automatic threshold tuning (relevance cutoff, freshness weight)
-   - Detect and adapt to source performance changes
+4. **MCP Tool Selective Invocation** (NEW)
+   - Tool metadata registry: capabilities, cost, reliability, freshness
+   - Pre-filtering: eliminate low-confidence candidates before invocation
+   - Parallel invocation: call top-2 candidates, use first-to-respond
+   - Cost tracking: associate tool invocation costs with source metadata
+   - Fallback chains: if primary tool fails, invoke ranked backup
+   - StatGuardian validation: pre-flight tool capability checks
 
-**Tests:** 72+ unit, 80+ integration  
+5. **Knowledge Merging & Weighting** (Metadata-Aware)
+   - Merge local + web + database results with confidence scores
+   - Metadata-driven weighting: newer sources, higher authority get priority
+   - Deduplication: consolidate same-entity results (customer_id matches)
+   - Temporal scoring: combine recency signals from all sources
+   - Audit trail: why each source was chosen (metadata justification)
+
+6. **Cost Optimization (Metadata-Level)**
+   - Track retrieval costs per metadata decision (in OpenAnchor)
+   - Identify expensive metadata patterns ("queries needing web always cost $0.15")
+   - Learn: "for this query type, always check cache first" (metadata caching ROI)
+   - Selective caching: cache high-value metadata + decision histories
+   - Predict: estimate cost at metadata level (before retrieval)
+
+7. **Multi-Source Context Sharing** (Metadata-Driven)
+   - Shared metadata cache: all agents benefit from learned patterns
+   - TTL-based metadata invalidation (respect freshness guarantees)
+   - Cross-agent learning: "Agent A's query pattern helps Agent B's filtering"
+   - Fair allocation: metadata-driven quota enforcement (no single agent monopolizes)
+
+8. **Enterprise Observability (OTel)**
+   - Trace every metadata decision: why filter this candidate? why skip this column?
+   - Lineage: which metadata decisions led to this context?
+   - Cost breakdown: metadata queries vs. actual data retrieval costs
+   - Latency: metadata filtering overhead vs. retrieval savings
+   - Audit: full decision history for compliance + debugging
+
+**Integration with Ecosystem (Metadata-Driven):**
+```
+Multi-Agent System with Queries
+    ↓
+PyStreamMCP (v1.0) — Selective Intelligence Layer
+    ├→ Metadata Filter (CORE): "What data do we need? Where is it best? Cache decision.")
+    ├→ Query Planning (via metadata, not data)
+    ├→ Selective Retrieval (web/database/tools guided by metadata)
+    ├→ OpenAnchor (v1.0): metadata-level cost tracking + learning
+    ├→ StatGuardian (v2.3): metadata + quality validation (pre + post)
+    ├→ PyTokenCalc (v1.0): accurate token estimates from metadata
+    ├→ PyVectorHound (debugging: "why this source? what metadata guided the choice?")
+    ├→ PyStreamDocuments (metadata-driven ingestion strategy)
+    └→ Web + Databases + MCP Tools (metadata-first selection)
+    ↓
+Shared Metadata Cache (across all agents + sessions)
+    ↓
+Observability: OTel traces (metadata decisions → retrieval → validation → context)
+    ↓
+Minimal + High-Value Context Window
+    ↓
+LLM Response (70-85% data reduction via metadata filtering, maintained quality)
+```
+
+**Key Innovation:** Metadata is now first-class, shared, cached, and learned-from. Every retrieval decision is justified by metadata, auditable, and reusable.
+
+**Tests:** 85+ unit, 95+ integration (total 200+ tests)
 **Deliverables:**
-- Full API reference + performance tuning guide
-- Langchain + AutoGen integration examples
+- Full API reference (metadata filtering + retrieval APIs)
+- Integration examples (Langchain, AutoGen, Pydantic AI)
 - Kubernetes deployment guide + YAML
-- Performance benchmarks vs baselines
+- Performance benchmarks: data reduction (70-85% fewer rows/columns)
+- Metadata filtering tuning guide
+- Cost analysis: metadata decision vs. data retrieval ROI
 
-**Stability:** Production-ready, stable API contract
+**Stability:** Production-ready, stable API contract. Metadata filtering is core capability.
+
+**Success Metrics (v1.0) — Focus on Data Minimization:**
+- 70-85% reduction in retrieved data size (vs. naive retrieval)
+- Metadata filtering accuracy >95% (no loss of critical information)
+- Metadata cache hit rate >70% (queries benefit from prior decisions)
+- Pre-retrieval metadata latency <50ms (decisions fast, before data transfer)
+- Confidence scoring >0.8 correlation with manual assessment
+- Zero false negatives (never miss critical data due to filtering)
+- Latency improvement: 40-60% faster (due to selective retrieval)
+- Cost improvement: 50-70% lower (fewer APIs, fewer data transfers)
+- 200+ metadata profiles (web domains, DB schemas, MCP tools)
+- 0 breaking changes (backward compatible)
 
 ---
 

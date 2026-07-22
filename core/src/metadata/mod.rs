@@ -6,8 +6,8 @@ pub mod filter;
 pub mod cache;
 
 pub use types::{
-    Metadata, MetadataSource, SourceType, SourceQuality, WebMetadata, DatabaseMetadata,
-    MCPToolMetadata, MetadataProfile, Candidate, RankedCandidate,
+    Metadata, SourceType, SourceQuality, WebMetadata, DatabaseMetadata,
+    MCPToolMetadata, MetadataProfile, RankedCandidate,
 };
 pub use filter::{MetadataFilter, FilterConfig, RankingStrategy};
 pub use cache::{MetadataCache, CacheEntry, CacheConfig};
