@@ -362,7 +362,7 @@ See CONTRIBUTING.md for guidelines. To contribute to the OKF catalog:
 
 ## License
 
-MIT License. See LICENSE for details.
+Proprietary License. See LICENSE for details.
 
 ## Support
 

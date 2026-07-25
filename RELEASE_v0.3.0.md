@@ -235,4 +235,4 @@ None planned until v1.0.0.
 
 ---
 
-**Built with Rust + Python | MIT License**
+**Built with Rust + Python | Proprietary License**
