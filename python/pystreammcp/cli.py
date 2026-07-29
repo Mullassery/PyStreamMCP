@@ -7,6 +7,7 @@ import click
 
 from pystreammcp import Agent, __version__
 from pystreammcp.api import PyStreamMCPAPI
+from pystreammcp.cli_dashboard import PyStreamMCPDashboard
 
 
 @click.group()
@@ -65,6 +66,34 @@ def server(host: str, port: int, reload: bool):
 def version():
     """Show version."""
     click.echo(f"PyStreamMCP v{__version__}")
+
+
+@cli.command()
+@click.option("--static", is_flag=True, help="Show static snapshot (non-interactive)")
+@click.option("--alerts", is_flag=True, help="Show alerts only")
+@click.option("--recommendations", is_flag=True, help="Show recommendations only")
+@click.option("--export", type=str, metavar="FILE", help="Export metrics to JSON file")
+@click.option("--config", type=str, metavar="PATH", help="Path to config file")
+def dashboard(static: bool, alerts: bool, recommendations: bool, export: str, config: str):
+    """View real-time orchestration dashboard."""
+    try:
+        dash = PyStreamMCPDashboard(config_path=config)
+
+        if export:
+            dash.export_json(export)
+        elif alerts:
+            dash.show_alerts()
+        elif recommendations:
+            dash.show_recommendations()
+        else:
+            dash.run_dashboard(interactive=not static)
+
+    except KeyboardInterrupt:
+        click.echo("\n\nDashboard stopped.")
+        sys.exit(0)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
 # Legacy CLI interface for compatibility
