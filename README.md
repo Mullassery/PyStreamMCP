@@ -2,7 +2,12 @@
 
 Two-stage selective intelligence: metadata-first filtering + contextual reranking. 90-95% token reduction. OpenAI-compatible MCP orchestration layer for streaming.
 
-**Latest Version:** 1.1.1
+**Latest Version:** 1.1.2 | **Python:** 3.9-3.13 | **License:** Proprietary | **Status:** ✅ Production Ready
+
+### v1.1.2 Updates
+- 🐍 Python 3.13 support certified
+- 🔒 License updated to Proprietary
+- ✅ Full dependency compatibility on Python 3.9-3.13
 
 ## Features
 
