@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyStreamMCP"
-version = "1.1.1"
+version = "1.1.2"
 description = "Intelligent MCP orchestration hub - Intent understanding, capability matching, tool ranking with cohesive foundation"
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "Proprietary" }
 authors = [{ name = "Georgi Mammen Mullassery", email = "mullassery@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = ["pydantic>=2.0", "python-frontmatter>=1.0.0", "click>=8.0", "rich>=13.0"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
