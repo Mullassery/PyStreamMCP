@@ -102,7 +102,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "project_name": project_name,
             "tools_registered": len(tools),
             "actions_triggered": actions,
@@ -152,7 +152,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "project_name": project_name,
             "affected_tools": len(affected_tools),
             "actions_triggered": actions,
@@ -228,7 +228,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "invocation_id": invocation_id,
             "tool_name": tool_name,
             "project_name": route_result.get("project_name"),
@@ -303,7 +303,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "invocation_id": invocation_id,
             "tool_name": tool_name,
             "cascaded_count": len(cascaded_results),
@@ -365,7 +365,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "project_name": project_name,
             "current_status": current_status,
             "actions_triggered": actions,
@@ -427,7 +427,7 @@ class OrchestrationWebhookHandlers:
 
         return {
             "status": "success",
-            "event_type": event.event_type,
+            "event_type": event.get("event_type"),
             "dependent_tool": dependent_tool,
             "required_tool": required_tool,
             "dependency_type": dependency_type,
