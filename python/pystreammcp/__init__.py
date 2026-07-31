@@ -7,7 +7,7 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "0.3.0"
+__version__ = "2.0.0"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
@@ -55,6 +55,9 @@ except ImportError:
     PyStreamMCPAPI = None
     create_app = None
 
+# MCP 2.0 Support (v0.3+) — Multi-project orchestration & federation
+from ._mcp_connector import Orchestrator
+
 __all__ = [
     # Core
     "Agent",
@@ -87,4 +90,6 @@ __all__ = [
     *((["PyStreamMCPServer"]) if PyStreamMCPServer else []),
     *((["PyStreamMCPAPI"]) if PyStreamMCPAPI else []),
     *((["create_app"]) if create_app else []),
+    # MCP 2.0 (v0.3+)
+    "Orchestrator",
 ]

@@ -1,0 +1,43 @@
+[mcp]
+enabled = true
+port = 8772
+discovery_method = "stdio"
+
+[mcp.tools]
+discover_mcp_projects = true
+plan_query_execution = true
+optimize_cross_project_query = true
+execute_federated_query = true
+detect_compatible_projects = true
+rank_tools_by_relevance = true
+handle_cross_database_join = true
+cache_management = true
+error_recovery_retry = true
+report_performance_metrics = true
+estimate_query_cost_multi_project = true
+manage_endpoint_federation = true
+
+[mcp.security]
+require_auth = false
+allowed_models = []
+
+[mcp.performance]
+cache_results = true
+cache_ttl_seconds = 3600
+
+[federation]
+endpoints = [
+    "http://localhost:8765/mcp",  # StatGuardian
+    "http://localhost:8766/mcp",  # PyReverseETL
+    "http://localhost:8767/mcp",  # PrismNote
+    "http://localhost:8768/mcp",  # ClusterAudienceKit
+    "http://localhost:8769/mcp",  # PyWeatherEnriched
+    "http://localhost:8770/mcp",  # PyTerrainMap
+    "http://localhost:8771/mcp",  # PyRoboFrames
+]
+
+[optimization]
+enable_caching = true
+enable_query_optimization = true
+enable_cost_estimation = true
+token_reduction_target_percent = 70
