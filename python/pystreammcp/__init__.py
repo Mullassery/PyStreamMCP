@@ -7,7 +7,7 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "2.1.0"
+__version__ = "3.0.0"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
