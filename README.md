@@ -4,7 +4,7 @@
 
 ## Overview
 
-PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 19 projects). This project provides AI-native tools for Claude via Model Context Protocol (MCP 2.0) with real-time event-driven webhook infrastructure.
+PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 19 projects). This project provides AI-native tools via Model Context Protocol (MCP 2.0) with real-time event-driven webhook infrastructure.
 
 ## Features
 
@@ -37,9 +37,9 @@ pip install --only-binary=:all: PyStreamMCP
 
 Enable MCP tools on port **8772** (see MCP_QUICKSTART.md for details).
 
-Claude discovers all 207 tools across 18 projects, enabling:
+AI systems discover all 207 tools across 18 projects, enabling:
 - Multi-project workflows
-- Intelligent query optimization (60-75% token reduction)
+- Intelligent query optimization (60-75% reduction in context usage)
 - Cross-database joins
 - Cost-optimized inference routing
 
@@ -52,7 +52,7 @@ See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documen
 19 projects, 228 tools, 19 simultaneous MCP endpoints (8765-8783).
 **Phase 2**: Event-driven webhook orchestration across all MCPs.
 
-**All tools discoverable by Claude in single connection.**
+**All tools discoverable via MCP protocol in a single connection.**
 
 ## Production Deployment Status
 
