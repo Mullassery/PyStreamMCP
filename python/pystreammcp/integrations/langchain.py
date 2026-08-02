@@ -11,8 +11,13 @@ Provides both:
 from typing import Optional, Dict, Any, List, Type
 import asyncio
 from pystreammcp import (
-    Agent, Query, QueryIntent,
-    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
+    Agent,
+    Query,
+    QueryIntent,
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
     QueryResult as AdapterQueryResult,
 )
 
@@ -38,7 +43,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             max_tokens=config.max_tokens,
         )
 
-    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    def query(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query with PyStreamMCP optimization.
 
         Args:
@@ -65,7 +72,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query asynchronously.
 
         Args:
@@ -108,7 +117,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.discover, context)
 
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize a query for cost reduction.
 
         Args:
@@ -135,7 +146,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.optimize, query_text, strategy)
@@ -150,8 +163,7 @@ class LangchainAdapter(AgentFrameworkAdapter):
             from langchain.tools import Tool
         except ImportError:
             raise ImportError(
-                "langchain is not installed. "
-                "Install it with: pip install langchain"
+                "langchain is not installed. " "Install it with: pip install langchain"
             )
 
         def execute_query(query_text: str, intent: str = "retrieve") -> str:
@@ -183,8 +195,7 @@ Meets Target: {60 <= result.cost_reduction_percent <= 75}
             from langchain.schema import BaseRetriever, Document
         except ImportError:
             raise ImportError(
-                "langchain is not installed. "
-                "Install it with: pip install langchain"
+                "langchain is not installed. " "Install it with: pip install langchain"
             )
 
         adapter = self
@@ -209,6 +220,7 @@ Meets Target: {60 <= result.cost_reduction_percent <= 75}
 
 
 # Legacy interfaces (backward compatible)
+
 
 class PyStreamMCPTool:
     """Langchain tool wrapper for PyStreamMCP (legacy).
@@ -240,7 +252,9 @@ class PyStreamMCPTool:
             "Use this when you need to get information efficiently."
         )
 
-    def __call__(self, query_text: str, intent: str = "retrieve", **kwargs) -> Dict[str, Any]:
+    def __call__(
+        self, query_text: str, intent: str = "retrieve", **kwargs
+    ) -> Dict[str, Any]:
         """Execute a query through PyStreamMCP."""
         result = self.adapter.query(query_text, intent, **kwargs)
 
@@ -339,8 +353,7 @@ def create_pystreammcp_agent(
         from langchain.agents import initialize_agent, AgentType
     except ImportError:
         raise ImportError(
-            "langchain is not installed. "
-            "Install it with: pip install langchain"
+            "langchain is not installed. " "Install it with: pip install langchain"
         )
 
     # Create LangchainAdapter

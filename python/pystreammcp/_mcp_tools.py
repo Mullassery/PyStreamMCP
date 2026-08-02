@@ -15,11 +15,23 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "include_metadata": {"type": "boolean", "description": "Include tool descriptions"},
+                        "include_metadata": {
+                            "type": "boolean",
+                            "description": "Include tool descriptions",
+                        },
                         "filter_by_capability": {
                             "type": "string",
-                            "enum": ["data_quality", "activation", "queries", "segmentation", "weather", "spatial", "datasets", "orchestration"],
-                            "description": "Filter projects by capability"
+                            "enum": [
+                                "data_quality",
+                                "activation",
+                                "queries",
+                                "segmentation",
+                                "weather",
+                                "spatial",
+                                "datasets",
+                                "orchestration",
+                            ],
+                            "description": "Filter projects by capability",
                         },
                     },
                 },
@@ -30,16 +42,19 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query_description": {"type": "string", "description": "What are you trying to do?"},
+                        "query_description": {
+                            "type": "string",
+                            "description": "What are you trying to do?",
+                        },
                         "projects_involved": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "List of projects to use"
+                            "description": "List of projects to use",
                         },
                         "optimization_goal": {
                             "type": "string",
                             "enum": ["speed", "cost", "accuracy", "balanced"],
-                            "description": "Optimize for speed/cost/accuracy"
+                            "description": "Optimize for speed/cost/accuracy",
                         },
                     },
                     "required": ["query_description"],
@@ -54,14 +69,14 @@ class PyStreamMCPTools:
                         "original_query": {"type": "string"},
                         "involved_projects": {
                             "type": "array",
-                            "items": {"type": "string"}
+                            "items": {"type": "string"},
                         },
                         "constraints": {
                             "type": "object",
                             "properties": {
                                 "max_latency_ms": {"type": "integer"},
                                 "max_cost_cents": {"type": "number"},
-                            }
+                            },
                         },
                     },
                     "required": ["original_query"],
@@ -77,9 +92,12 @@ class PyStreamMCPTools:
                         "projects": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Target projects"
+                            "description": "Target projects",
                         },
-                        "timeout_seconds": {"type": "integer", "description": "Query timeout"},
+                        "timeout_seconds": {
+                            "type": "integer",
+                            "description": "Query timeout",
+                        },
                         "fallback_strategy": {
                             "type": "string",
                             "enum": ["fail_fast", "partial_results", "use_cache"],
@@ -94,9 +112,18 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "capability": {"type": "string", "description": "Required capability"},
-                        "data_type": {"type": "string", "description": "Input data type"},
-                        "output_format": {"type": "string", "description": "Desired output format"},
+                        "capability": {
+                            "type": "string",
+                            "description": "Required capability",
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "description": "Input data type",
+                        },
+                        "output_format": {
+                            "type": "string",
+                            "description": "Desired output format",
+                        },
                     },
                     "required": ["capability"],
                 },
@@ -111,10 +138,16 @@ class PyStreamMCPTools:
                         "available_tools": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Pool of tools to rank"
+                            "description": "Pool of tools to rank",
                         },
-                        "weight_by_speed": {"type": "number", "description": "0-1 weight for speed"},
-                        "weight_by_accuracy": {"type": "number", "description": "0-1 weight for accuracy"},
+                        "weight_by_speed": {
+                            "type": "number",
+                            "description": "0-1 weight for speed",
+                        },
+                        "weight_by_accuracy": {
+                            "type": "number",
+                            "description": "0-1 weight for accuracy",
+                        },
                     },
                     "required": ["task_description"],
                 },
@@ -125,9 +158,18 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "left_source": {"type": "string", "description": "Left data source (project.table)"},
-                        "right_source": {"type": "string", "description": "Right data source"},
-                        "join_key": {"type": "string", "description": "Join key expression"},
+                        "left_source": {
+                            "type": "string",
+                            "description": "Left data source (project.table)",
+                        },
+                        "right_source": {
+                            "type": "string",
+                            "description": "Right data source",
+                        },
+                        "join_key": {
+                            "type": "string",
+                            "description": "Join key expression",
+                        },
                         "join_type": {
                             "type": "string",
                             "enum": ["inner", "left", "right", "full"],
@@ -145,15 +187,21 @@ class PyStreamMCPTools:
                         "action": {
                             "type": "string",
                             "enum": ["enable", "disable", "clear", "stats"],
-                            "description": "Cache action"
+                            "description": "Cache action",
                         },
                         "scope": {
                             "type": "string",
                             "enum": ["global", "project", "query"],
-                            "description": "Cache scope"
+                            "description": "Cache scope",
                         },
-                        "ttl_seconds": {"type": "integer", "description": "Cache time-to-live"},
-                        "target": {"type": "string", "description": "Project or query ID"},
+                        "ttl_seconds": {
+                            "type": "integer",
+                            "description": "Cache time-to-live",
+                        },
+                        "target": {
+                            "type": "string",
+                            "description": "Project or query ID",
+                        },
                     },
                     "required": ["action"],
                 },
@@ -167,11 +215,21 @@ class PyStreamMCPTools:
                         "failed_query": {"type": "string"},
                         "error_type": {
                             "type": "string",
-                            "enum": ["timeout", "not_found", "permission", "rate_limit", "incompatible"],
+                            "enum": [
+                                "timeout",
+                                "not_found",
+                                "permission",
+                                "rate_limit",
+                                "incompatible",
+                            ],
                         },
                         "retry_strategy": {
                             "type": "string",
-                            "enum": ["exponential_backoff", "immediate", "fallback_project"],
+                            "enum": [
+                                "exponential_backoff",
+                                "immediate",
+                                "fallback_project",
+                            ],
                         },
                         "max_retries": {"type": "integer"},
                     },
@@ -186,9 +244,18 @@ class PyStreamMCPTools:
                     "properties": {
                         "metric_type": {
                             "type": "string",
-                            "enum": ["latency", "throughput", "accuracy", "cost", "availability"],
+                            "enum": [
+                                "latency",
+                                "throughput",
+                                "accuracy",
+                                "cost",
+                                "availability",
+                            ],
                         },
-                        "time_window_hours": {"type": "integer", "description": "Historical window"},
+                        "time_window_hours": {
+                            "type": "integer",
+                            "description": "Historical window",
+                        },
                         "group_by": {
                             "type": "string",
                             "enum": ["project", "tool", "hour", "day"],
@@ -204,10 +271,7 @@ class PyStreamMCPTools:
                     "type": "object",
                     "properties": {
                         "query": {"type": "string"},
-                        "projects": {
-                            "type": "array",
-                            "items": {"type": "string"}
-                        },
+                        "projects": {"type": "array", "items": {"type": "string"}},
                         "cost_model": {
                             "type": "string",
                             "enum": ["tokens", "api_calls", "compute_seconds", "usd"],
@@ -224,10 +288,21 @@ class PyStreamMCPTools:
                     "properties": {
                         "action": {
                             "type": "string",
-                            "enum": ["register", "discover", "health_check", "deregister"],
+                            "enum": [
+                                "register",
+                                "discover",
+                                "health_check",
+                                "deregister",
+                            ],
                         },
-                        "endpoint_url": {"type": "string", "description": "MCP endpoint URL"},
-                        "project_name": {"type": "string", "description": "Project name"},
+                        "endpoint_url": {
+                            "type": "string",
+                            "description": "MCP endpoint URL",
+                        },
+                        "project_name": {
+                            "type": "string",
+                            "description": "Project name",
+                        },
                     },
                     "required": ["action"],
                 },
@@ -239,17 +314,33 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "webhook_id": {"type": "string", "description": "Unique webhook identifier"},
-                        "url": {"type": "string", "description": "Webhook endpoint URL"},
+                        "webhook_id": {
+                            "type": "string",
+                            "description": "Unique webhook identifier",
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "Webhook endpoint URL",
+                        },
                         "events": {
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "enum": ["mcp.available", "mcp.unavailable", "tool.invoked", "tool.result", "mcp.health_update", "tool.dependency_required"],
+                                "enum": [
+                                    "mcp.available",
+                                    "mcp.unavailable",
+                                    "tool.invoked",
+                                    "tool.result",
+                                    "mcp.health_update",
+                                    "tool.dependency_required",
+                                ],
                             },
                             "description": "Events to subscribe to",
                         },
-                        "secret_key": {"type": "string", "description": "Secret for HMAC signature validation"},
+                        "secret_key": {
+                            "type": "string",
+                            "description": "Secret for HMAC signature validation",
+                        },
                     },
                     "required": ["webhook_id", "url", "events"],
                 },
@@ -265,7 +356,10 @@ class PyStreamMCPTools:
                             "enum": ["healthy", "degraded", "unavailable", "all"],
                             "description": "Filter endpoints by health status",
                         },
-                        "include_metrics": {"type": "boolean", "description": "Include health metrics"},
+                        "include_metrics": {
+                            "type": "boolean",
+                            "description": "Include health metrics",
+                        },
                     },
                 },
             },
@@ -275,11 +369,23 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "tool_name": {"type": "string", "description": "Tool to invoke"},
+                        "tool_name": {
+                            "type": "string",
+                            "description": "Tool to invoke",
+                        },
                         "params": {"type": "object", "description": "Tool parameters"},
-                        "chain_id": {"type": "string", "description": "Chain context for cascading"},
-                        "use_fallback": {"type": "boolean", "description": "Enable fallback if primary unavailable"},
-                        "timeout_ms": {"type": "integer", "description": "Invocation timeout"},
+                        "chain_id": {
+                            "type": "string",
+                            "description": "Chain context for cascading",
+                        },
+                        "use_fallback": {
+                            "type": "boolean",
+                            "description": "Enable fallback if primary unavailable",
+                        },
+                        "timeout_ms": {
+                            "type": "integer",
+                            "description": "Invocation timeout",
+                        },
                     },
                     "required": ["tool_name"],
                 },
@@ -290,8 +396,14 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "tool_name": {"type": "string", "description": "Tool to get routing info for"},
-                        "include_fallbacks": {"type": "boolean", "description": "Include fallback options"},
+                        "tool_name": {
+                            "type": "string",
+                            "description": "Tool to get routing info for",
+                        },
+                        "include_fallbacks": {
+                            "type": "boolean",
+                            "description": "Include fallback options",
+                        },
                     },
                     "required": ["tool_name"],
                 },
@@ -302,9 +414,18 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "project_name": {"type": "string", "description": "Project to monitor (or 'all')"},
-                        "alert_on_degradation": {"type": "boolean", "description": "Alert if status changes"},
-                        "metrics_window_minutes": {"type": "integer", "description": "Historical window for metrics"},
+                        "project_name": {
+                            "type": "string",
+                            "description": "Project to monitor (or 'all')",
+                        },
+                        "alert_on_degradation": {
+                            "type": "boolean",
+                            "description": "Alert if status changes",
+                        },
+                        "metrics_window_minutes": {
+                            "type": "integer",
+                            "description": "Historical window for metrics",
+                        },
                     },
                 },
             },
@@ -314,13 +435,19 @@ class PyStreamMCPTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "workflow_id": {"type": "string", "description": "Unique workflow identifier"},
+                        "workflow_id": {
+                            "type": "string",
+                            "description": "Unique workflow identifier",
+                        },
                         "tool_sequence": {
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "Ordered sequence of tools to execute",
                         },
-                        "cascade_on_success": {"type": "boolean", "description": "Continue on success"},
+                        "cascade_on_success": {
+                            "type": "boolean",
+                            "description": "Continue on success",
+                        },
                         "error_handling": {
                             "type": "string",
                             "enum": ["fail_fast", "continue", "use_fallback"],
@@ -339,8 +466,9 @@ class PyStreamMCPHandler:
     def __init__(self, orchestrator: Any):
         self.orchestrator = orchestrator
 
-    async def discover_mcp_projects(self, include_metadata: bool = False,
-                                   filter_by_capability: Optional[str] = None) -> Dict[str, Any]:
+    async def discover_mcp_projects(
+        self, include_metadata: bool = False, filter_by_capability: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Discover all MCP-enabled projects"""
         projects = {
             "statguardian": {
@@ -388,7 +516,11 @@ class PyStreamMCPHandler:
         }
 
         if filter_by_capability:
-            projects = {k: v for k, v in projects.items() if v["capability"] == filter_by_capability}
+            projects = {
+                k: v
+                for k, v in projects.items()
+                if v["capability"] == filter_by_capability
+            }
 
         if include_metadata:
             for p in projects.values():
@@ -401,16 +533,31 @@ class PyStreamMCPHandler:
             "discovered_at": "2024-07-31T00:00:00Z",
         }
 
-    async def plan_query_execution(self, query_description: str,
-                                  projects_involved: Optional[List[str]] = None,
-                                  optimization_goal: str = "balanced") -> Dict[str, Any]:
+    async def plan_query_execution(
+        self,
+        query_description: str,
+        projects_involved: Optional[List[str]] = None,
+        optimization_goal: str = "balanced",
+    ) -> Dict[str, Any]:
         """Plan optimal query execution"""
         plan = {
             "query": query_description,
             "execution_stages": [
-                {"stage": 1, "description": "Validate query", "projects": projects_involved or []},
-                {"stage": 2, "description": "Fetch data", "projects": projects_involved or []},
-                {"stage": 3, "description": "Aggregate results", "projects": projects_involved or []},
+                {
+                    "stage": 1,
+                    "description": "Validate query",
+                    "projects": projects_involved or [],
+                },
+                {
+                    "stage": 2,
+                    "description": "Fetch data",
+                    "projects": projects_involved or [],
+                },
+                {
+                    "stage": 3,
+                    "description": "Aggregate results",
+                    "projects": projects_involved or [],
+                },
             ],
             "estimated_latency_ms": 1500,
             "optimization_goal": optimization_goal,
@@ -419,9 +566,12 @@ class PyStreamMCPHandler:
         }
         return plan
 
-    async def optimize_cross_project_query(self, original_query: str,
-                                          involved_projects: Optional[List[str]] = None,
-                                          constraints: Optional[Dict] = None) -> Dict[str, Any]:
+    async def optimize_cross_project_query(
+        self,
+        original_query: str,
+        involved_projects: Optional[List[str]] = None,
+        constraints: Optional[Dict] = None,
+    ) -> Dict[str, Any]:
         """Optimize query to reduce tokens and latency"""
         return {
             "original_query": original_query,
@@ -437,9 +587,13 @@ class PyStreamMCPHandler:
             ],
         }
 
-    async def execute_federated_query(self, query: str, projects: List[str],
-                                     timeout_seconds: int = 30,
-                                     fallback_strategy: str = "fail_fast") -> Dict[str, Any]:
+    async def execute_federated_query(
+        self,
+        query: str,
+        projects: List[str],
+        timeout_seconds: int = 30,
+        fallback_strategy: str = "fail_fast",
+    ) -> Dict[str, Any]:
         """Execute federated query across projects"""
         results = {
             "query": query,
@@ -451,9 +605,12 @@ class PyStreamMCPHandler:
         }
         return results
 
-    async def detect_compatible_projects(self, capability: str,
-                                        data_type: Optional[str] = None,
-                                        output_format: Optional[str] = None) -> Dict[str, Any]:
+    async def detect_compatible_projects(
+        self,
+        capability: str,
+        data_type: Optional[str] = None,
+        output_format: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Detect compatible projects"""
         compatibility_map = {
             "data_quality": ["statguardian", "pyreverseetl"],
@@ -471,10 +628,13 @@ class PyStreamMCPHandler:
             "confidence_score": 0.95,
         }
 
-    async def rank_tools_by_relevance(self, task_description: str,
-                                     available_tools: Optional[List[str]] = None,
-                                     weight_by_speed: float = 0.5,
-                                     weight_by_accuracy: float = 0.5) -> Dict[str, Any]:
+    async def rank_tools_by_relevance(
+        self,
+        task_description: str,
+        available_tools: Optional[List[str]] = None,
+        weight_by_speed: float = 0.5,
+        weight_by_accuracy: float = 0.5,
+    ) -> Dict[str, Any]:
         """Rank tools by relevance"""
         return {
             "task": task_description,
@@ -483,12 +643,19 @@ class PyStreamMCPHandler:
                 {"rank": 2, "tool": "validate_sql_syntax", "relevance_score": 0.95},
                 {"rank": 3, "tool": "estimate_query_cost", "relevance_score": 0.88},
             ],
-            "scoring_weights": {"speed": weight_by_speed, "accuracy": weight_by_accuracy},
+            "scoring_weights": {
+                "speed": weight_by_speed,
+                "accuracy": weight_by_accuracy,
+            },
         }
 
-    async def handle_cross_database_join(self, left_source: str, right_source: str,
-                                        join_key: str,
-                                        join_type: str = "inner") -> Dict[str, Any]:
+    async def handle_cross_database_join(
+        self,
+        left_source: str,
+        right_source: str,
+        join_key: str,
+        join_type: str = "inner",
+    ) -> Dict[str, Any]:
         """Execute cross-database join"""
         return {
             "left_source": left_source,
@@ -501,10 +668,13 @@ class PyStreamMCPHandler:
             "approach": "Broadcast join (left table < 1GB)",
         }
 
-    async def cache_management(self, action: str,
-                              scope: str = "global",
-                              ttl_seconds: Optional[int] = None,
-                              target: Optional[str] = None) -> Dict[str, Any]:
+    async def cache_management(
+        self,
+        action: str,
+        scope: str = "global",
+        ttl_seconds: Optional[int] = None,
+        target: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Manage caching"""
         status = {
             "action": action,
@@ -518,9 +688,13 @@ class PyStreamMCPHandler:
             status["avg_ttl_seconds"] = 3600
         return status
 
-    async def error_recovery_retry(self, failed_query: str, error_type: str,
-                                  retry_strategy: str = "exponential_backoff",
-                                  max_retries: int = 3) -> Dict[str, Any]:
+    async def error_recovery_retry(
+        self,
+        failed_query: str,
+        error_type: str,
+        retry_strategy: str = "exponential_backoff",
+        max_retries: int = 3,
+    ) -> Dict[str, Any]:
         """Handle error recovery"""
         return {
             "failed_query": failed_query,
@@ -532,9 +706,9 @@ class PyStreamMCPHandler:
             "next_retry_in_ms": 1000,
         }
 
-    async def report_performance_metrics(self, metric_type: str,
-                                        time_window_hours: int = 24,
-                                        group_by: str = "project") -> Dict[str, Any]:
+    async def report_performance_metrics(
+        self, metric_type: str, time_window_hours: int = 24, group_by: str = "project"
+    ) -> Dict[str, Any]:
         """Report performance metrics"""
         return {
             "metric_type": metric_type,
@@ -553,9 +727,12 @@ class PyStreamMCPHandler:
             ],
         }
 
-    async def estimate_query_cost_multi_project(self, query: str,
-                                               projects: Optional[List[str]] = None,
-                                               cost_model: str = "tokens") -> Dict[str, Any]:
+    async def estimate_query_cost_multi_project(
+        self,
+        query: str,
+        projects: Optional[List[str]] = None,
+        cost_model: str = "tokens",
+    ) -> Dict[str, Any]:
         """Estimate query cost"""
         return {
             "query": query,
@@ -572,9 +749,12 @@ class PyStreamMCPHandler:
             },
         }
 
-    async def manage_endpoint_federation(self, action: str,
-                                        endpoint_url: Optional[str] = None,
-                                        project_name: Optional[str] = None) -> Dict[str, Any]:
+    async def manage_endpoint_federation(
+        self,
+        action: str,
+        endpoint_url: Optional[str] = None,
+        project_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Manage endpoint federation"""
         if action == "discover":
             return {
@@ -583,7 +763,11 @@ class PyStreamMCPHandler:
                     {"port": 8765, "project": "statguardian", "status": "healthy"},
                     {"port": 8766, "project": "pyreverseetl", "status": "healthy"},
                     {"port": 8767, "project": "prismnote", "status": "healthy"},
-                    {"port": 8768, "project": "clusteraudiencekit", "status": "healthy"},
+                    {
+                        "port": 8768,
+                        "project": "clusteraudiencekit",
+                        "status": "healthy",
+                    },
                     {"port": 8769, "project": "pyweatherenriched", "status": "healthy"},
                     {"port": 8770, "project": "pyterrain", "status": "healthy"},
                     {"port": 8771, "project": "pyroboframes", "status": "healthy"},
@@ -599,8 +783,13 @@ class PyStreamMCPHandler:
             }
 
     # Orchestration Webhook Handlers
-    async def register_orchestration_webhook(self, webhook_id: str, url: str, events: List[str],
-                                            secret_key: Optional[str] = None) -> Dict[str, Any]:
+    async def register_orchestration_webhook(
+        self,
+        webhook_id: str,
+        url: str,
+        events: List[str],
+        secret_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Register orchestration webhook for real-time MCP events"""
         return {
             "status": "success",
@@ -614,15 +803,26 @@ class PyStreamMCPHandler:
             "created_at": "2026-07-31T00:00:00Z",
         }
 
-    async def list_service_endpoints(self, filter_by_status: str = "all",
-                                    include_metrics: bool = False) -> Dict[str, Any]:
+    async def list_service_endpoints(
+        self, filter_by_status: str = "all", include_metrics: bool = False
+    ) -> Dict[str, Any]:
         """List all MCP service endpoints"""
         endpoints = [
             {"project": "statguardian", "port": 8765, "status": "healthy", "tools": 9},
             {"project": "pyreverseetl", "port": 8766, "status": "healthy", "tools": 12},
             {"project": "prismnote", "port": 8767, "status": "healthy", "tools": 10},
-            {"project": "clusteraudiencekit", "port": 8768, "status": "healthy", "tools": 10},
-            {"project": "pyweatherenriched", "port": 8769, "status": "healthy", "tools": 10},
+            {
+                "project": "clusteraudiencekit",
+                "port": 8768,
+                "status": "healthy",
+                "tools": 10,
+            },
+            {
+                "project": "pyweatherenriched",
+                "port": 8769,
+                "status": "healthy",
+                "tools": 10,
+            },
             {"project": "pyterrain", "port": 8770, "status": "healthy", "tools": 10},
             {"project": "pyroboframes", "port": 8771, "status": "healthy", "tools": 11},
         ]
@@ -645,11 +845,14 @@ class PyStreamMCPHandler:
             "healthy_count": len([e for e in endpoints if e["status"] == "healthy"]),
         }
 
-    async def route_tool_invocation(self, tool_name: str,
-                                   params: Optional[Dict] = None,
-                                   chain_id: Optional[str] = None,
-                                   use_fallback: bool = True,
-                                   timeout_ms: Optional[int] = None) -> Dict[str, Any]:
+    async def route_tool_invocation(
+        self,
+        tool_name: str,
+        params: Optional[Dict] = None,
+        chain_id: Optional[str] = None,
+        use_fallback: bool = True,
+        timeout_ms: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """Route tool invocation to appropriate MCP"""
         return {
             "status": "routed",
@@ -663,8 +866,9 @@ class PyStreamMCPHandler:
             "routed_at": "2026-07-31T00:00:00Z",
         }
 
-    async def get_tool_routing_info(self, tool_name: str,
-                                   include_fallbacks: bool = False) -> Dict[str, Any]:
+    async def get_tool_routing_info(
+        self, tool_name: str, include_fallbacks: bool = False
+    ) -> Dict[str, Any]:
         """Get tool routing information"""
         routing = {
             "tool_name": tool_name,
@@ -677,8 +881,16 @@ class PyStreamMCPHandler:
 
         if include_fallbacks:
             routing["fallback_mcps"] = [
-                {"project": "pyreverseetl", "endpoint": "http://localhost:8766", "status": "healthy"},
-                {"project": "prismnote", "endpoint": "http://localhost:8767", "status": "healthy"},
+                {
+                    "project": "pyreverseetl",
+                    "endpoint": "http://localhost:8766",
+                    "status": "healthy",
+                },
+                {
+                    "project": "prismnote",
+                    "endpoint": "http://localhost:8767",
+                    "status": "healthy",
+                },
             ]
 
         return {
@@ -686,9 +898,12 @@ class PyStreamMCPHandler:
             "routing": routing,
         }
 
-    async def monitor_mcp_health(self, project_name: str = "all",
-                                alert_on_degradation: bool = True,
-                                metrics_window_minutes: int = 60) -> Dict[str, Any]:
+    async def monitor_mcp_health(
+        self,
+        project_name: str = "all",
+        alert_on_degradation: bool = True,
+        metrics_window_minutes: int = 60,
+    ) -> Dict[str, Any]:
         """Monitor MCP health status"""
         return {
             "status": "success",
@@ -705,10 +920,13 @@ class PyStreamMCPHandler:
             "unavailable_count": 0,
         }
 
-    async def orchestrate_cross_mcp_workflow(self, workflow_id: str,
-                                            tool_sequence: List[str],
-                                            cascade_on_success: bool = True,
-                                            error_handling: str = "fail_fast") -> Dict[str, Any]:
+    async def orchestrate_cross_mcp_workflow(
+        self,
+        workflow_id: str,
+        tool_sequence: List[str],
+        cascade_on_success: bool = True,
+        error_handling: str = "fail_fast",
+    ) -> Dict[str, Any]:
         """Orchestrate cross-MCP workflow"""
         return {
             "status": "orchestrating",
@@ -721,7 +939,7 @@ class PyStreamMCPHandler:
             "total_stages": len(tool_sequence),
             "started_at": "2026-07-31T00:00:00Z",
             "execution_plan": [
-                {"stage": i+1, "tool": tool, "status": "pending"}
+                {"stage": i + 1, "tool": tool, "status": "pending"}
                 for i, tool in enumerate(tool_sequence)
             ],
         }

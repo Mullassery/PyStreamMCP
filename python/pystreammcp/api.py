@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 
 # Request/Response Models
 
+
 class QueryRequest(BaseModel):
     """Query execution request."""
+
     text: str = Field(..., description="Query text")
     intent: str = Field("retrieve", description="Query intent")
     agent_id: Optional[str] = Field(None, description="Agent ID")
@@ -30,6 +32,7 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     """Query execution response."""
+
     status: str
     query_id: str
     text: str
@@ -43,12 +46,14 @@ class QueryResponse(BaseModel):
 
 class DiscoveryRequest(BaseModel):
     """Data source discovery request."""
+
     context: str = Field(..., description="Context for discovery")
     agent_id: Optional[str] = Field(None, description="Agent ID")
 
 
 class DiscoveryResponse(BaseModel):
     """Discovery response with sources."""
+
     status: str
     sources: List[Dict[str, Any]]
     total_sources: int
@@ -56,6 +61,7 @@ class DiscoveryResponse(BaseModel):
 
 class OptimizationRequest(BaseModel):
     """Query optimization request."""
+
     text: str = Field(..., description="Query text")
     strategy: Optional[str] = Field(None, description="Optimization strategy")
     agent_id: Optional[str] = Field(None, description="Agent ID")
@@ -63,6 +69,7 @@ class OptimizationRequest(BaseModel):
 
 class OptimizationResponse(BaseModel):
     """Optimization response."""
+
     status: str
     query_id: str
     baseline_tokens: int
@@ -73,6 +80,7 @@ class OptimizationResponse(BaseModel):
 
 class AgentConfig(BaseModel):
     """Agent configuration."""
+
     agent_id: str = Field(..., description="Unique agent ID")
     name: str = Field(..., description="Agent name")
     optimization_strategy: str = Field("balanced", description="Optimization strategy")
@@ -82,6 +90,7 @@ class AgentConfig(BaseModel):
 
 class AgentResponse(BaseModel):
     """Agent creation response."""
+
     status: str
     agent_id: str
     name: str
@@ -91,12 +100,14 @@ class AgentResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str
     version: str
     adapters: List[str]
 
 
 # API Server
+
 
 class PyStreamMCPAPI:
     """PyStreamMCP REST API server."""
@@ -152,7 +163,9 @@ class PyStreamMCPAPI:
         async def create_agent(config: AgentConfig):
             """Create a new agent."""
             if config.agent_id in self.agents:
-                raise HTTPException(status_code=400, detail=f"Agent {config.agent_id} already exists")
+                raise HTTPException(
+                    status_code=400, detail=f"Agent {config.agent_id} already exists"
+                )
 
             agent = Agent(
                 agent_id=config.agent_id,
@@ -179,7 +192,9 @@ class PyStreamMCPAPI:
                     {
                         "agent_id": agent.agent_id,
                         "name": agent.name,
-                        "optimization_strategy": getattr(agent, "optimization_strategy", "unknown"),
+                        "optimization_strategy": getattr(
+                            agent, "optimization_strategy", "unknown"
+                        ),
                     }
                     for agent in self.agents.values()
                 ],
@@ -189,7 +204,9 @@ class PyStreamMCPAPI:
         async def get_agent(agent_id: str):
             """Get agent details."""
             if agent_id not in self.agents:
-                raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Agent {agent_id} not found"
+                )
 
             agent = self.agents[agent_id]
             return {
@@ -226,13 +243,15 @@ class PyStreamMCPAPI:
             results = []
             for text in texts:
                 result = agent.query(text)
-                results.append({
-                    "query_id": result.query_id,
-                    "text": text,
-                    "baseline_tokens": result.baseline_tokens,
-                    "optimized_tokens": result.optimized_tokens,
-                    "cost_reduction_percent": result.cost_reduction_percent,
-                })
+                results.append(
+                    {
+                        "query_id": result.query_id,
+                        "text": text,
+                        "baseline_tokens": result.baseline_tokens,
+                        "optimized_tokens": result.optimized_tokens,
+                        "cost_reduction_percent": result.cost_reduction_percent,
+                    }
+                )
 
             return {
                 "status": "success",
@@ -277,7 +296,9 @@ class PyStreamMCPAPI:
         async def metrics(agent_id: Optional[str] = QueryParam(None)):
             """Get performance metrics."""
             if agent_id and agent_id not in self.agents:
-                raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Agent {agent_id} not found"
+                )
 
             return {
                 "status": "success",
@@ -312,6 +333,7 @@ class PyStreamMCPAPI:
             reload: Enable auto-reload on file changes
         """
         import uvicorn
+
         uvicorn.run(self.app, host=host, port=port, reload=reload)
 
 

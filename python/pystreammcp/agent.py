@@ -13,6 +13,7 @@ from datetime import datetime
 @dataclass
 class AgentConfig:
     """Configuration for an agent."""
+
     agent_id: str
     name: str
     optimization_strategy: str = "balanced"
@@ -89,7 +90,9 @@ class Agent:
         self.metrics["queries_executed"] += 1
         self.metrics["total_baseline_tokens"] += result.baseline_tokens
         self.metrics["total_optimized_tokens"] += result.optimized_tokens
-        estimated_cost_saved = (result.baseline_tokens - result.optimized_tokens) * 0.00001
+        estimated_cost_saved = (
+            result.baseline_tokens - result.optimized_tokens
+        ) * 0.00001
         self.metrics["total_cost_saved"] += estimated_cost_saved
 
         return result
@@ -101,21 +104,24 @@ class Agent:
             "average_cost_reduction": (
                 (
                     (
-                        self.metrics["total_baseline_tokens"]
-                        - self.metrics["total_optimized_tokens"]
+                        (
+                            self.metrics["total_baseline_tokens"]
+                            - self.metrics["total_optimized_tokens"]
+                        )
+                        / self.metrics["total_baseline_tokens"]
                     )
-                    / self.metrics["total_baseline_tokens"]
+                    * 100
                 )
-                * 100
-            )
-            if self.metrics["total_baseline_tokens"] > 0
-            else 0,
+                if self.metrics["total_baseline_tokens"] > 0
+                else 0
+            ),
         }
 
 
 @dataclass
 class QueryResult:
     """Result of a query execution."""
+
     query_id: str
     query_text: str
     baseline_tokens: int
@@ -140,6 +146,4 @@ class QueryResult:
 
     def get_context_text(self) -> str:
         """Get concatenated context."""
-        return "\n".join(
-            [str(ctx.get("content", "")) for ctx in self.contexts]
-        )
+        return "\n".join([str(ctx.get("content", "")) for ctx in self.contexts])

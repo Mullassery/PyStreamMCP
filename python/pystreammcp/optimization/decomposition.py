@@ -11,6 +11,7 @@ from enum import Enum
 
 class QueryType(str, Enum):
     """Query type classification."""
+
     SIMPLE = "simple"  # Single table, basic filters
     JOINED = "joined"  # Multiple tables with joins
     AGGREGATED = "aggregated"  # GROUP BY, aggregations
@@ -69,7 +70,11 @@ class QueryDecomposer:
             return QueryType.JOINED
         elif "group by" in query_lower or "count(" in query_lower:
             return QueryType.AGGREGATED
-        elif "with " in query_lower or "select" in query_lower and query_lower.count("select") > 1:
+        elif (
+            "with " in query_lower
+            or "select" in query_lower
+            and query_lower.count("select") > 1
+        ):
             return QueryType.COMPLEX
         else:
             return QueryType.SIMPLE

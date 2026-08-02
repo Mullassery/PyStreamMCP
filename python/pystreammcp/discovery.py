@@ -8,6 +8,7 @@ from datetime import datetime
 
 class SourceType(str, Enum):
     """Type of data source."""
+
     TABLE = "table"
     INDEX = "index"
     CACHE = "cache"
@@ -18,6 +19,7 @@ class SourceType(str, Enum):
 @dataclass
 class DiscoveredSource:
     """A discovered data source."""
+
     name: str
     source_type: SourceType
     relevance_score: float
@@ -29,6 +31,7 @@ class DiscoveredSource:
     def __post_init__(self):
         if not self.source_id:
             import uuid
+
             self.source_id = str(uuid.uuid4())
         self.relevance_score = max(0.0, min(1.0, self.relevance_score))
         self.freshness_score = max(0.0, min(1.0, self.freshness_score))
@@ -46,6 +49,7 @@ class DiscoveredSource:
 @dataclass
 class Discovery:
     """Discovery result for a query."""
+
     query_id: str
     discovered_sources: List[DiscoveredSource] = field(default_factory=list)
     discovery_id: str = ""
@@ -54,6 +58,7 @@ class Discovery:
     def __post_init__(self):
         if not self.discovery_id:
             import uuid
+
             self.discovery_id = str(uuid.uuid4())
 
     def add_source(self, source: DiscoveredSource) -> "Discovery":
@@ -68,9 +73,7 @@ class Discovery:
     def top_sources(self, limit: int = 5) -> List[DiscoveredSource]:
         """Get top sources by quality score."""
         sorted_sources = sorted(
-            self.discovered_sources,
-            key=lambda s: s.quality_score(),
-            reverse=True
+            self.discovered_sources, key=lambda s: s.quality_score(), reverse=True
         )
         return sorted_sources[:limit]
 

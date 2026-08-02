@@ -84,7 +84,9 @@ class OrchestrationWebhookHandlers:
             ],
         )
         self.event_router.service_registry.register_mcp_endpoint(endpoint)
-        registration = self._register_mcp_endpoint(project_name, port, len(tools), mcp_version)
+        registration = self._register_mcp_endpoint(
+            project_name, port, len(tools), mcp_version
+        )
         actions.append(registration)
 
         # Action 2: Update health metrics
@@ -128,7 +130,9 @@ class OrchestrationWebhookHandlers:
 
         # Action 1: Mark MCP unavailable
         self.event_router.service_registry.mark_mcp_unavailable(project_name, reason)
-        unavailable_action = self._mark_mcp_unavailable(project_name, reason, is_temporary)
+        unavailable_action = self._mark_mcp_unavailable(
+            project_name, reason, is_temporary
+        )
         actions.append(unavailable_action)
 
         # Action 2: Queue affected tools for retry
@@ -192,13 +196,15 @@ class OrchestrationWebhookHandlers:
             chain_context=chain_context,
             user_id=user_id,
         )
-        actions.append({
-            "action": "route_tool_invocation",
-            "tool_name": tool_name,
-            "routed_to": route_result.get("project_name"),
-            "invocation_id": invocation_id,
-            "status": route_result.get("status"),
-        })
+        actions.append(
+            {
+                "action": "route_tool_invocation",
+                "tool_name": tool_name,
+                "routed_to": route_result.get("project_name"),
+                "invocation_id": invocation_id,
+                "status": route_result.get("status"),
+            }
+        )
 
         # Action 2: Track invocation in orchestration
         tracking = self._track_invocation(
@@ -277,15 +283,19 @@ class OrchestrationWebhookHandlers:
             actions.append(cascade_action)
 
             # Track cascade history
-            self.cascade_history.append({
-                "invocation_id": invocation_id,
-                "source_tool": tool_name,
-                "cascaded_tools": cascaded_results,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            self.cascade_history.append(
+                {
+                    "invocation_id": invocation_id,
+                    "source_tool": tool_name,
+                    "cascaded_tools": cascaded_results,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         # Action 3: Update chain metrics
-        chain_context = self.active_invocations.get(invocation_id, {}).get("chain_context", {})
+        chain_context = self.active_invocations.get(invocation_id, {}).get(
+            "chain_context", {}
+        )
         if chain_context.get("chain_id"):
             metrics_update = self._update_chain_metrics(
                 chain_id=chain_context.get("chain_id"),
@@ -298,7 +308,11 @@ class OrchestrationWebhookHandlers:
         # Action 4: Clean up invocation tracking
         if invocation_id in self.active_invocations:
             del self.active_invocations[invocation_id]
-            cleanup = {"action": "cleanup_invocation", "invocation_id": invocation_id, "status": "cleaned"}
+            cleanup = {
+                "action": "cleanup_invocation",
+                "invocation_id": invocation_id,
+                "status": "cleaned",
+            }
             actions.append(cleanup)
 
         return {
@@ -384,7 +398,9 @@ class OrchestrationWebhookHandlers:
         data = event.get("data", {})
         dependent_tool = data.get("dependent_tool")
         required_tool = data.get("required_tool")
-        dependency_type = data.get("dependency_type", "result")  # result, state, trigger
+        dependency_type = data.get(
+            "dependency_type", "result"
+        )  # result, state, trigger
         invocation_id = data.get("invocation_id")
 
         actions = []
@@ -405,7 +421,9 @@ class OrchestrationWebhookHandlers:
         actions.append(exec_order)
 
         # Action 3: Verify both tools available
-        availability_check = self._check_tools_available([dependent_tool, required_tool])
+        availability_check = self._check_tools_available(
+            [dependent_tool, required_tool]
+        )
         actions.append(availability_check)
 
         # Action 4: If cross-MCP, plan cross-project execution
@@ -413,7 +431,9 @@ class OrchestrationWebhookHandlers:
             result = self.event_router.service_registry.find_tool(required_tool)
             if result:
                 required_project, _ = result
-                dep_result = self.event_router.service_registry.find_tool(dependent_tool)
+                dep_result = self.event_router.service_registry.find_tool(
+                    dependent_tool
+                )
                 if dep_result:
                     dependent_project, _ = dep_result
                     if required_project != dependent_project:
@@ -477,7 +497,9 @@ class OrchestrationWebhookHandlers:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-    def _notify_mcp_available(self, project_name: str, tool_count: int) -> Dict[str, Any]:
+    def _notify_mcp_available(
+        self, project_name: str, tool_count: int
+    ) -> Dict[str, Any]:
         """Notify dependent systems MCP available"""
         return {
             "action": "notify_mcp_available",
@@ -677,9 +699,7 @@ class OrchestrationWebhookHandlers:
             return True
         return False
 
-    def _extract_critical_metrics(
-        self, metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_critical_metrics(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Extract critical metrics from health metrics"""
         critical = {}
         if metrics.get("error_rate", 0) > 0.1:

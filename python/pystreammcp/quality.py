@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class QualityStatus(str, Enum):
     """Quality status of a data source."""
+
     VALID = "valid"
     INVALID = "invalid"
     STALE = "stale"
@@ -25,6 +26,7 @@ class QualityStatus(str, Enum):
 @dataclass
 class QualityCheck:
     """A single quality check result."""
+
     check_name: str
     passed: bool
     score: float  # 0.0-1.0
@@ -38,6 +40,7 @@ class QualityCheck:
 @dataclass
 class ValidationResult:
     """Result of validating data source quality."""
+
     dataset_id: str
     status: QualityStatus
     quality_score: float  # 0.0-1.0
@@ -50,6 +53,7 @@ class ValidationResult:
         self.quality_score = max(0.0, min(1.0, self.quality_score))
         if not self.validation_id:
             import uuid
+
             self.validation_id = str(uuid.uuid4())
 
     def is_valid(self) -> bool:
@@ -85,6 +89,7 @@ class ValidationResult:
 @dataclass
 class ValidationGate:
     """Configuration for a quality validation gate."""
+
     dataset_id: str
     enabled: bool = True
     block_on_failure: bool = True
@@ -109,14 +114,18 @@ class QualityValidator:
         self.statguardian_enabled = statguardian_enabled
         self._validation_cache: Dict[str, ValidationResult] = {}
         self._gates: Dict[str, ValidationGate] = {}
-        logger.info(f"QualityValidator initialized (StatGuardian: {statguardian_enabled})")
+        logger.info(
+            f"QualityValidator initialized (StatGuardian: {statguardian_enabled})"
+        )
 
     def register_gate(self, gate: ValidationGate) -> None:
         """Register a validation gate for a dataset."""
         self._gates[gate.dataset_id] = gate
         logger.debug(f"Registered validation gate for dataset: {gate.dataset_id}")
 
-    def validate(self, dataset_id: str, source_data: Dict[str, Any]) -> ValidationResult:
+    def validate(
+        self, dataset_id: str, source_data: Dict[str, Any]
+    ) -> ValidationResult:
         """
         Validate a data source using StatGuardian.
 
@@ -159,7 +168,9 @@ class QualityValidator:
         gate: ValidationGate,
     ) -> ValidationResult:
         """Internal method to perform actual validation."""
-        result = ValidationResult(dataset_id=dataset_id, status=QualityStatus.UNKNOWN, quality_score=1.0)
+        result = ValidationResult(
+            dataset_id=dataset_id, status=QualityStatus.UNKNOWN, quality_score=1.0
+        )
 
         if not self.statguardian_enabled:
             logger.debug(f"StatGuardian disabled, marking {dataset_id} as valid")
@@ -199,7 +210,9 @@ class QualityValidator:
                 result.status = QualityStatus.DEGRADED
             else:
                 result.status = QualityStatus.INVALID
-                result.add_error(f"Quality score {result.quality_score:.2f} below threshold {gate.min_quality_score}")
+                result.add_error(
+                    f"Quality score {result.quality_score:.2f} below threshold {gate.min_quality_score}"
+                )
 
         except Exception as e:
             logger.error(f"Error validating {dataset_id}: {e}")
@@ -213,31 +226,37 @@ class QualityValidator:
         checks = []
 
         if "schema" not in source_data:
-            checks.append(QualityCheck(
-                check_name="schema_present",
-                passed=False,
-                score=0.0,
-                message="No schema information provided"
-            ))
+            checks.append(
+                QualityCheck(
+                    check_name="schema_present",
+                    passed=False,
+                    score=0.0,
+                    message="No schema information provided",
+                )
+            )
             return checks
 
         schema = source_data["schema"]
 
         # Check schema has fields
         if not schema.get("fields"):
-            checks.append(QualityCheck(
-                check_name="schema_fields",
-                passed=False,
-                score=0.0,
-                message="Schema has no fields"
-            ))
+            checks.append(
+                QualityCheck(
+                    check_name="schema_fields",
+                    passed=False,
+                    score=0.0,
+                    message="Schema has no fields",
+                )
+            )
         else:
-            checks.append(QualityCheck(
-                check_name="schema_fields",
-                passed=True,
-                score=1.0,
-                message=f"Schema has {len(schema['fields'])} fields"
-            ))
+            checks.append(
+                QualityCheck(
+                    check_name="schema_fields",
+                    passed=True,
+                    score=1.0,
+                    message=f"Schema has {len(schema['fields'])} fields",
+                )
+            )
 
         return checks
 
@@ -246,12 +265,14 @@ class QualityValidator:
         checks = []
 
         if "rows" not in source_data or not source_data["rows"]:
-            checks.append(QualityCheck(
-                check_name="data_rows",
-                passed=False,
-                score=0.0,
-                message="No data rows provided"
-            ))
+            checks.append(
+                QualityCheck(
+                    check_name="data_rows",
+                    passed=False,
+                    score=0.0,
+                    message="No data rows provided",
+                )
+            )
             return checks
 
         rows = source_data["rows"]
@@ -270,24 +291,28 @@ class QualityValidator:
             total_nulls = sum(null_counts.values())
             null_ratio = total_nulls / total_values if total_values > 0 else 0
 
-            checks.append(QualityCheck(
-                check_name="null_ratio",
-                passed=null_ratio < 0.1,
-                score=1.0 - min(null_ratio, 1.0),
-                message=f"Null ratio: {null_ratio:.2%}"
-            ))
+            checks.append(
+                QualityCheck(
+                    check_name="null_ratio",
+                    passed=null_ratio < 0.1,
+                    score=1.0 - min(null_ratio, 1.0),
+                    message=f"Null ratio: {null_ratio:.2%}",
+                )
+            )
 
         # Check for duplicates (simplified)
         row_count = len(rows)
         unique_rows = len(set(tuple(row.values()) for row in rows))
         duplicate_ratio = 1.0 - (unique_rows / row_count) if row_count > 0 else 0
 
-        checks.append(QualityCheck(
-            check_name="duplicate_ratio",
-            passed=duplicate_ratio < 0.05,
-            score=1.0 - duplicate_ratio,
-            message=f"Duplicate ratio: {duplicate_ratio:.2%}"
-        ))
+        checks.append(
+            QualityCheck(
+                check_name="duplicate_ratio",
+                passed=duplicate_ratio < 0.05,
+                score=1.0 - duplicate_ratio,
+                message=f"Duplicate ratio: {duplicate_ratio:.2%}",
+            )
+        )
 
         return checks
 
@@ -328,7 +353,9 @@ class QualityValidator:
         # Check quality score
         if result.quality_score < gate.min_quality_score:
             if gate.block_on_failure:
-                logger.warning(f"Blocking source {dataset_id}: quality {result.quality_score:.2f} < {gate.min_quality_score}")
+                logger.warning(
+                    f"Blocking source {dataset_id}: quality {result.quality_score:.2f} < {gate.min_quality_score}"
+                )
                 return False
 
         return True
@@ -351,8 +378,10 @@ class QualityValidator:
                 dataset_id: {
                     "status": result.status,
                     "quality_score": result.quality_score,
-                    "age_seconds": (datetime.utcnow() - result.last_validated).total_seconds(),
+                    "age_seconds": (
+                        datetime.utcnow() - result.last_validated
+                    ).total_seconds(),
                 }
                 for dataset_id, result in self._validation_cache.items()
-            }
+            },
         }

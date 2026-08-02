@@ -238,11 +238,13 @@ class PyStreamMCPDAGFactory:
             tasks.append(task)
 
         # Add aggregation task
-        tasks.append({
-            "task_id": "aggregate_results",
-            "operator": "PythonOperator",
-            "depends_on": [f"query_{i}" for i in range(len(queries))],
-        })
+        tasks.append(
+            {
+                "task_id": "aggregate_results",
+                "operator": "PythonOperator",
+                "depends_on": [f"query_{i}" for i in range(len(queries))],
+            }
+        )
 
         return {
             "dag_id": dag_id,

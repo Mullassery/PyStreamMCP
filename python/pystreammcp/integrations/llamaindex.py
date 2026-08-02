@@ -11,8 +11,13 @@ Provides both:
 from typing import Any, List, Optional, Dict
 import asyncio
 from pystreammcp import (
-    Agent, Query, QueryIntent,
-    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
+    Agent,
+    Query,
+    QueryIntent,
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
     QueryResult as AdapterQueryResult,
 )
 
@@ -38,7 +43,9 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
             max_tokens=config.max_tokens,
         )
 
-    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    def query(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query with PyStreamMCP optimization.
 
         In LlamaIndex context, this is typically used for document retrieval.
@@ -68,7 +75,9 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.query, text, intent)
@@ -105,7 +114,9 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.discover, context)
 
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize a query for RAG context retrieval.
 
         Args:
@@ -132,7 +143,9 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.optimize, query_text, strategy)
@@ -182,6 +195,7 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
 
 
 # Legacy interface (backward compatible)
+
 
 class StreamMCPRetriever:
     """LlamaIndex retriever using PyStreamMCP (legacy).

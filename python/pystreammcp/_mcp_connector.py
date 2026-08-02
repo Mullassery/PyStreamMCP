@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 try:
     from statguardian._mcp_connector import BaseMCPConnector
 except ImportError:
+
     class BaseMCPConnector(ABC):
         def __init__(self, project_name: str, port: int = 8765):
             self.project_name = project_name
@@ -52,15 +53,27 @@ except ImportError:
 
         def _generate_dab_config(self, tools: Dict[str, Any]) -> Dict:
             return {
-                "runtime": {"host": "0.0.0.0", "port": self.port, "cors": {"origins": ["*"]}},
-                "entities": {k: {"source": k, "permissions": [{"actions": ["*"], "roles": ["*"]}]} for k in tools.keys()},
+                "runtime": {
+                    "host": "0.0.0.0",
+                    "port": self.port,
+                    "cors": {"origins": ["*"]},
+                },
+                "entities": {
+                    k: {
+                        "source": k,
+                        "permissions": [{"actions": ["*"], "roles": ["*"]}],
+                    }
+                    for k in tools.keys()
+                },
                 "rest": {"enabled": True, "path": "/api"},
                 "graphql": {"enabled": True, "path": "/graphql"},
                 "mcp": {"enabled": True, "path": "/mcp"},
             }
 
         def _write_temp_config(self, config: Dict) -> str:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 json.dump(config, f)
                 return f.name
 
@@ -120,6 +133,7 @@ class Orchestrator:
 
     def start_mcp_connector(self, port: int = 8772) -> str:
         from pystreammcp._mcp_tools import PyStreamMCPHandler, PyStreamMCPTools
+
         self.mcp_connector = _MCPOrchestratorConnector(orchestrator=self, port=port)
         return self.mcp_connector.start_mcp_connector()
 
@@ -135,8 +149,10 @@ class _MCPOrchestratorConnector(BaseMCPConnector):
 
     def get_mcp_tools(self) -> Dict[str, Any]:
         from pystreammcp._mcp_tools import PyStreamMCPTools
+
         return PyStreamMCPTools.get_tools()
 
     def get_tool_handlers(self) -> Any:
         from pystreammcp._mcp_tools import PyStreamMCPHandler
+
         return PyStreamMCPHandler(self.orchestrator)

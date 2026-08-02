@@ -11,6 +11,7 @@ from enum import Enum
 
 class PromptIntent(str, Enum):
     """Detected prompt intent."""
+
     RETRIEVE = "retrieve"  # Get specific data
     DISCOVER = "discover"  # Explore available data
     ANALYZE = "analyze"  # Statistical analysis
@@ -23,6 +24,7 @@ class PromptIntent(str, Enum):
 
 class PromptComplexity(str, Enum):
     """Prompt complexity level."""
+
     SIMPLE = "simple"  # Single operation
     MODERATE = "moderate"  # Multiple operations
     COMPLEX = "complex"  # Multi-step reasoning
@@ -65,20 +67,86 @@ class PromptClassifier:
         """Initialize classifier."""
         self.intent_keywords = {
             PromptIntent.RETRIEVE: ["get", "find", "search", "select", "fetch", "show"],
-            PromptIntent.DISCOVER: ["explore", "what", "list", "available", "scan", "browse"],
-            PromptIntent.ANALYZE: ["analyze", "calculate", "compute", "aggregate", "sum", "count"],
-            PromptIntent.AGGREGATE: ["group", "group by", "summarize", "total", "average"],
-            PromptIntent.SYNTHESIZE: ["combine", "merge", "join", "correlate", "compare"],
+            PromptIntent.DISCOVER: [
+                "explore",
+                "what",
+                "list",
+                "available",
+                "scan",
+                "browse",
+            ],
+            PromptIntent.ANALYZE: [
+                "analyze",
+                "calculate",
+                "compute",
+                "aggregate",
+                "sum",
+                "count",
+            ],
+            PromptIntent.AGGREGATE: [
+                "group",
+                "group by",
+                "summarize",
+                "total",
+                "average",
+            ],
+            PromptIntent.SYNTHESIZE: [
+                "combine",
+                "merge",
+                "join",
+                "correlate",
+                "compare",
+            ],
             PromptIntent.GENERATE: ["create", "generate", "build", "make", "produce"],
-            PromptIntent.VALIDATE: ["check", "verify", "validate", "quality", "correct"],
-            PromptIntent.OPTIMIZE: ["optimize", "improve", "reduce", "minimize", "maximize"],
+            PromptIntent.VALIDATE: [
+                "check",
+                "verify",
+                "validate",
+                "quality",
+                "correct",
+            ],
+            PromptIntent.OPTIMIZE: [
+                "optimize",
+                "improve",
+                "reduce",
+                "minimize",
+                "maximize",
+            ],
         }
 
         self.domain_keywords = {
-            "finance": ["revenue", "cost", "profit", "payment", "transaction", "budget"],
-            "healthcare": ["patient", "diagnosis", "treatment", "medical", "health", "clinical"],
-            "retail": ["customer", "product", "order", "inventory", "sales", "purchase"],
-            "logistics": ["shipment", "delivery", "warehouse", "route", "tracking", "distribution"],
+            "finance": [
+                "revenue",
+                "cost",
+                "profit",
+                "payment",
+                "transaction",
+                "budget",
+            ],
+            "healthcare": [
+                "patient",
+                "diagnosis",
+                "treatment",
+                "medical",
+                "health",
+                "clinical",
+            ],
+            "retail": [
+                "customer",
+                "product",
+                "order",
+                "inventory",
+                "sales",
+                "purchase",
+            ],
+            "logistics": [
+                "shipment",
+                "delivery",
+                "warehouse",
+                "route",
+                "tracking",
+                "distribution",
+            ],
         }
 
         self.training_data: List[PromptAnalysis] = []
@@ -141,7 +209,11 @@ class PromptClassifier:
     def _detect_complexity(self, prompt_lower: str) -> PromptComplexity:
         """Detect prompt complexity."""
         # Count operations/keywords
-        operation_count = prompt_lower.count("and ") + prompt_lower.count("or ") + prompt_lower.count("where ")
+        operation_count = (
+            prompt_lower.count("and ")
+            + prompt_lower.count("or ")
+            + prompt_lower.count("where ")
+        )
 
         if operation_count == 0:
             return PromptComplexity.SIMPLE
@@ -171,53 +243,69 @@ class PromptClassifier:
         tags = []
 
         # Intent tag
-        tags.append(PromptTag(
-            name="intent",
-            value=intent.value,
-            confidence=0.85,
-            category="operation",
-        ))
+        tags.append(
+            PromptTag(
+                name="intent",
+                value=intent.value,
+                confidence=0.85,
+                category="operation",
+            )
+        )
 
         # Complexity tag
-        tags.append(PromptTag(
-            name="complexity",
-            value=complexity.value,
-            confidence=0.8,
-            category="complexity",
-        ))
+        tags.append(
+            PromptTag(
+                name="complexity",
+                value=complexity.value,
+                confidence=0.8,
+                category="complexity",
+            )
+        )
 
         # Domain tag
         if domain:
-            tags.append(PromptTag(
-                name="domain",
-                value=domain,
-                confidence=0.75,
-                category="domain",
-            ))
+            tags.append(
+                PromptTag(
+                    name="domain",
+                    value=domain,
+                    confidence=0.75,
+                    category="domain",
+                )
+            )
 
         # Quality tags
-        has_specificity = any(word in prompt_lower for word in ["specific", "exact", "precise"])
+        has_specificity = any(
+            word in prompt_lower for word in ["specific", "exact", "precise"]
+        )
         if has_specificity:
-            tags.append(PromptTag(
-                name="specificity",
-                value="high",
-                confidence=0.7,
-                category="quality",
-            ))
+            tags.append(
+                PromptTag(
+                    name="specificity",
+                    value="high",
+                    confidence=0.7,
+                    category="quality",
+                )
+            )
 
         # Performance tags
-        is_performance_critical = any(word in prompt_lower for word in ["urgent", "critical", "fast", "real-time"])
+        is_performance_critical = any(
+            word in prompt_lower for word in ["urgent", "critical", "fast", "real-time"]
+        )
         if is_performance_critical:
-            tags.append(PromptTag(
-                name="performance_critical",
-                value="true",
-                confidence=0.8,
-                category="quality",
-            ))
+            tags.append(
+                PromptTag(
+                    name="performance_critical",
+                    value="true",
+                    confidence=0.8,
+                    category="quality",
+                )
+            )
 
         return tags
 
-    def _calculate_quality_score(self, prompt_text: str, tags: List[PromptTag]) -> float:
+    def _calculate_quality_score(
+        self, prompt_text: str, tags: List[PromptTag]
+    ) -> float:
         """Calculate prompt quality score."""
         score = 0.5  # Base score
 
@@ -305,10 +393,15 @@ class PromptClassifier:
         strategy = {
             "intent": analysis.intent.value,
             "complexity": analysis.complexity.value,
-            "parallelizable": analysis.complexity in [PromptComplexity.SIMPLE, PromptComplexity.MODERATE],
+            "parallelizable": analysis.complexity
+            in [PromptComplexity.SIMPLE, PromptComplexity.MODERATE],
             "cache_friendly": analysis.complexity == PromptComplexity.SIMPLE,
-            "priority": 2 if analysis.complexity == PromptComplexity.VERY_COMPLEX else 1,
-            "estimated_cost_reduction": 65.0 if analysis.complexity == PromptComplexity.SIMPLE else 60.0,
+            "priority": (
+                2 if analysis.complexity == PromptComplexity.VERY_COMPLEX else 1
+            ),
+            "estimated_cost_reduction": (
+                65.0 if analysis.complexity == PromptComplexity.SIMPLE else 60.0
+            ),
         }
 
         # Adjust for domain

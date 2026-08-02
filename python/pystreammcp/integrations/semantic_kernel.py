@@ -11,8 +11,13 @@ Provides both:
 from typing import Optional, Dict, Any
 import asyncio
 from pystreammcp import (
-    Agent, Query, QueryIntent,
-    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
+    Agent,
+    Query,
+    QueryIntent,
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
     QueryResult as AdapterQueryResult,
 )
 
@@ -38,7 +43,9 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
             max_tokens=config.max_tokens,
         )
 
-    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    def query(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query with PyStreamMCP optimization.
 
         Args:
@@ -65,7 +72,9 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query asynchronously (SK-native async).
 
         Args:
@@ -107,7 +116,9 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.discover, context)
 
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize a query for cost reduction.
 
         Args:
@@ -134,7 +145,9 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.optimize, query_text, strategy)
@@ -159,7 +172,9 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
         class PyStreamMCPSkPlugin:
             """Semantic Kernel plugin for PyStreamMCP."""
 
-            async def optimize_query(self, query_text: str, intent: str = "retrieve") -> Dict[str, Any]:
+            async def optimize_query(
+                self, query_text: str, intent: str = "retrieve"
+            ) -> Dict[str, Any]:
                 """Optimize a query."""
                 result = await adapter.query_async(query_text, intent)
                 return {
@@ -178,6 +193,7 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
 
 
 # Legacy interface (backward compatible)
+
 
 class PyStreamMCPPlugin:
     """Semantic Kernel plugin for PyStreamMCP (legacy).

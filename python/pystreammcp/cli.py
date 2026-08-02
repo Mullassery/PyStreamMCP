@@ -20,11 +20,26 @@ def cli():
 @cli.command()
 @click.argument("query_text")
 @click.option("--agent-id", default="cli_agent", help="Agent ID")
-@click.option("--intent", type=click.Choice(["retrieve", "discover", "aggregate", "synthesize", "analyze"]), default="retrieve")
-@click.option("--strategy", type=click.Choice(["balanced", "token_efficient", "quality_first"]), default="balanced")
+@click.option(
+    "--intent",
+    type=click.Choice(["retrieve", "discover", "aggregate", "synthesize", "analyze"]),
+    default="retrieve",
+)
+@click.option(
+    "--strategy",
+    type=click.Choice(["balanced", "token_efficient", "quality_first"]),
+    default="balanced",
+)
 @click.option("--max-tokens", type=int, default=2000)
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def query(query_text: str, agent_id: str, intent: str, strategy: str, max_tokens: int, output_json: bool):
+def query(
+    query_text: str,
+    agent_id: str,
+    intent: str,
+    strategy: str,
+    max_tokens: int,
+    output_json: bool,
+):
     """Execute optimized query."""
     try:
         agent = Agent(
@@ -35,13 +50,18 @@ def query(query_text: str, agent_id: str, intent: str, strategy: str, max_tokens
         result = agent.query(query_text)
 
         if output_json:
-            click.echo(json.dumps({
-                "query_id": result.query_id,
-                "baseline_tokens": result.baseline_tokens,
-                "optimized_tokens": result.optimized_tokens,
-                "cost_reduction_percent": result.cost_reduction_percent,
-                "execution_time_ms": result.execution_time_ms,
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "query_id": result.query_id,
+                        "baseline_tokens": result.baseline_tokens,
+                        "optimized_tokens": result.optimized_tokens,
+                        "cost_reduction_percent": result.cost_reduction_percent,
+                        "execution_time_ms": result.execution_time_ms,
+                    },
+                    indent=2,
+                )
+            )
         else:
             click.echo(f"Query ID: {result.query_id}")
             click.echo(f"Reduction: {result.cost_reduction_percent:.1f}%")
@@ -74,7 +94,9 @@ def version():
 @click.option("--recommendations", is_flag=True, help="Show recommendations only")
 @click.option("--export", type=str, metavar="FILE", help="Export metrics to JSON file")
 @click.option("--config", type=str, metavar="PATH", help="Path to config file")
-def dashboard(static: bool, alerts: bool, recommendations: bool, export: str, config: str):
+def dashboard(
+    static: bool, alerts: bool, recommendations: bool, export: str, config: str
+):
     """View real-time orchestration dashboard."""
     try:
         dash = PyStreamMCPDashboard(config_path=config)
@@ -103,7 +125,9 @@ class CLIInterface:
     def __init__(self):
         self.agent = None
 
-    def create_agent(self, agent_id: str, strategy: str = "balanced", max_tokens: int = 2000):
+    def create_agent(
+        self, agent_id: str, strategy: str = "balanced", max_tokens: int = 2000
+    ):
         """Create an agent."""
         self.agent = Agent(
             agent_id=agent_id,
@@ -112,7 +136,9 @@ class CLIInterface:
         )
         return {"status": "success", "agent_id": agent_id}
 
-    def query(self, text: str, intent: str = "retrieve", agent_id: Optional[str] = None) -> dict:
+    def query(
+        self, text: str, intent: str = "retrieve", agent_id: Optional[str] = None
+    ) -> dict:
         """Execute a query."""
         if agent_id:
             self.create_agent(agent_id)

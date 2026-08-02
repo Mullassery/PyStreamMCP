@@ -12,7 +12,10 @@ from typing import Optional, Dict, Any
 import asyncio
 from pystreammcp import (
     Agent,
-    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
     QueryResult as AdapterQueryResult,
 )
 
@@ -34,7 +37,9 @@ class CrewAIAdapter(AgentFrameworkAdapter):
             max_tokens=config.max_tokens,
         )
 
-    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    def query(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query with PyStreamMCP optimization."""
         result = self.agent.query(text)
 
@@ -52,7 +57,9 @@ class CrewAIAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.query, text, intent)
@@ -71,7 +78,9 @@ class CrewAIAdapter(AgentFrameworkAdapter):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.discover, context)
 
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize a query for multi-agent execution."""
         result = self.agent.query(query_text)
 
@@ -89,7 +98,9 @@ class CrewAIAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.optimize, query_text, strategy)

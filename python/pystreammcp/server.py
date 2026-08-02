@@ -38,7 +38,9 @@ class PyStreamMCPServer:
             "message": f"Agent {agent_id} created",
         }
 
-    def query(self, agent_id: str, text: str, intent: str = "retrieve") -> Dict[str, Any]:
+    def query(
+        self, agent_id: str, text: str, intent: str = "retrieve"
+    ) -> Dict[str, Any]:
         """Execute a query."""
         if agent_id not in self.agents:
             return {"status": "error", "message": f"Agent {agent_id} not found"}
@@ -70,11 +72,14 @@ class PyStreamMCPServer:
 
         for query_text in queries:
             result = agent.query(query_text)
-            results.append({
-                "query": query_text,
-                "cost_reduction_percent": result.cost_reduction_percent,
-                "cost_saved": (result.baseline_tokens - result.optimized_tokens) * 0.00001,
-            })
+            results.append(
+                {
+                    "query": query_text,
+                    "cost_reduction_percent": result.cost_reduction_percent,
+                    "cost_saved": (result.baseline_tokens - result.optimized_tokens)
+                    * 0.00001,
+                }
+            )
             total_saved += (result.baseline_tokens - result.optimized_tokens) * 0.00001
 
         return {
@@ -173,9 +178,7 @@ class PyStreamMCPServer:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                result = loop.run_until_complete(
-                    self.event_router.route(event_data)
-                )
+                result = loop.run_until_complete(self.event_router.route(event_data))
             finally:
                 loop.close()
 
@@ -378,10 +381,12 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
 
         if not webhook_id or not url or not events:
             return (
-                jsonify({
-                    "status": "error",
-                    "message": "webhook_id, url, and events required"
-                }),
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "webhook_id, url, and events required",
+                    }
+                ),
                 400,
             )
 
@@ -421,10 +426,9 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
 
         if not project_name or not port:
             return (
-                jsonify({
-                    "status": "error",
-                    "message": "project_name and port required"
-                }),
+                jsonify(
+                    {"status": "error", "message": "project_name and port required"}
+                ),
                 400,
             )
 
@@ -452,10 +456,12 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
 
         if not primary_tool or not fallback_tools:
             return (
-                jsonify({
-                    "status": "error",
-                    "message": "primary_tool and fallback_tools required"
-                }),
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "primary_tool and fallback_tools required",
+                    }
+                ),
                 400,
             )
 

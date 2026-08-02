@@ -12,6 +12,7 @@ from enum import Enum
 
 class FrameworkType(str, Enum):
     """Supported LLM frameworks."""
+
     LANGCHAIN = "langchain"
     LLAMAINDEX = "llamaindex"
     SEMANTIC_KERNEL = "semantic_kernel"
@@ -23,6 +24,7 @@ class FrameworkType(str, Enum):
 @dataclass
 class AdapterConfig:
     """Configuration for framework adapters."""
+
     framework: FrameworkType
     agent_id: str
     name: str
@@ -34,6 +36,7 @@ class AdapterConfig:
 @dataclass
 class QueryResult:
     """Result from executing a query through an adapter."""
+
     query_id: str
     text: str
     intent: str
@@ -78,7 +81,9 @@ class AgentFrameworkAdapter(ABC):
         pass
 
     @abstractmethod
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> QueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> QueryResult:
         """Execute a query asynchronously.
 
         Args:
@@ -110,7 +115,9 @@ class AgentFrameworkAdapter(ABC):
         pass
 
     @abstractmethod
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> QueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> QueryResult:
         """Optimize a query for cost reduction.
 
         Args:
@@ -124,7 +131,9 @@ class AgentFrameworkAdapter(ABC):
         pass
 
     @abstractmethod
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> QueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> QueryResult:
         """Optimize query asynchronously."""
         pass
 
@@ -165,7 +174,9 @@ class AdapterRegistry:
     _instances: Dict[str, AgentFrameworkAdapter] = {}
 
     @classmethod
-    def register(cls, framework: FrameworkType, adapter_class: type[AgentFrameworkAdapter]) -> None:
+    def register(
+        cls, framework: FrameworkType, adapter_class: type[AgentFrameworkAdapter]
+    ) -> None:
         """Register an adapter implementation.
 
         Args:
@@ -175,7 +186,9 @@ class AdapterRegistry:
         cls._adapters[framework] = adapter_class
 
     @classmethod
-    def get_adapter_class(cls, framework: FrameworkType) -> Optional[type[AgentFrameworkAdapter]]:
+    def get_adapter_class(
+        cls, framework: FrameworkType
+    ) -> Optional[type[AgentFrameworkAdapter]]:
         """Get registered adapter class.
 
         Args:

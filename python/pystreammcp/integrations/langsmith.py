@@ -12,6 +12,7 @@ from enum import Enum
 
 class SpanType(str, Enum):
     """LangSmith span types."""
+
     QUERY = "query"
     DISCOVER = "discover"
     OPTIMIZE = "optimize"
@@ -58,7 +59,9 @@ class LangSmithTracer:
     for distributed tracing and cost analytics.
     """
 
-    def __init__(self, api_key: Optional[str] = None, project_name: str = "pystreammcp"):
+    def __init__(
+        self, api_key: Optional[str] = None, project_name: str = "pystreammcp"
+    ):
         """Initialize LangSmith tracer.
 
         Args:
@@ -71,7 +74,9 @@ class LangSmithTracer:
         self.active_spans: Dict[str, LangSmithSpan] = {}
         self.root_trace_id: Optional[str] = None
 
-    def start_trace(self, trace_name: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def start_trace(
+        self, trace_name: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Start a new trace.
 
         Args:
@@ -210,11 +215,13 @@ class LangSmithTracer:
             analytics.avg_duration_ms /= analytics.total_operations
 
         if analytics.total_baseline_tokens > 0:
-            analytics.total_cost_reduction_percent = (
-                100 * (1 - analytics.total_optimized_tokens / analytics.total_baseline_tokens)
+            analytics.total_cost_reduction_percent = 100 * (
+                1 - analytics.total_optimized_tokens / analytics.total_baseline_tokens
             )
 
-        analytics.error_rate = sum(1 for s in self.spans if s.status == "error") / len(self.spans)
+        analytics.error_rate = sum(1 for s in self.spans if s.status == "error") / len(
+            self.spans
+        )
 
         return analytics
 
@@ -256,13 +263,16 @@ class LangSmithTracer:
             "overview": {
                 "total_queries": analytics.total_operations,
                 "avg_duration_ms": round(analytics.avg_duration_ms, 2),
-                "cost_reduction_percent": round(analytics.total_cost_reduction_percent, 2),
+                "cost_reduction_percent": round(
+                    analytics.total_cost_reduction_percent, 2
+                ),
                 "error_rate": round(analytics.error_rate * 100, 2),
             },
             "cost_breakdown": {
                 "baseline_tokens": analytics.total_baseline_tokens,
                 "optimized_tokens": analytics.total_optimized_tokens,
-                "total_saved": analytics.total_baseline_tokens - analytics.total_optimized_tokens,
+                "total_saved": analytics.total_baseline_tokens
+                - analytics.total_optimized_tokens,
             },
             "performance": {
                 "p50": self._calculate_percentile(50),

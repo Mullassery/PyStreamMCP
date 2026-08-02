@@ -13,9 +13,15 @@ class MCPSystemToOKF:
     """Convert an MCP system to OKF document format."""
 
     @staticmethod
-    def render(system_id: str, name: str, description: str,
-              tools_count: int, cost_per_query: float = 0.0,
-              latency_p99_ms: int = 0, metadata: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
+    def render(
+        system_id: str,
+        name: str,
+        description: str,
+        tools_count: int,
+        cost_per_query: float = 0.0,
+        latency_p99_ms: int = 0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> tuple[str, Dict[str, Any]]:
         """Render an MCP system as OKF document.
 
         Args:
@@ -64,12 +70,17 @@ class MCPToolToOKF:
     """Convert an MCP tool to OKF document format."""
 
     @staticmethod
-    def render(tool_id: str, name: str, description: str,
-              system_id: str, cost: float = 0.0,
-              latency_p95_ms: int = 0,
-              parameters: Optional[Dict[str, Any]] = None,
-              returns: Optional[Dict[str, Any]] = None,
-              metadata: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
+    def render(
+        tool_id: str,
+        name: str,
+        description: str,
+        system_id: str,
+        cost: float = 0.0,
+        latency_p95_ms: int = 0,
+        parameters: Optional[Dict[str, Any]] = None,
+        returns: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> tuple[str, Dict[str, Any]]:
         """Render an MCP tool as OKF document.
 
         Args:
@@ -151,10 +162,16 @@ class DiscoveryOKFExporter:
         """
         self.catalog = catalog
 
-    def export_system(self, system_id: str, name: str, description: str,
-                     tools_count: int, cost_per_query: float = 0.0,
-                     latency_p99_ms: int = 0,
-                     metadata: Optional[Dict[str, Any]] = None) -> str:
+    def export_system(
+        self,
+        system_id: str,
+        name: str,
+        description: str,
+        tools_count: int,
+        cost_per_query: float = 0.0,
+        latency_p99_ms: int = 0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """Export an MCP system as OKF document.
 
         Args:
@@ -170,25 +187,33 @@ class DiscoveryOKFExporter:
             Path to saved document
         """
         content, okf_metadata = MCPSystemToOKF.render(
-            system_id, name, description, tools_count,
-            cost_per_query, latency_p99_ms, metadata
+            system_id,
+            name,
+            description,
+            tools_count,
+            cost_per_query,
+            latency_p99_ms,
+            metadata,
         )
 
         path = self.catalog.save_document(
-            OKFDocType.MCP_SYSTEM,
-            name,
-            content,
-            okf_metadata
+            OKFDocType.MCP_SYSTEM, name, content, okf_metadata
         )
 
         return str(path)
 
-    def export_tool(self, tool_id: str, name: str, description: str,
-                   system_id: str, cost: float = 0.0,
-                   latency_p95_ms: int = 0,
-                   parameters: Optional[Dict[str, Any]] = None,
-                   returns: Optional[Dict[str, Any]] = None,
-                   metadata: Optional[Dict[str, Any]] = None) -> str:
+    def export_tool(
+        self,
+        tool_id: str,
+        name: str,
+        description: str,
+        system_id: str,
+        cost: float = 0.0,
+        latency_p95_ms: int = 0,
+        parameters: Optional[Dict[str, Any]] = None,
+        returns: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """Export an MCP tool as OKF document.
 
         Args:
@@ -206,24 +231,32 @@ class DiscoveryOKFExporter:
             Path to saved document
         """
         content, okf_metadata = MCPToolToOKF.render(
-            tool_id, name, description, system_id,
-            cost, latency_p95_ms, parameters, returns, metadata
+            tool_id,
+            name,
+            description,
+            system_id,
+            cost,
+            latency_p95_ms,
+            parameters,
+            returns,
+            metadata,
         )
 
         path = self.catalog.save_document(
-            OKFDocType.MCP_TOOL,
-            name,
-            content,
-            okf_metadata
+            OKFDocType.MCP_TOOL, name, content, okf_metadata
         )
 
         return str(path)
 
-    def export_query_plan(self, plan_id: str, objective: str,
-                         steps: List[Dict[str, Any]],
-                         estimated_token_savings: float = 0.0,
-                         estimated_cost_savings: float = 0.0,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+    def export_query_plan(
+        self,
+        plan_id: str,
+        objective: str,
+        steps: List[Dict[str, Any]],
+        estimated_token_savings: float = 0.0,
+        estimated_cost_savings: float = 0.0,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """Export a query optimization plan as OKF document.
 
         Args:
@@ -270,10 +303,7 @@ class DiscoveryOKFExporter:
         }
 
         path = self.catalog.save_document(
-            OKFDocType.QUERY_PLAN,
-            objective,
-            content,
-            okf_metadata
+            OKFDocType.QUERY_PLAN, objective, content, okf_metadata
         )
 
         return str(path)

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 @dataclass
 class DashboardMetrics:
     """Standard metrics container"""
+
     timestamp: str
     title: str
     metrics: Dict[str, Any]
@@ -28,6 +29,7 @@ def get_dashboard_impl(product_name: str):
     if platform_name == "Darwin":  # macOS
         try:
             from rich.console import Console
+
             return RichDashboard(product_name)
         except ImportError:
             return SimpleDashboard(product_name)
@@ -35,10 +37,12 @@ def get_dashboard_impl(product_name: str):
     elif platform_name == "Linux":
         try:
             from textual.app import App
+
             return TextualDashboard(product_name)
         except ImportError:
             try:
                 from rich.console import Console
+
                 return RichDashboard(product_name)
             except ImportError:
                 return SimpleDashboard(product_name)
@@ -46,6 +50,7 @@ def get_dashboard_impl(product_name: str):
     else:  # Windows or other
         try:
             from rich.console import Console
+
             return RichDashboard(product_name)
         except ImportError:
             return SimpleDashboard(product_name)
@@ -75,7 +80,9 @@ class SimpleDashboard:
         if data.alerts:
             print("\n⚠️  ALERTS:")
             for alert in data.alerts:
-                print(f"  [{alert.get('level', '').upper()}] {alert.get('message', '')}")
+                print(
+                    f"  [{alert.get('level', '').upper()}] {alert.get('message', '')}"
+                )
 
         if data.recommendations:
             print("\n💡 RECOMMENDATIONS:")
@@ -90,7 +97,7 @@ class SimpleDashboard:
             title=f"{self.product_name} Dashboard",
             metrics={"Status": "Active"},
             alerts=[],
-            recommendations=[]
+            recommendations=[],
         )
         self.render(sample_data)
 
@@ -102,6 +109,7 @@ class RichDashboard:
         self.product_name = product_name
         try:
             from rich.console import Console
+
             self.console = Console()
         except ImportError:
             print("Error: Rich library required. Install with: pip install rich")
@@ -153,7 +161,7 @@ class RichDashboard:
             title=f"{self.product_name} Dashboard",
             metrics={"Status": "Active ✓"},
             alerts=[],
-            recommendations=[]
+            recommendations=[],
         )
         self.render(sample_data)
 
@@ -166,6 +174,7 @@ class TextualDashboard:
         self.has_textual = False
         try:
             from textual.app import App
+
             self.has_textual = True
         except ImportError:
             pass
@@ -190,7 +199,7 @@ class TextualDashboard:
             title=f"{self.product_name} Dashboard",
             metrics={"Status": "Active ✓"},
             alerts=[],
-            recommendations=[]
+            recommendations=[],
         )
         self.render(sample_data)
 
@@ -246,12 +255,21 @@ class PyStreamMCPDashboard:
             },
             alerts=[
                 {"level": "info", "message": "All orchestration systems operational"},
-                {"level": "warning", "message": "web_search latency trending up (156ms)"},
+                {
+                    "level": "warning",
+                    "message": "web_search latency trending up (156ms)",
+                },
             ],
             recommendations=[
-                {"type": "routing", "message": "Consider routing 20% of web_search to backup tool"},
-                {"type": "performance", "message": "browser tool latency at 234ms - may need optimization"},
-            ]
+                {
+                    "type": "routing",
+                    "message": "Consider routing 20% of web_search to backup tool",
+                },
+                {
+                    "type": "performance",
+                    "message": "browser tool latency at 234ms - may need optimization",
+                },
+            ],
         )
 
     def run_dashboard(self, interactive: bool = True) -> None:
@@ -294,6 +312,7 @@ class PyStreamMCPDashboard:
     def export_json(self, output_file: str) -> None:
         """Export metrics as JSON"""
         import json
+
         metrics = self.get_mock_metrics()
         data = {
             "timestamp": metrics.timestamp,
@@ -302,6 +321,6 @@ class PyStreamMCPDashboard:
             "alerts": metrics.alerts,
             "recommendations": metrics.recommendations,
         }
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(data, f, indent=2)
         print(f"✓ Metrics exported to {output_file}")

@@ -11,9 +11,15 @@ from .okf_core import OKFCatalog, OKFDocType
 class QueryPlanStep:
     """Represents a single step in a query plan."""
 
-    def __init__(self, system_name: str, tool_name: str, cost: float,
-                 latency_ms: int = 0, token_cost: int = 0,
-                 okf_ref: Optional[str] = None):
+    def __init__(
+        self,
+        system_name: str,
+        tool_name: str,
+        cost: float,
+        latency_ms: int = 0,
+        token_cost: int = 0,
+        okf_ref: Optional[str] = None,
+    ):
         """Initialize query plan step.
 
         Args:
@@ -93,8 +99,12 @@ class OKFQueryPlanner:
         """
         self.catalog = catalog
 
-    def generate_plan(self, objective: str, system_constraint: Optional[str] = None,
-                     max_cost: Optional[float] = None) -> QueryPlan:
+    def generate_plan(
+        self,
+        objective: str,
+        system_constraint: Optional[str] = None,
+        max_cost: Optional[float] = None,
+    ) -> QueryPlan:
         """Generate optimized query plan from OKF catalog.
 
         Args:
@@ -133,7 +143,7 @@ class OKFQueryPlanner:
                     cost=cost,
                     latency_ms=latency,
                     token_cost=token_cost,
-                    okf_ref=str(tool_doc.path)
+                    okf_ref=str(tool_doc.path),
                 )
 
                 # Only add if within budget
@@ -214,9 +224,13 @@ class OKFQueryPlanner:
 
         return QueryPlan(objective=objective, steps=fast_steps)
 
-    def find_optimal_path(self, objective: str, cost_weight: float = 0.5,
-                         latency_weight: float = 0.3,
-                         relevance_weight: float = 0.2) -> QueryPlan:
+    def find_optimal_path(
+        self,
+        objective: str,
+        cost_weight: float = 0.5,
+        latency_weight: float = 0.3,
+        relevance_weight: float = 0.2,
+    ) -> QueryPlan:
         """Find balanced optimal path considering multiple factors.
 
         Args:
@@ -241,13 +255,15 @@ class OKFQueryPlanner:
         scored_steps = []
         for step in plan.steps:
             cost_score = 1 - (step.cost / max_cost) if max_cost > 0 else 1
-            latency_score = 1 - (step.latency_ms / max_latency) if max_latency > 0 else 1
+            latency_score = (
+                1 - (step.latency_ms / max_latency) if max_latency > 0 else 1
+            )
             relevance_score = 0.8  # Default relevance
 
             combined_score = (
-                cost_score * cost_weight +
-                latency_score * latency_weight +
-                relevance_score * relevance_weight
+                cost_score * cost_weight
+                + latency_score * latency_weight
+                + relevance_score * relevance_weight
             )
 
             scored_steps.append((step, combined_score))

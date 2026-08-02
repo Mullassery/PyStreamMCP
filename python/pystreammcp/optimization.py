@@ -8,6 +8,7 @@ from datetime import datetime
 
 class StrategyType(str, Enum):
     """Type of optimization strategy."""
+
     TOKEN_MINIMIZATION = "token_minimization"
     LATENCY_MINIMIZATION = "latency_minimization"
     COST_MINIMIZATION = "cost_minimization"
@@ -17,6 +18,7 @@ class StrategyType(str, Enum):
 
 class OptimizationTechnique(str, Enum):
     """Optimization technique."""
+
     CACHING = "caching"
     SUMMARIZATION = "summarization"
     SAMPLING = "sampling"
@@ -29,6 +31,7 @@ class OptimizationTechnique(str, Enum):
 @dataclass
 class OptimizationStrategy:
     """Strategy for query optimization."""
+
     query_id: str
     strategy_type: StrategyType
     techniques: List[OptimizationTechnique] = field(default_factory=list)
@@ -39,6 +42,7 @@ class OptimizationStrategy:
     def __post_init__(self):
         if not self.strategy_id:
             import uuid
+
             self.strategy_id = str(uuid.uuid4())
 
     def add_technique(self, technique: OptimizationTechnique) -> "OptimizationStrategy":
@@ -75,6 +79,7 @@ class OptimizationStrategy:
 @dataclass
 class CostMetrics:
     """Cost metrics for a query."""
+
     query_id: str
     baseline_tokens: int
     optimized_tokens: int
@@ -88,7 +93,9 @@ class CostMetrics:
         """Token reduction percentage."""
         if self.baseline_tokens == 0:
             return 0.0
-        return ((self.baseline_tokens - self.optimized_tokens) / self.baseline_tokens) * 100
+        return (
+            (self.baseline_tokens - self.optimized_tokens) / self.baseline_tokens
+        ) * 100
 
     @property
     def meets_target(self) -> bool:

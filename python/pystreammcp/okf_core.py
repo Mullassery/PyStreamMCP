@@ -24,6 +24,7 @@ except ImportError:
 
 class OKFDocType(str, Enum):
     """Valid OKF document types."""
+
     MCP_SYSTEM = "mcp-system"
     MCP_TOOL = "mcp-tool"
     QUERY_PLAN = "query-plan"
@@ -70,7 +71,7 @@ class OKFDocument:
     @property
     def related(self) -> List[str]:
         """Extract [[linked-doc.md]] references from content."""
-        links = re.findall(r'\[\[(.+?\.md)\]\]', self.content)
+        links = re.findall(r"\[\[(.+?\.md)\]\]", self.content)
         return links
 
     @property
@@ -107,7 +108,7 @@ class OKFCatalog:
             "schemas",
             "interconnections",
             "playbooks",
-            "case_studies"
+            "case_studies",
         ]
         self.catalog_dir.mkdir(parents=True, exist_ok=True)
         for subdir in subdirs:
@@ -149,15 +150,18 @@ class OKFCatalog:
 
             if query == "*":
                 results.append(doc)
-            elif (query_lower in doc.title.lower() or
-                  any(query_lower in tag for tag in doc.tags) or
-                  query_lower in doc.content.lower()):
+            elif (
+                query_lower in doc.title.lower()
+                or any(query_lower in tag for tag in doc.tags)
+                or query_lower in doc.content.lower()
+            ):
                 results.append(doc)
 
         return results
 
-    def search_tools(self, system_id: Optional[str] = None,
-                     query: str = "*") -> List[OKFDocument]:
+    def search_tools(
+        self, system_id: Optional[str] = None, query: str = "*"
+    ) -> List[OKFDocument]:
         """Find MCP tools, optionally filtered by system.
 
         Args:
@@ -179,8 +183,10 @@ class OKFCatalog:
 
             # Filter by query
             if query != "*":
-                if not (query_lower in doc.title.lower() or
-                       any(query_lower in tag for tag in doc.tags)):
+                if not (
+                    query_lower in doc.title.lower()
+                    or any(query_lower in tag for tag in doc.tags)
+                ):
                     continue
 
             results.append(doc)
@@ -241,8 +247,13 @@ class OKFCatalog:
             results.append(self.docs[doc_id])
         return results
 
-    def save_document(self, doc_type: str, title: str, content: str,
-                     metadata: Optional[Dict[str, Any]] = None) -> Path:
+    def save_document(
+        self,
+        doc_type: str,
+        title: str,
+        content: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Path:
         """Save a new OKF document to catalog.
 
         Args:
@@ -269,15 +280,19 @@ class OKFCatalog:
             if isinstance(value, Enum):
                 clean_metadata[key] = value.value
             elif isinstance(value, list):
-                clean_metadata[key] = [v.value if isinstance(v, Enum) else v for v in value]
+                clean_metadata[key] = [
+                    v.value if isinstance(v, Enum) else v for v in value
+                ]
             else:
                 clean_metadata[key] = value
 
-        clean_metadata.update({
-            "type": doc_type_str,
-            "title": title,
-            "timestamp": datetime.now().isoformat(),
-        })
+        clean_metadata.update(
+            {
+                "type": doc_type_str,
+                "title": title,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # Determine subdirectory
         subdir_map = {

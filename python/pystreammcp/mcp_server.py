@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MCPTool:
     """MCP tool definition."""
+
     name: str
     description: str
     input_schema: Dict[str, Any]
@@ -56,7 +57,13 @@ class PyStreamMCPServer:
                         },
                         "intent": {
                             "type": "string",
-                            "enum": ["retrieve", "discover", "aggregate", "synthesize", "analyze"],
+                            "enum": [
+                                "retrieve",
+                                "discover",
+                                "aggregate",
+                                "synthesize",
+                                "analyze",
+                            ],
                             "description": "Query intent - what the agent is trying to do",
                         },
                         "max_tokens": {

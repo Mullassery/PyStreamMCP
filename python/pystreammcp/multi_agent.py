@@ -98,8 +98,7 @@ class ContextHub:
     def collaboration_savings(self) -> float:
         """Calculate total cost savings from multi-agent collaboration."""
         return sum(
-            ctx.cost_savings * ctx.usage_count
-            for ctx in self.shared_contexts.values()
+            ctx.cost_savings * ctx.usage_count for ctx in self.shared_contexts.values()
         )
 
     def context_count(self) -> int:

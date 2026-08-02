@@ -26,7 +26,13 @@ class QueryFeatures:
 
     def to_vector(self) -> List[float]:
         """Convert features to vector for ML model."""
-        intent_map = {"retrieve": 0, "discover": 1, "aggregate": 2, "synthesize": 3, "analyze": 4}
+        intent_map = {
+            "retrieve": 0,
+            "discover": 1,
+            "aggregate": 2,
+            "synthesize": 3,
+            "analyze": 4,
+        }
         size_map = {"small": 0, "medium": 1, "large": 2}
         time_map = {"realtime": 0, "hourly": 1, "daily": 2}
 
@@ -125,7 +131,9 @@ class RelevanceModel:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def predict_relevance(self, features: QueryFeatures, candidate_sources: List[str]) -> float:
+    def predict_relevance(
+        self, features: QueryFeatures, candidate_sources: List[str]
+    ) -> float:
         """Predict cost reduction for a query using learned model.
 
         Args:
@@ -179,19 +187,29 @@ class RelevanceModel:
 
         for source in available_sources:
             source_name = source.get("name", "unknown")
-            relevance = self.source_relevance_cache.get(source_name, {}).get("relevance", 0.7)
+            relevance = self.source_relevance_cache.get(source_name, {}).get(
+                "relevance", 0.7
+            )
 
             # Adjust based on query features
-            if features.estimated_data_size == "small" and source.get("size") == "small":
+            if (
+                features.estimated_data_size == "small"
+                and source.get("size") == "small"
+            ):
                 relevance += 0.1
-            elif features.estimated_data_size == "large" and source.get("size") == "large":
+            elif (
+                features.estimated_data_size == "large"
+                and source.get("size") == "large"
+            ):
                 relevance += 0.05
 
-            ranked.append({
-                **source,
-                "learned_relevance": min(0.99, relevance),
-                "model_version": self.model_version,
-            })
+            ranked.append(
+                {
+                    **source,
+                    "learned_relevance": min(0.99, relevance),
+                    "model_version": self.model_version,
+                }
+            )
 
         # Sort by learned relevance
         ranked.sort(key=lambda x: x["learned_relevance"], reverse=True)
@@ -305,8 +323,7 @@ class ModelTrainer:
             **results,
             "history_length": len(self.training_history),
             "best_accuracy": max(
-                (r.get("accuracy", 0.0) for r in self.training_history),
-                default=0.0
+                (r.get("accuracy", 0.0) for r in self.training_history), default=0.0
             ),
         }
 

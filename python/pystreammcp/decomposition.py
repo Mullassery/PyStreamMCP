@@ -101,7 +101,8 @@ class QueryDecomposer:
 
         # Find parallelizable steps
         parallelizable = [
-            i for i in range(len(steps))
+            i
+            for i in range(len(steps))
             if not any(dep_to == i or dep_from == i for dep_from, dep_to in [])
         ]
 
@@ -126,7 +127,8 @@ class QueryDecomposer:
         # Merge parallelizable steps into same stage
         if len(decomposed.parallelizable_steps) > 1:
             stages = [decomposed.parallelizable_steps] + [
-                [i] for i in range(len(decomposed.steps))
+                [i]
+                for i in range(len(decomposed.steps))
                 if i not in decomposed.parallelizable_steps
             ]
 
@@ -168,7 +170,15 @@ class QueryDecomposer:
     @staticmethod
     def _extract_sources(query: str) -> List[str]:
         """Extract data sources from query."""
-        keywords = ["customer", "order", "product", "revenue", "segment", "metric", "data"]
+        keywords = [
+            "customer",
+            "order",
+            "product",
+            "revenue",
+            "segment",
+            "metric",
+            "data",
+        ]
         return [kw for kw in keywords if kw in query.lower()]
 
     @staticmethod

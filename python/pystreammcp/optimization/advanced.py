@@ -188,7 +188,9 @@ class MultiAgentContextSharing:
 
         return context_id
 
-    def request_context(self, source_context_id: str, requesting_agent_id: str) -> Optional[Dict[str, Any]]:
+    def request_context(
+        self, source_context_id: str, requesting_agent_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Request a shared context.
 
         Args:
@@ -234,8 +236,11 @@ class MultiAgentContextSharing:
             "total_shared_contexts": total_contexts,
             "total_reuses": total_reuses,
             "total_tokens_saved": total_savings,
-            "avg_reuses_per_context": total_reuses / total_contexts if total_contexts > 0 else 0,
-            "collective_savings_percent": 20.0 * min(1.0, total_reuses / 10),  # Up to 20% savings
+            "avg_reuses_per_context": (
+                total_reuses / total_contexts if total_contexts > 0 else 0
+            ),
+            "collective_savings_percent": 20.0
+            * min(1.0, total_reuses / 10),  # Up to 20% savings
         }
 
     def cleanup_expired(self) -> int:
@@ -296,30 +301,36 @@ class CostOptimizationEngine:
 
         if len(agents) == 1:
             # Single agent: use streaming
-            plan["strategies"].append({
-                "type": "streaming",
-                "target_agents": agents,
-                "latency_target_ms": 50,
-                "estimated_savings": 5,
-            })
+            plan["strategies"].append(
+                {
+                    "type": "streaming",
+                    "target_agents": agents,
+                    "latency_target_ms": 50,
+                    "estimated_savings": 5,
+                }
+            )
             plan["estimated_savings_percent"] = 5.0
 
         elif len(agents) > 1:
             # Multiple agents: use sharing + streaming
-            plan["strategies"].append({
-                "type": "shared_context",
-                "source_agent": agents[0],
-                "target_agents": agents[1:],
-                "reuse_count": len(agents) - 1,
-                "estimated_savings": 15 * (len(agents) - 1),
-            })
+            plan["strategies"].append(
+                {
+                    "type": "shared_context",
+                    "source_agent": agents[0],
+                    "target_agents": agents[1:],
+                    "reuse_count": len(agents) - 1,
+                    "estimated_savings": 15 * (len(agents) - 1),
+                }
+            )
 
-            plan["strategies"].append({
-                "type": "streaming",
-                "target_agents": agents,
-                "latency_target_ms": 50,
-                "estimated_savings": 5,
-            })
+            plan["strategies"].append(
+                {
+                    "type": "streaming",
+                    "target_agents": agents,
+                    "latency_target_ms": 50,
+                    "estimated_savings": 5,
+                }
+            )
 
             plan["estimated_savings_percent"] = 15.0 + (5.0 * len(agents))
 
