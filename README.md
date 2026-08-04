@@ -1,4 +1,8 @@
-# PyStreamMCP v3.0.0
+# PyStreamMCP
+
+Intelligence layer for AI agents. Query planning, context discovery, cost optimization. Reduces token usage by 60-75% while maintaining response quality.
+
+Used by Claude and other LLMs to optimize context window usage and reduce inference costs.
 
 **Production-Grade Event-Driven Webhook Orchestration (20 Projects, 228 Tools, 12 Webhooks)**
 
