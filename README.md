@@ -8,6 +8,7 @@ Used by Claude and other LLMs to optimize context window usage and reduce infere
 
 ## Overview
 
+
 PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 19 projects). This project provides AI-native tools via Model Context Protocol (MCP 2.0) with real-time event-driven webhook infrastructure.
 
 ## Features
