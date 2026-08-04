@@ -7,11 +7,13 @@ Used by Claude and other LLMs to optimize context window usage and reduce infere
 **Production-Grade Event-Driven Webhook Orchestration (20 Projects, 228 Tools, 12 Webhooks)**
 
 ## Overview
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 
 PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 19 projects). This project provides AI-native tools via Model Context Protocol (MCP 2.0) with real-time event-driven webhook infrastructure.
 
 ## Features
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 - **Production-Grade Webhooks**: 12 webhooks live across 6 projects (HMAC-SHA256 security)
 - **Multi-Modal Sensor Fusion**: RGB+Thermal+LIDAR temporal synchronization (PyRoboReplay)
@@ -27,6 +29,7 @@ PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 1
 - **Production Proven**: 520+ RPS sustained, <100ms p95 latency, 99.95% delivery reliability
 
 ## Installation
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 ```bash
 pip install PyStreamMCP
@@ -39,6 +42,7 @@ pip install --only-binary=:all: PyStreamMCP
 ```
 
 ## MCP 2.0 Integration
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 Enable MCP tools on port **8772** (see MCP_QUICKSTART.md for details).
 
@@ -49,10 +53,12 @@ AI systems discover all 207 tools across 18 projects, enabling:
 - Cost-optimized inference routing
 
 ## Quick Start
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documentation.
 
 ## Part of Unified Platform
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 19 projects, 228 tools, 19 simultaneous MCP endpoints (8765-8783).
 **Phase 2**: Event-driven webhook orchestration across all MCPs.
@@ -60,6 +66,7 @@ See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documen
 **All tools discoverable via MCP protocol in a single connection.**
 
 ## Production Deployment Status
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 **Phase 3 Complete** (Aug 22, 2026) ✅
 - Week 1 (Aug 2-7): Staging validation complete (28/28 tests passing)
@@ -81,6 +88,7 @@ See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documen
 - ✅ Full team training complete
 
 ## Version History
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 ### v3.0.0 (Current - Phase 3 Production Deployment Complete)
 - ✅ Event-driven webhook infrastructure live in production (100% traffic)
@@ -115,6 +123,7 @@ See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documen
 - ✅ Intelligent orchestration
 
 ## License
+See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
 MIT
 
