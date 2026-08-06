@@ -4,6 +4,7 @@
 pub mod types;
 pub mod filter;
 pub mod cache;
+pub mod profiles;
 
 pub use types::{
     Metadata, SourceType, SourceQuality, WebMetadata, DatabaseMetadata,
@@ -11,6 +12,7 @@ pub use types::{
 };
 pub use filter::{MetadataFilter, FilterConfig, RankingStrategy};
 pub use cache::{MetadataCache, CacheEntry, CacheConfig};
+pub use profiles::{WebProfiles, DatabaseProfiles, MCPToolProfiles};
 
 use crate::Result;
 

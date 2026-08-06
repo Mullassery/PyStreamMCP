@@ -7,7 +7,7 @@ setup(
     description="Intelligent MCP orchestration hub - Intent understanding, capability matching, tool ranking with cohesive foundation",
     author="Georgi Mammen Mullassery",
     author_email="mullassery@gmail.com",
-    license="MIT",
+    license="Proprietary License - Free to use with explicit attribution",
     packages=find_packages(where="python"),
     package_dir={"": "python"},
     install_requires=["pydantic>=2.0"],
