@@ -34,3 +34,9 @@ pub use metadata::{MetadataIntelligence, Metadata, SourceType};
 pub use selective_retrieval::{SelectiveRetrievalEngine, TokenBudget, BudgetTier, QueryIntent};
 pub use quality_gates::{QualityGatesEngine, ConfidenceScore, FallbackChain, PolicyEnforcer};
 pub use observability::{ObservabilityEngine, DecisionTracer, MetricsCollector, StructuredLogger};
+pub use orchestration::{
+    ComplexityTier, ComplexityDetector, QueryComplexity,
+    TokenBudget, TokenFilter, RelevanceRanker,
+    ContextualReranker, RerankedCandidate, UserContext, ExpertiseLevel,
+    RetrievalOrchestrator, OrchestrationConfig, OrchestrationResult,
+};
