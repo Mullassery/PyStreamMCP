@@ -1,5 +1,7 @@
 # PyStreamMCP
 
+[![CI](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml)
+
 Intelligence layer for AI agents. Query planning, context discovery, cost optimization. Reduces token usage by 60-75% while maintaining response quality.
 
 Used by Claude and other LLMs to optimize context window usage and reduce inference costs.
