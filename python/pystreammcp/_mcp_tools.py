@@ -461,7 +461,17 @@ class PyStreamMCPTools:
 
 
 class PyStreamMCPHandler:
-    """Async handlers for PyStreamMCP orchestration tools"""
+    """Async handlers for PyStreamMCP orchestration tools.
+
+    Every handler here delegates to `self.orchestrator` (an
+    `_mcp_connector.Orchestrator` instance) — the same real,
+    tested federation-discovery / routing / webhook logic used
+    elsewhere in the package — instead of returning hardcoded
+    fixture data disconnected from what's actually configured or
+    reachable. Where the underlying capability genuinely isn't
+    implemented yet (e.g. cross-database joins), the response says
+    so explicitly rather than fabricating a plausible-looking result.
+    """
 
     def __init__(self, orchestrator: Any):
         self.orchestrator = orchestrator
@@ -469,69 +479,35 @@ class PyStreamMCPHandler:
     async def discover_mcp_projects(
         self, include_metadata: bool = False, filter_by_capability: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Discover all MCP-enabled projects"""
-        projects = {
-            "statguardian": {
-                "port": 8765,
-                "tools": 9,
-                "capability": "data_quality",
-                "status": "active",
-            },
-            "pyreverseetl": {
-                "port": 8766,
-                "tools": 12,
-                "capability": "activation",
-                "status": "active",
-            },
-            "prismnote": {
-                "port": 8767,
-                "tools": 10,
-                "capability": "queries",
-                "status": "active",
-            },
-            "clusteraudiencekit": {
-                "port": 8768,
-                "tools": 10,
-                "capability": "segmentation",
-                "status": "active",
-            },
-            "pyweatherenriched": {
-                "port": 8769,
-                "tools": 10,
-                "capability": "weather",
-                "status": "active",
-            },
-            "pyterrain": {
-                "port": 8770,
-                "tools": 10,
-                "capability": "spatial",
-                "status": "active",
-            },
-            "pyroboframes": {
-                "port": 8771,
-                "tools": 11,
-                "capability": "datasets",
-                "status": "active",
-            },
-        }
+        """Discover MCP-enabled projects actually configured for federation.
 
+        Probes every endpoint in [federation].endpoints (pystreammcp.toml)
+        for real liveness and its real tool list. When `filter_by_capability`
+        is given, this narrows to projects with a tool whose name/description
+        lexically matches that capability (via Orchestrator.detect_compatible_projects)
+        instead of a fixed capability->project fixture map.
+        """
         if filter_by_capability:
-            projects = {
-                k: v
-                for k, v in projects.items()
-                if v["capability"] == filter_by_capability
+            compat = self.orchestrator.detect_compatible_projects(filter_by_capability)
+            return {
+                "projects": compat["compatible"],
+                "total": len(compat["compatible"]),
+                "filtered_by_capability": filter_by_capability,
             }
 
-        if include_metadata:
-            for p in projects.values():
-                p["tools_list"] = ["tool_1", "tool_2", "..."]
-
-        return {
-            "projects": projects,
-            "total": len(projects),
-            "total_tools": sum(p["tools"] for p in projects.values()),
-            "discovered_at": "2024-07-31T00:00:00Z",
-        }
+        result = self.orchestrator.discover_mcp_projects(refresh=True)
+        if not include_metadata:
+            return result
+        # include_metadata: attach each project's real discovered tool
+        # names (not a fixture "tool_1, tool_2, ..." placeholder).
+        for project in result.get("projects", []):
+            discovered = self.orchestrator.registered_projects.get(
+                project["project_name"]
+            )
+            project["tools_list"] = (
+                [t.get("name") for t in discovered.tools] if discovered else []
+            )
+        return result
 
     async def plan_query_execution(
         self,
@@ -539,31 +515,11 @@ class PyStreamMCPHandler:
         projects_involved: Optional[List[str]] = None,
         optimization_goal: str = "balanced",
     ) -> Dict[str, Any]:
-        """Plan optimal query execution"""
-        plan = {
-            "query": query_description,
-            "execution_stages": [
-                {
-                    "stage": 1,
-                    "description": "Validate query",
-                    "projects": projects_involved or [],
-                },
-                {
-                    "stage": 2,
-                    "description": "Fetch data",
-                    "projects": projects_involved or [],
-                },
-                {
-                    "stage": 3,
-                    "description": "Aggregate results",
-                    "projects": projects_involved or [],
-                },
-            ],
-            "estimated_latency_ms": 1500,
-            "optimization_goal": optimization_goal,
-            "parallelizable": True,
-            "projected_token_reduction": "72%",
-        }
+        """Plan query execution against actually discovered/healthy projects."""
+        plan = self.orchestrator.plan_query_execution(
+            query_description, projects_involved
+        )
+        plan["optimization_goal"] = optimization_goal
         return plan
 
     async def optimize_cross_project_query(
@@ -572,20 +528,11 @@ class PyStreamMCPHandler:
         involved_projects: Optional[List[str]] = None,
         constraints: Optional[Dict] = None,
     ) -> Dict[str, Any]:
-        """Optimize query to reduce tokens and latency"""
-        return {
-            "original_query": original_query,
-            "optimized_query": original_query[:50] + "... [optimized]",
-            "token_reduction_percent": 72.0,
-            "latency_reduction_ms": 2500,
-            "cost_reduction_percent": 68.0,
-            "optimization_techniques": [
-                "Selective projection (reduce columns)",
-                "Early filtering (push predicates)",
-                "Caching common subexpressions",
-                "Parallel execution across projects",
-            ],
-        }
+        """Optimize query: real, input-derived token-reduction estimate."""
+        result = self.orchestrator.optimize_cross_project_query(original_query)
+        result["involved_projects"] = involved_projects or []
+        result["constraints"] = constraints or {}
+        return result
 
     async def execute_federated_query(
         self,
@@ -594,16 +541,15 @@ class PyStreamMCPHandler:
         timeout_seconds: int = 30,
         fallback_strategy: str = "fail_fast",
     ) -> Dict[str, Any]:
-        """Execute federated query across projects"""
-        results = {
-            "query": query,
-            "projects": projects,
-            "status": "success",
-            "results_rows": 1250,
-            "latency_ms": 2100,
-            "results": [{"project": p, "rows": 250, "status": "ok"} for p in projects],
-        }
-        return results
+        """Execute federated query across projects.
+
+        Federated query *execution* isn't implemented yet — this honestly
+        reports which of the requested projects are actually reachable
+        rather than fabricating result rows.
+        """
+        return self.orchestrator.execute_federated_query(
+            query, projects, timeout_seconds
+        )
 
     async def detect_compatible_projects(
         self,
@@ -611,21 +557,14 @@ class PyStreamMCPHandler:
         data_type: Optional[str] = None,
         output_format: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Detect compatible projects"""
-        compatibility_map = {
-            "data_quality": ["statguardian", "pyreverseetl"],
-            "activation": ["pyreverseetl", "statguardian"],
-            "queries": ["prismnote", "pyweatherenriched"],
-            "segmentation": ["clusteraudiencekit", "pyweatherenriched"],
-            "weather": ["pyweatherenriched", "clusteraudiencekit"],
-            "spatial": ["pyterrain", "pyroboframes"],
-            "datasets": ["pyroboframes", "prismnote"],
-        }
-        compatible = compatibility_map.get(capability, [])
+        """Detect projects with a tool lexically matching `capability`."""
+        result = self.orchestrator.detect_compatible_projects(capability)
         return {
             "capability": capability,
-            "compatible_projects": compatible,
-            "confidence_score": 0.95,
+            "compatible_projects": [
+                c["project_name"] for c in result["compatible"]
+            ],
+            "details": result["compatible"],
         }
 
     async def rank_tools_by_relevance(
@@ -635,17 +574,32 @@ class PyStreamMCPHandler:
         weight_by_speed: float = 0.5,
         weight_by_accuracy: float = 0.5,
     ) -> Dict[str, Any]:
-        """Rank tools by relevance"""
+        """Rank real, discovered tools by lexical relevance to the task.
+
+        `weight_by_speed`/`weight_by_accuracy` are accepted for API
+        compatibility but not applied: ranking here is purely lexical
+        (name/description term overlap) since there's no real per-tool
+        speed/accuracy telemetry to weight against yet.
+        """
+        result = self.orchestrator.rank_tools_by_relevance(task_description)
+        ranked = result["ranked"]
+        if available_tools:
+            ranked = [r for r in ranked if r["tool_name"] in available_tools]
         return {
             "task": task_description,
             "ranked_tools": [
-                {"rank": 1, "tool": "query_database", "relevance_score": 0.98},
-                {"rank": 2, "tool": "validate_sql_syntax", "relevance_score": 0.95},
-                {"rank": 3, "tool": "estimate_query_cost", "relevance_score": 0.88},
+                {
+                    "rank": i + 1,
+                    "tool": r["tool_name"],
+                    "project": r["project_name"],
+                    "relevance_score": r["relevance"],
+                }
+                for i, r in enumerate(ranked)
             ],
             "scoring_weights": {
                 "speed": weight_by_speed,
                 "accuracy": weight_by_accuracy,
+                "note": "weights accepted but not applied; ranking is lexical",
             },
         }
 
@@ -656,17 +610,13 @@ class PyStreamMCPHandler:
         join_key: str,
         join_type: str = "inner",
     ) -> Dict[str, Any]:
-        """Execute cross-database join"""
-        return {
-            "left_source": left_source,
-            "right_source": right_source,
-            "join_key": join_key,
-            "join_type": join_type,
-            "status": "success",
-            "rows_matched": 5432,
-            "execution_time_ms": 850,
-            "approach": "Broadcast join (left table < 1GB)",
-        }
+        """Cross-database joins are not implemented yet (honest "not_implemented",
+        not a fabricated row count)."""
+        result = self.orchestrator.handle_cross_database_join(
+            left_source, right_source, join_key
+        )
+        result["join_type"] = join_type
+        return result
 
     async def cache_management(
         self,
@@ -675,18 +625,11 @@ class PyStreamMCPHandler:
         ttl_seconds: Optional[int] = None,
         target: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Manage caching"""
-        status = {
-            "action": action,
-            "scope": scope,
-            "status": "success",
-        }
-        if action == "stats":
-            status["cache_size_mb"] = 2540.0
-            status["entries"] = 1250
-            status["hit_rate_percent"] = 72.3
-            status["avg_ttl_seconds"] = 3600
-        return status
+        """Manage a real in-memory cache (single global namespace;
+        `scope` is accepted but the cache isn't currently partitioned by it)."""
+        result = self.orchestrator.cache_management(action, ttl_seconds, target)
+        result["scope"] = scope
+        return result
 
     async def error_recovery_retry(
         self,
@@ -695,37 +638,20 @@ class PyStreamMCPHandler:
         retry_strategy: str = "exponential_backoff",
         max_retries: int = 3,
     ) -> Dict[str, Any]:
-        """Handle error recovery"""
-        return {
-            "failed_query": failed_query,
-            "error_type": error_type,
-            "retry_strategy": retry_strategy,
-            "max_retries": max_retries,
-            "status": "retrying",
-            "retry_attempt": 1,
-            "next_retry_in_ms": 1000,
-        }
+        """Queue a failed query for retry via the real FallbackManager."""
+        return self.orchestrator.error_recovery_retry(
+            failed_query, error_type, retry_strategy, max_retries
+        )
 
     async def report_performance_metrics(
         self, metric_type: str, time_window_hours: int = 24, group_by: str = "project"
     ) -> Dict[str, Any]:
-        """Report performance metrics"""
-        return {
-            "metric_type": metric_type,
-            "time_window_hours": time_window_hours,
-            "group_by": group_by,
-            "metrics": [
-                {
-                    "group": "statguardian",
-                    "value": 145.5 if metric_type == "latency" else 9852,
-                    "unit": "ms" if metric_type == "latency" else "calls",
-                },
-                {
-                    "group": "prismnote",
-                    "value": 340.2 if metric_type == "latency" else 5420,
-                },
-            ],
-        }
+        """Report real recorded health metrics (may be empty if nothing has
+        reported health yet — `time_window_hours` is accepted but not yet
+        applied as a filter)."""
+        result = self.orchestrator.report_performance_metrics(metric_type, group_by)
+        result["time_window_hours"] = time_window_hours
+        return result
 
     async def estimate_query_cost_multi_project(
         self,
@@ -733,21 +659,10 @@ class PyStreamMCPHandler:
         projects: Optional[List[str]] = None,
         cost_model: str = "tokens",
     ) -> Dict[str, Any]:
-        """Estimate query cost"""
-        return {
-            "query": query,
-            "cost_model": cost_model,
-            "projects_involved": projects or [],
-            "estimated_cost": {
-                "tokens": 2500,
-                "api_calls": 3,
-                "usd": 0.045,
-            },
-            "cost_breakdown": {
-                p: {"tokens": 500, "calls": 1, "usd": 0.015}
-                for p in (projects or ["prismnote", "statguardian"])
-            },
-        }
+        """Estimate token cost from the actual query text."""
+        return self.orchestrator.estimate_query_cost_multi_project(
+            query, projects, cost_model
+        )
 
     async def manage_endpoint_federation(
         self,
@@ -755,32 +670,28 @@ class PyStreamMCPHandler:
         endpoint_url: Optional[str] = None,
         project_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Manage endpoint federation"""
-        if action == "discover":
-            return {
-                "action": "discover",
-                "endpoints": [
-                    {"port": 8765, "project": "statguardian", "status": "healthy"},
-                    {"port": 8766, "project": "pyreverseetl", "status": "healthy"},
-                    {"port": 8767, "project": "prismnote", "status": "healthy"},
-                    {
-                        "port": 8768,
-                        "project": "clusteraudiencekit",
-                        "status": "healthy",
-                    },
-                    {"port": 8769, "project": "pyweatherenriched", "status": "healthy"},
-                    {"port": 8770, "project": "pyterrain", "status": "healthy"},
-                    {"port": 8771, "project": "pyroboframes", "status": "healthy"},
-                ],
-                "total_endpoints": 7,
-            }
-        else:
-            return {
-                "action": action,
-                "endpoint_url": endpoint_url,
-                "project_name": project_name,
-                "status": "success",
-            }
+        """Manage the federation endpoint list configured in pystreammcp.toml.
+
+        "discover" re-probes every configured endpoint (maps to the real
+        Orchestrator "refresh" action); "health_check" lists current status
+        without re-probing (maps to "list"). "register"/"deregister" of
+        individual ad-hoc endpoints isn't supported — federation membership
+        is config-file driven, not fabricated as if it succeeded.
+        """
+        action_map = {"discover": "refresh", "health_check": "list"}
+        if action in action_map:
+            return self.orchestrator.manage_endpoint_federation(action_map[action])
+        return {
+            "action": action,
+            "status": "not_implemented",
+            "message": (
+                f"Action {action!r} is not supported: federation endpoints are "
+                "configured via pystreammcp.toml's [federation].endpoints, not "
+                "registered/deregistered individually at runtime."
+            ),
+            "endpoint_url": endpoint_url,
+            "project_name": project_name,
+        }
 
     # Orchestration Webhook Handlers
     async def register_orchestration_webhook(
@@ -790,60 +701,22 @@ class PyStreamMCPHandler:
         events: List[str],
         secret_key: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Register orchestration webhook for real-time MCP events"""
-        return {
-            "status": "success",
-            "webhook_id": webhook_id,
-            "url": url,
-            "events": events,
-            "message": f"Webhook registered for {len(events)} event types",
-            "event_types": events,
-            "signature_method": "HMAC-SHA256" if secret_key else "none",
-            "delivery_endpoint": f"{url}/webhook",
-            "created_at": "2026-07-31T00:00:00Z",
-        }
+        """Register orchestration webhook in real, queryable state."""
+        result = self.orchestrator.register_orchestration_webhook(
+            webhook_id, url, events, secret_key
+        )
+        result["message"] = f"Webhook registered for {len(events)} event types"
+        result["event_types"] = events
+        return result
 
     async def list_service_endpoints(
         self, filter_by_status: str = "all", include_metrics: bool = False
     ) -> Dict[str, Any]:
-        """List all MCP service endpoints"""
-        endpoints = [
-            {"project": "statguardian", "port": 8765, "status": "healthy", "tools": 9},
-            {"project": "pyreverseetl", "port": 8766, "status": "healthy", "tools": 12},
-            {"project": "prismnote", "port": 8767, "status": "healthy", "tools": 10},
-            {
-                "project": "clusteraudiencekit",
-                "port": 8768,
-                "status": "healthy",
-                "tools": 10,
-            },
-            {
-                "project": "pyweatherenriched",
-                "port": 8769,
-                "status": "healthy",
-                "tools": 10,
-            },
-            {"project": "pyterrain", "port": 8770, "status": "healthy", "tools": 10},
-            {"project": "pyroboframes", "port": 8771, "status": "healthy", "tools": 11},
-        ]
-
-        if filter_by_status != "all":
-            endpoints = [e for e in endpoints if e["status"] == filter_by_status]
-
-        if include_metrics:
-            for ep in endpoints:
-                ep["metrics"] = {
-                    "latency_p99_ms": 145.5,
-                    "error_rate": 0.001,
-                    "tool_availability": 0.999,
-                }
-
-        return {
-            "status": "success",
-            "endpoints": endpoints,
-            "total": len(endpoints),
-            "healthy_count": len([e for e in endpoints if e["status"] == "healthy"]),
-        }
+        """List MCP endpoints actually registered with the ServiceRegistry
+        (genuinely empty until something registers via an mcp.available event)."""
+        return self.orchestrator.list_service_endpoints(
+            filter_by_status, include_metrics
+        )
 
     async def route_tool_invocation(
         self,
@@ -853,50 +726,18 @@ class PyStreamMCPHandler:
         use_fallback: bool = True,
         timeout_ms: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Route tool invocation to appropriate MCP"""
-        return {
-            "status": "routed",
-            "tool_name": tool_name,
-            "project_name": "statguardian",
-            "endpoint": "http://localhost:8765",
-            "chain_id": chain_id,
-            "use_fallback": use_fallback,
-            "timeout_ms": timeout_ms or 5000,
-            "invocation_id": f"inv_{tool_name}_{chain_id or 'standalone'}",
-            "routed_at": "2026-07-31T00:00:00Z",
-        }
+        """Route tool invocation via the real ToolChainOrchestrator/FallbackManager."""
+        result = await self.orchestrator.route_tool_invocation(
+            tool_name, params, chain_id, use_fallback, timeout_ms
+        )
+        result["timeout_ms"] = timeout_ms or 5000
+        return result
 
     async def get_tool_routing_info(
         self, tool_name: str, include_fallbacks: bool = False
     ) -> Dict[str, Any]:
-        """Get tool routing information"""
-        routing = {
-            "tool_name": tool_name,
-            "primary_mcp": "statguardian",
-            "primary_endpoint": "http://localhost:8765",
-            "health_status": "healthy",
-            "latency_ms": 145.5,
-            "availability": 0.999,
-        }
-
-        if include_fallbacks:
-            routing["fallback_mcps"] = [
-                {
-                    "project": "pyreverseetl",
-                    "endpoint": "http://localhost:8766",
-                    "status": "healthy",
-                },
-                {
-                    "project": "prismnote",
-                    "endpoint": "http://localhost:8767",
-                    "status": "healthy",
-                },
-            ]
-
-        return {
-            "status": "success",
-            "routing": routing,
-        }
+        """Get real routing info for a tool from the ServiceRegistry."""
+        return self.orchestrator.get_tool_routing_info(tool_name, include_fallbacks)
 
     async def monitor_mcp_health(
         self,
@@ -904,21 +745,12 @@ class PyStreamMCPHandler:
         alert_on_degradation: bool = True,
         metrics_window_minutes: int = 60,
     ) -> Dict[str, Any]:
-        """Monitor MCP health status"""
-        return {
-            "status": "success",
-            "monitoring": {
-                "project_name": project_name,
-                "alert_on_degradation": alert_on_degradation,
-                "metrics_window_minutes": metrics_window_minutes,
-                "current_status": "healthy",
-                "health_trend": "stable",
-                "last_check": "2026-07-31T00:00:00Z",
-            },
-            "endpoints_monitored": 7,
-            "degraded_count": 0,
-            "unavailable_count": 0,
-        }
+        """Real health snapshot from the ServiceRegistry (`alert_on_degradation`
+        and `metrics_window_minutes` are accepted but not yet applied)."""
+        result = self.orchestrator.monitor_mcp_health(project_name)
+        result["alert_on_degradation"] = alert_on_degradation
+        result["metrics_window_minutes"] = metrics_window_minutes
+        return result
 
     async def orchestrate_cross_mcp_workflow(
         self,
@@ -927,19 +759,8 @@ class PyStreamMCPHandler:
         cascade_on_success: bool = True,
         error_handling: str = "fail_fast",
     ) -> Dict[str, Any]:
-        """Orchestrate cross-MCP workflow"""
-        return {
-            "status": "orchestrating",
-            "workflow_id": workflow_id,
-            "tool_sequence": tool_sequence,
-            "cascade_on_success": cascade_on_success,
-            "error_handling": error_handling,
-            "current_stage": 1,
-            "current_tool": tool_sequence[0] if tool_sequence else None,
-            "total_stages": len(tool_sequence),
-            "started_at": "2026-07-31T00:00:00Z",
-            "execution_plan": [
-                {"stage": i + 1, "tool": tool, "status": "pending"}
-                for i, tool in enumerate(tool_sequence)
-            ],
-        }
+        """Actually execute a sequence of routed tool invocations, not just
+        return a fabricated "pending" plan."""
+        return await self.orchestrator.orchestrate_cross_mcp_workflow(
+            workflow_id, tool_sequence, cascade_on_success, error_handling
+        )
