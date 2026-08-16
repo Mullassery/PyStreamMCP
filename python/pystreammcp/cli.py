@@ -72,7 +72,13 @@ def query(
 
 
 @cli.command()
-@click.option("--host", default="0.0.0.0")
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    help="Bind address. Defaults to localhost-only; pass --host 0.0.0.0 "
+    "explicitly to accept connections from other hosts (e.g. in a "
+    "container behind its own network boundary).",
+)
 @click.option("--port", type=int, default=8000)
 @click.option("--reload", is_flag=True)
 def server(host: str, port: int, reload: bool):

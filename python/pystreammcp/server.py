@@ -1,18 +1,72 @@
 """REST API server for PyStreamMCP - integrates with workflow tools and orchestration webhooks."""
 
 import asyncio
-from typing import Dict, Any, Optional, List
+import hashlib
+import hmac
+import os
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 from pystreammcp import Agent
 from .webhook_router import EventRouter, MCPEndpoint, Tool
 from .webhook_handlers import OrchestrationWebhookHandlers
 
+# Shared secret for verifying inbound orchestration webhook deliveries
+# (POST /orchestration/webhooks/events). Configure it via this environment
+# variable, or pass `webhook_secret=` explicitly to create_flask_app(). See
+# README.md "Webhook security" for setup instructions.
+WEBHOOK_SECRET_ENV_VAR = "PYSTREAMMCP_WEBHOOK_SECRET"
+WEBHOOK_SIGNATURE_HEADER = "X-PyStreamMCP-Signature"
+
+
+def compute_webhook_signature(secret: str, payload: bytes) -> str:
+    """Compute the HMAC-SHA256 signature for a webhook payload.
+
+    Senders must include this as `X-PyStreamMCP-Signature: sha256=<hexdigest>`
+    on their POST to /orchestration/webhooks/events, computed over the
+    exact raw request body bytes using the shared secret.
+    """
+    digest = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    return f"sha256={digest}"
+
+
+def verify_webhook_signature(
+    secret: Optional[str], payload: bytes, signature_header: Optional[str]
+) -> Tuple[bool, str]:
+    """Verify an inbound webhook request's HMAC-SHA256 signature.
+
+    Returns (is_valid, error_message). Fails closed: a missing secret,
+    missing header, malformed header, or mismatched signature are all
+    rejected — there is no "allow through unsigned" fallback.
+    """
+    if not secret:
+        return False, (
+            "Webhook receiver has no shared secret configured "
+            f"(set the {WEBHOOK_SECRET_ENV_VAR} environment variable)"
+        )
+    if not signature_header:
+        return False, f"Missing {WEBHOOK_SIGNATURE_HEADER} header"
+    if not signature_header.startswith("sha256="):
+        return False, f"Malformed {WEBHOOK_SIGNATURE_HEADER} header (expected 'sha256=<hexdigest>')"
+
+    expected = compute_webhook_signature(secret, payload)
+    # Constant-time comparison to avoid leaking signature bytes via timing.
+    if not hmac.compare_digest(signature_header, expected):
+        return False, "Invalid webhook signature"
+    return True, ""
+
 
 class PyStreamMCPServer:
     """REST API server for workflow integration and MCP orchestration."""
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 8000):
-        """Initialize server."""
+    def __init__(self, host: str = "127.0.0.1", port: int = 8000):
+        """Initialize server.
+
+        Args:
+            host: Bind address. Defaults to localhost-only (127.0.0.1);
+                pass "0.0.0.0" explicitly to accept external connections
+                (e.g. behind a container's own network boundary).
+            port: Bind port.
+        """
         self.host = host
         self.port = port
         self.agents: Dict[str, Agent] = {}
@@ -293,8 +347,19 @@ class PyStreamMCPServer:
 
 
 # Flask integration for REST API
-def create_flask_app(server: Optional[PyStreamMCPServer] = None):
-    """Create Flask app for REST API."""
+def create_flask_app(
+    server: Optional[PyStreamMCPServer] = None, webhook_secret: Optional[str] = None
+):
+    """Create Flask app for REST API.
+
+    Args:
+        server: PyStreamMCPServer instance to back the routes.
+        webhook_secret: Shared secret used to verify HMAC-SHA256 signatures
+            on inbound requests to POST /orchestration/webhooks/events.
+            Falls back to the PYSTREAMMCP_WEBHOOK_SECRET environment
+            variable. If neither is set, that endpoint refuses all
+            requests (fails closed) rather than accepting unsigned events.
+    """
     try:
         from flask import Flask, request, jsonify
     except ImportError:
@@ -304,6 +369,9 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
 
     app = Flask(__name__)
     srv = server or PyStreamMCPServer()
+    secret = webhook_secret if webhook_secret is not None else os.environ.get(
+        WEBHOOK_SECRET_ENV_VAR
+    )
 
     @app.route("/health", methods=["GET"])
     def health():
@@ -407,7 +475,27 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
 
     @app.route("/orchestration/webhooks/events", methods=["POST"])
     def receive_orchestration_event():
-        """Receive and process orchestration webhook event."""
+        """Receive and process an inbound orchestration webhook event.
+
+        Requires a valid HMAC-SHA256 signature over the raw request body
+        in the X-PyStreamMCP-Signature header (see verify_webhook_signature
+        / compute_webhook_signature above). Unsigned or incorrectly signed
+        requests are rejected with 401; if no shared secret is configured
+        at all, every request is rejected with 503 rather than silently
+        accepted.
+        """
+        is_valid, error = verify_webhook_signature(
+            secret,
+            request.get_data(),
+            request.headers.get(WEBHOOK_SIGNATURE_HEADER),
+        )
+        if not is_valid:
+            status_code = 503 if not secret else 401
+            return (
+                jsonify({"status": "error", "message": error}),
+                status_code,
+            )
+
         data = request.get_json() or {}
         return jsonify(srv.emit_orchestration_event(data))
 
@@ -481,8 +569,14 @@ def create_flask_app(server: Optional[PyStreamMCPServer] = None):
     return app
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8000):
-    """Run the REST API server."""
+def run_server(host: str = "127.0.0.1", port: int = 8000):
+    """Run the REST API server.
+
+    Args:
+        host: Bind address. Defaults to localhost-only (127.0.0.1); pass
+            "0.0.0.0" explicitly to accept external connections.
+        port: Bind port.
+    """
     app = create_flask_app()
     app.run(host=host, port=port, debug=False)
 

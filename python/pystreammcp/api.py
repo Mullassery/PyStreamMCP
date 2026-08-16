@@ -324,11 +324,12 @@ class PyStreamMCPAPI:
 
         return self.agents[agent_id]
 
-    def run(self, host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
+    def run(self, host: str = "127.0.0.1", port: int = 8000, reload: bool = False):
         """Run the API server.
 
         Args:
-            host: Server host
+            host: Server host. Defaults to localhost-only (127.0.0.1);
+                pass "0.0.0.0" explicitly to accept external connections.
             port: Server port
             reload: Enable auto-reload on file changes
         """

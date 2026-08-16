@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyStreamMCP"
-version = "3.1.0"
+version = "3.2.0"
 description = "Intelligent MCP orchestration hub - Intent understanding, capability matching, tool ranking with cohesive foundation"
 readme = "README.md"
 license = {text = "Proprietary License — Free to use with explicit attribution"}
@@ -46,6 +46,7 @@ api = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "pydantic-settings>=2.0",
+    "flask>=2.3.0",
 ]
 
 # MCP (Model Context Protocol)
