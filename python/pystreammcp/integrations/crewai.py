@@ -16,8 +16,9 @@ from pystreammcp import (
     AdapterConfig,
     AdapterRegistry,
     FrameworkType,
-    QueryResult as AdapterQueryResult,
 )
+
+from pystreammcp.adapters import QueryResult as AdapterQueryResult
 
 
 class CrewAIAdapter(AgentFrameworkAdapter):

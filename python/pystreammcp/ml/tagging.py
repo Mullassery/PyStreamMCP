@@ -225,12 +225,21 @@ class PromptClassifier:
             return PromptComplexity.VERY_COMPLEX
 
     def _detect_domain(self, prompt_lower: str) -> Optional[str]:
-        """Detect domain from keywords."""
-        for domain, keywords in self.domain_keywords.items():
-            if any(kw in prompt_lower for kw in keywords):
-                return domain
+        """Detect domain from keywords.
 
-        return None
+        Scores every domain by its number of keyword matches rather than
+        returning the first domain (in dict order) with any match at all —
+        a prompt like "patient treatment costs" hits both "healthcare"
+        ("patient", "treatment") and "finance" ("cost"), and the domain
+        with more matching signals should win, not whichever happened to
+        be declared first.
+        """
+        scores = {
+            domain: sum(1 for kw in keywords if kw in prompt_lower)
+            for domain, keywords in self.domain_keywords.items()
+        }
+        best_domain, best_score = max(scores.items(), key=lambda item: item[1])
+        return best_domain if best_score > 0 else None
 
     def _generate_tags(
         self,

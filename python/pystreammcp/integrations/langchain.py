@@ -18,8 +18,9 @@ from pystreammcp import (
     AdapterConfig,
     AdapterRegistry,
     FrameworkType,
-    QueryResult as AdapterQueryResult,
 )
+
+from pystreammcp.adapters import QueryResult as AdapterQueryResult
 
 
 class LangchainAdapter(AgentFrameworkAdapter):
@@ -160,11 +161,16 @@ class LangchainAdapter(AgentFrameworkAdapter):
             Langchain Tool instance
         """
         try:
-            from langchain.tools import Tool
+            # langchain >=0.2 moved Tool to langchain_core; try that first.
+            from langchain_core.tools import Tool
         except ImportError:
-            raise ImportError(
-                "langchain is not installed. " "Install it with: pip install langchain"
-            )
+            try:
+                from langchain.tools import Tool
+            except ImportError:
+                raise ImportError(
+                    "langchain is not installed. "
+                    "Install it with: pip install langchain"
+                )
 
         def execute_query(query_text: str, intent: str = "retrieve") -> str:
             """Execute query through Langchain tool."""
@@ -192,18 +198,26 @@ Meets Target: {60 <= result.cost_reduction_percent <= 75}
             Langchain BaseRetriever instance
         """
         try:
-            from langchain.schema import BaseRetriever, Document
+            # langchain >=0.2 moved these to langchain_core; try that first.
+            from langchain_core.retrievers import BaseRetriever
+            from langchain_core.documents import Document
         except ImportError:
-            raise ImportError(
-                "langchain is not installed. " "Install it with: pip install langchain"
-            )
+            try:
+                from langchain.schema import BaseRetriever, Document
+            except ImportError:
+                raise ImportError(
+                    "langchain is not installed. "
+                    "Install it with: pip install langchain"
+                )
 
         adapter = self
 
         class PyStreamMCPLangchainRetriever(BaseRetriever):
             """Langchain retriever backed by PyStreamMCP."""
 
-            def _get_relevant_documents(self, query: str) -> List["Document"]:
+            def _get_relevant_documents(self, query: str, **kwargs) -> List["Document"]:
+                # **kwargs absorbs the `run_manager` callback argument that
+                # modern langchain_core's BaseRetriever ABC passes in.
                 result = adapter.query(query)
                 return [
                     Document(
@@ -245,6 +259,7 @@ class PyStreamMCPTool:
         )
         self.adapter = LangchainAdapter(config)
         self.agent = self.adapter.agent
+        self.agent_id = agent_id
         self.name = "pystreammcp_optimize"
         self.description = (
             "Optimize and execute a query using PyStreamMCP. "
@@ -259,6 +274,7 @@ class PyStreamMCPTool:
         result = self.adapter.query(query_text, intent, **kwargs)
 
         return {
+            "status": "success",
             "query_text": query_text,
             "query_id": result.query_id,
             "intent": intent,
@@ -273,8 +289,16 @@ class PyStreamMCPTool:
         }
 
     def get_tool_for_langchain(self) -> "LangchainTool":
-        """Get a Langchain-compatible tool wrapper."""
-        return self.adapter.get_tool_for_langchain()
+        """Get a Langchain-compatible tool wrapper.
+
+        Renamed to match this legacy tool's own advertised `self.name`
+        (`pystreammcp_optimize`), rather than the adapter's internal
+        `pystreammcp_query` tool name, so callers see one consistent
+        identity for this tool regardless of which entry point they used.
+        """
+        langchain_tool = self.adapter.get_tool_for_langchain()
+        langchain_tool.name = self.name
+        return langchain_tool
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get agent metrics."""
