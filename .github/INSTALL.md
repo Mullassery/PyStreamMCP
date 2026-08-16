@@ -3,49 +3,40 @@
 ## Quick Install
 
 ```bash
-pip install pystreammcp
+pip install PyStreamMCP
 ```
+
+PyStreamMCP is a **pure Python package** — no Rust toolchain or C
+compiler required, on any platform.
 
 ## Requirements
 
-- Python 3.10+
-- macOS 10.13+, Ubuntu 20.04+, Windows 10+
+- Python 3.9+
+- Any OS pip itself supports (macOS, Linux, Windows)
 
-## Installation
+## Optional extras
 
-### Standard Install (Recommended)
-Works for most users with prebuilt wheels:
+Install only the extras you actually need:
+
 ```bash
-pip install pystreammcp
-```
-
-### From Source (If Needed)
-For ARM or custom builds:
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Then install
-pip install pystreammcp
+pip install "PyStreamMCP[api]"              # FastAPI + Flask HTTP servers
+pip install "PyStreamMCP[mcp]"              # MCP protocol client library
+pip install "PyStreamMCP[langchain]"        # LangChain adapter
+pip install "PyStreamMCP[llamaindex]"       # LlamaIndex adapter
+pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
+pip install "PyStreamMCP[crewai]"           # CrewAI adapter
+pip install "PyStreamMCP[pydantic-ai]"      # PydanticAI adapter
+pip install "PyStreamMCP[haystack]"         # Haystack adapter
+pip install "PyStreamMCP[all-integrations]" # every framework adapter above
+pip install "PyStreamMCP[dev]"              # pytest + dev tooling
 ```
 
 ## Troubleshooting
 
-### "No wheels available for your platform"
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-pip install --force-reinstall pystreammcp
-```
-
 ### Python version issues
-Ensure Python 3.10+:
+Ensure Python 3.9+:
 ```bash
 python --version
-```
-
-### Missing dependencies (Linux)
-```bash
-sudo apt-get install python3-dev build-essential
 ```
 
 ## Next Steps

@@ -2,6 +2,67 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [3.2.0] - 2026-08-16
+
+### Fixed (Correctness & Security)
+- **MCP tool handlers wired to the real Orchestrator**: `PyStreamMCPHandler`
+  (`pystreammcp._mcp_tools`) previously ignored `self.orchestrator` entirely
+  and returned hardcoded fixture data (a fake 7-project list, fixed
+  "72% reduction", fake "5432 rows matched" cross-DB join results, etc.)
+  for every one of its 17 tools. All handlers now call into the real,
+  tested `Orchestrator`/`EventRouter` (federation discovery, lexical tool
+  ranking, tool routing, webhook registration, workflow execution). Where
+  a capability genuinely isn't implemented yet (federated query execution,
+  cross-database joins), the response now says `"status": "not_implemented"`
+  instead of fabricating a plausible-looking result.
+- **Real HMAC-SHA256 auth on the webhook endpoint**: `POST
+  /orchestration/webhooks/events` previously accepted any unsigned request
+  despite the README claiming HMAC-SHA256 security. It now verifies an
+  `X-PyStreamMCP-Signature: sha256=<hex>` header against a shared secret
+  (`PYSTREAMMCP_WEBHOOK_SECRET`), rejects missing/invalid signatures with
+  401, and fails closed (503) if no secret is configured at all.
+- **CI now runs the real test suite**: the Python test job installed from
+  `python/` (which has no `pyproject.toml`/`setup.py`) and looked for tests
+  in `python/tests` (which doesn't exist) — every run silently no-op'd.
+  Fixed to install from the repo root and run the actual `tests/` suite.
+- **Version strings reconciled**: `Cargo.toml` (was 1.1.0), `setup.py`
+  (was 1.1.0, MIT), and `python/pystreammcp/__init__.py` (was 3.0.0) now
+  all match `pyproject.toml`'s 3.2.0 / Proprietary license.
+- **Insecure network defaults removed**: HTTP/CLI servers now bind to
+  `127.0.0.1` by default instead of `0.0.0.0`; the local MCP connector's
+  generated config no longer defaults to wildcard CORS origins (`["*"]`)
+  and wildcard `actions`/`roles` permissions.
+- Fixed a name collision in `pystreammcp/__init__.py` where `QueryResult`
+  (from `agent.py`) shadowed `adapters.QueryResult`, which every framework
+  integration (LangChain, LlamaIndex, CrewAI, PydanticAI, Semantic Kernel,
+  Haystack) imported expecting the adapters version — this broke nearly
+  every integration test (`TypeError: unexpected keyword argument 'text'`).
+- Fixed `Agent` missing `agent_id`/`name`/`optimization_strategy`/
+  `max_tokens` properties (`AttributeError` from `api.py`'s `/agents` endpoints).
+- Fixed `PromptClassifier._detect_domain` returning the first
+  dict-order keyword match instead of the best-scoring domain (e.g.
+  "patient treatment costs" incorrectly classified as "finance" instead
+  of "healthcare").
+- `Agent.query()` no longer returns a fixed 70%/50ms result regardless of
+  input: token estimates now derive from the actual query text, the
+  reduction target varies by `optimization_strategy`, and execution time
+  is actually measured.
+- Updated LangChain/LlamaIndex adapter imports to support current major
+  versions of those libraries (`langchain_core`, `llama_index.core`) with
+  fallback to legacy import paths.
+- Fixed `AdapterRegistry` test-session pollution where
+  `test_sprint1_foundation.py` permanently overwrote the real
+  `LangchainAdapter` registration for the rest of the test run.
+
+### Known limitations (documented, not fixed this release)
+- The `core`/`python` Rust workspace does not currently compile and is
+  **not part of the published PyPI package** (the wheel is pure Python).
+  Its CI job is now non-blocking (`continue-on-error`) rather than
+  silently masked.
+- Cross-project federated query execution and cross-database joins are
+  accepted at the API level but report `"not_implemented"` — there's no
+  real execution engine behind them yet.
+
 ## [1.1.0] - 2026-07-22
 
 ### Added

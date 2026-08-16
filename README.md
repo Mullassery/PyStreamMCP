@@ -2,133 +2,166 @@
 
 [![CI](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml)
 
-Intelligence layer for AI agents. Query planning, context discovery, cost optimization. Reduces token usage by 60-75% while maintaining response quality.
+An AI-agent intelligence layer: query planning, context discovery, and
+token-cost optimization, exposed both as a Python SDK and as an MCP
+(Model Context Protocol) tool server, plus a small event-driven
+orchestration/federation layer for coordinating multiple MCP endpoints.
 
-Used by Claude and other LLMs to optimize context window usage and reduce inference costs.
+Pure Python — `pip install` just works, no Rust toolchain or compiler
+required.
 
-**Production-Grade Event-Driven Webhook Orchestration (20 Projects, 228 Tools, 12 Webhooks)**
-
-## Overview
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
-
-
-PyStreamMCP is part of the unified **MCP 2.0 Mega-Platform** (228 tools across 19 projects). This project provides AI-native tools via Model Context Protocol (MCP 2.0) with real-time event-driven webhook infrastructure.
-
-## Features
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
-
-- **Production-Grade Webhooks**: 12 webhooks live across 6 projects (HMAC-SHA256 security)
-- **Multi-Modal Sensor Fusion**: RGB+Thermal+LIDAR temporal synchronization (PyRoboReplay)
-- **Threat Detection Orchestration**: Real-time security alert automation (PyNetworkIntel)
-- **Cache Optimization**: Semantic caching with intelligent invalidation (OpenAnchor)
-- **Quality Monitoring**: Adaptive retrieval quality tracking (PyVectorHound)
-- **Workflow Automation**: Notebook execution & Spark/SQL integration (PrismNote)
-- **Provider Failover**: Automatic multi-provider routing (PyInferenceManager)
-- **Cross-MCP Orchestration**: 228 tools across 19 MCPs, fully orchestrated
-- **Smart Fallback Routing**: Automatic health-aware MCP selection
-- **Async Handlers**: All operations async-first for high-performance execution
-- **Type-Safe**: 100% Python type hints throughout
-- **Production Proven**: 520+ RPS sustained, <100ms p95 latency, 99.95% delivery reliability
-
-## Installation
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+## Install
 
 ```bash
 pip install PyStreamMCP
 ```
 
-Wheels-only distribution (recommended for production):
+Optional extras, install what you actually need:
 
 ```bash
-pip install --only-binary=:all: PyStreamMCP
+pip install "PyStreamMCP[api]"          # FastAPI + Flask HTTP servers
+pip install "PyStreamMCP[mcp]"          # MCP protocol client library
+pip install "PyStreamMCP[langchain]"    # LangChain adapter
+pip install "PyStreamMCP[llamaindex]"   # LlamaIndex adapter
+pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
+pip install "PyStreamMCP[all-integrations]" # every framework adapter
 ```
 
-## MCP 2.0 Integration
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+Requires Python 3.9+.
 
-Enable MCP tools on port **8772** (see MCP_QUICKSTART.md for details).
+## Quick start
 
-AI systems discover all 207 tools across 18 projects, enabling:
-- Multi-project workflows
-- Intelligent query optimization (60-75% reduction in context usage)
-- Cross-database joins
-- Cost-optimized inference routing
+```python
+from pystreammcp import Agent
 
-## Quick Start
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+agent = Agent(
+    agent_id="recommendation_engine",
+    name="Product Recommendation Engine",
+    optimization_strategy="token_efficient",  # or "balanced" / "quality_first"
+    max_tokens=1000,
+)
 
-See [MCP_QUICKSTART.md](PyStreamMCP/MCP_QUICKSTART.md) for detailed tool documentation.
+result = agent.query("What are the top 10 customers by lifetime value?")
 
-## Part of Unified Platform
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+print(f"Baseline tokens:  {result.baseline_tokens}")
+print(f"Optimized tokens: {result.optimized_tokens}")
+print(f"Reduction:        {result.cost_reduction_percent:.1f}%")
+```
 
-19 projects, 228 tools, 19 simultaneous MCP endpoints (8765-8783).
-**Phase 2**: Event-driven webhook orchestration across all MCPs.
+Token counts are estimated from the actual query text (a standard
+~4-characters-per-token heuristic) and the reduction percentage is
+computed from the selected `optimization_strategy` — not a fixed number
+returned regardless of input. See [`examples/basic_usage.py`](examples/basic_usage.py)
+for a full runnable walkthrough, including framework adapters for
+LangChain, LlamaIndex, CrewAI, Semantic Kernel, PydanticAI, and Haystack
+under [`pystreammcp.integrations`](python/pystreammcp/integrations/).
 
-**All tools discoverable via MCP protocol in a single connection.**
+## MCP orchestration & federation
 
-## Production Deployment Status
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+`Orchestrator` (`pystreammcp.Orchestrator`) discovers and routes across
+other MCP-enabled projects you configure in `pystreammcp.toml`:
 
-**Phase 3 Complete** (Aug 22, 2026) ✅
-- Week 1 (Aug 2-7): Staging validation complete (28/28 tests passing)
-- Week 2 (Aug 8-15): Canary → Production deployment complete (100% traffic)
-- Week 3 (Aug 15-22): 6-project integration complete
-  - PyNetworkIntel (threat detection webhooks)
-  - PyRoboReplay (multi-modal sensor fusion)
-  - OpenAnchor (cache invalidation & token intelligence)
-  - PyVectorHound (quality alerts & retrieval monitoring)
-  - PrismNote (notebook execution & Spark/SQL workflows)
-  - PyInferenceManager (provider failover & multi-provider routing)
+```toml
+[federation]
+endpoints = [
+    "http://localhost:8765/mcp",
+    "http://localhost:8766/mcp",
+]
+```
 
-**Production Metrics**:
-- ✅ Error rate: <0.1% (proven: 0.02%)
-- ✅ Latency p95: <100ms (proven: 65ms)
-- ✅ Webhook delivery: >99.9% (proven: 99.95%)
-- ✅ Throughput: 520+ RPS sustained
-- ✅ Zero data loss confirmed
-- ✅ Full team training complete
+```python
+from pystreammcp import Orchestrator
 
-## Version History
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
+orch = Orchestrator()  # reads ./pystreammcp.toml
+result = orch.discover_mcp_projects()
+# {"projects": [{"project_name": ..., "endpoint": ..., "status": "healthy"|"unavailable", ...}], "total": N}
+```
 
-### v3.0.0 (Current - Phase 3 Production Deployment Complete)
-- ✅ Event-driven webhook infrastructure live in production (100% traffic)
-- ✅ 12 webhooks across 6 high-priority projects integrated
-- ✅ 228 tools orchestrated across 19 MCPs
-- ✅ Multi-modal sensor fusion (PyRoboReplay: RGB+Thermal+LIDAR)
-- ✅ Threat detection & security orchestration (PyNetworkIntel)
-- ✅ Cache optimization with semantic caching (OpenAnchor)
-- ✅ Quality monitoring & vector search optimization (PyVectorHound)
-- ✅ Notebook execution & Spark/SQL workflows (PrismNote)
-- ✅ Provider failover & multi-provider routing (PyInferenceManager)
-- ✅ 300-3600x faster quality detection
-- ✅ 1200x faster tool routing
-- ✅ >99.9% webhook delivery reliability
-- ✅ 520+ RPS throughput, <100ms p95 latency
-- ✅ Zero data loss confirmed
-- ✅ Full team training & knowledge transfer
-- ✅ Wheels-only distribution on PyPI
+This actually probes each configured endpoint's real `tools/list` MCP
+method — with nothing configured, or nothing reachable, it honestly
+reports zero/unavailable projects rather than a fixed fixture list.
+`Orchestrator` also does lexical tool-relevance ranking
+(`rank_tools_by_relevance`) and capability matching
+(`detect_compatible_projects`) against whatever it actually discovers.
 
-### v2.1.0 (Previous - Phase 2 Webhook Infrastructure)
-- ✅ Event-driven webhook architecture with HMAC-SHA256 security
-- ✅ Cross-MCP orchestration (228 tools, 19 projects)
-- ✅ Quality event enforcement (StatGuardian integration)
-- ✅ Automatic tool routing & fallback mechanisms
-- ✅ Complete audit trail & event deduplication
-- ✅ Staging validation complete (28/28 tests)
+To expose these (plus tool-routing and webhook-event handling) as MCP
+tools, `PyStreamMCPHandler` (`pystreammcp._mcp_tools`) wires the MCP
+tool-call surface directly to a live `Orchestrator`/`EventRouter`
+instance — every handler call is backed by real, inspectable state, not
+a hardcoded response.
 
-### v2.0.0 (Archived)
-- ✅ MCP 2.0 Support
-- ✅ Integrated with 17 other projects
-- ✅ 207 unified MCP tools
-- ✅ Intelligent orchestration
+**Honest limitations**: a few orchestration capabilities are accepted at
+the API level but not fully implemented yet — cross-project federated
+query *execution* and cross-database joins currently report
+`"status": "not_implemented"` with an explanation, rather than fabricated
+result rows, because there's no real query engine behind them yet.
+
+## Webhook event server
+
+`pystreammcp.server.create_flask_app()` exposes a small REST/webhook
+surface for orchestration events (agent MCPs reporting `mcp.available`,
+`tool.invoked`, health updates, etc. to `POST /orchestration/webhooks/events`).
+
+### Webhook security (HMAC-SHA256)
+
+Inbound events to `/orchestration/webhooks/events` must be signed:
+
+```bash
+export PYSTREAMMCP_WEBHOOK_SECRET="a long random shared secret"
+```
+
+Senders compute `HMAC-SHA256(secret, raw_request_body)` and send it as:
+
+```
+X-PyStreamMCP-Signature: sha256=<hex digest>
+```
+
+```python
+from pystreammcp.server import compute_webhook_signature
+import json, requests
+
+body = json.dumps({"event_type": "mcp.available", "data": {...}}).encode()
+signature = compute_webhook_signature(secret, body)
+
+requests.post(
+    "http://localhost:8000/orchestration/webhooks/events",
+    data=body,
+    headers={
+        "Content-Type": "application/json",
+        "X-PyStreamMCP-Signature": signature,
+    },
+)
+```
+
+Requests with a missing or invalid signature are rejected with `401`. If
+`PYSTREAMMCP_WEBHOOK_SECRET` isn't set at all, the endpoint fails closed
+and rejects every request with `503` — there is no "accept unsigned
+events" fallback.
+
+### Network defaults
+
+The HTTP/CLI servers (`pystreammcp server`, `PyStreamMCPServer`,
+`PyStreamMCPAPI.run`) bind to `127.0.0.1` (localhost-only) by default.
+Pass `--host 0.0.0.0` (CLI) or `host="0.0.0.0"` explicitly if you need the
+server reachable from other hosts — e.g. inside a container that already
+has its own network boundary.
+
+## Testing
+
+```bash
+pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
+pytest tests/ -v
+```
+
+## Rust workspace (not shipped)
+
+`core/` and `python/src/lib.rs` are an in-progress Rust workspace intended
+as a future performance backend. **It is not part of the published PyPI
+package** — the wheel built from `pyproject.toml` is pure Python — and it
+does not currently compile. Don't rely on it; it's tracked separately
+from the Python package described in this README.
 
 ## License
-See [INSTALL.md](.github/INSTALL.md) for platform-specific installation guidance.
 
-MIT
-
----
-
-**MCP 2.0 Mega-Platform | v3.0.0 (Phase 3 Production Complete) | 20 Projects Integrated | 228 Tools Orchestrated | Wheels-Only Distribution**
+Proprietary License — Free to use with explicit attribution. See
+[LICENSE](LICENSE).
