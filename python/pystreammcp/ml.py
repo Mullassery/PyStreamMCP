@@ -54,9 +54,15 @@ class LearnedRelevanceModel:
             if sample.user_feedback:
                 if sample.user_feedback == "useful" and sample.relevance_score > 0.7:
                     correct_predictions += 1
-                elif sample.user_feedback == "irrelevant" and sample.relevance_score <= 0.3:
+                elif (
+                    sample.user_feedback == "irrelevant"
+                    and sample.relevance_score <= 0.3
+                ):
                     correct_predictions += 1
-                elif sample.user_feedback == "partial" and 0.4 <= sample.relevance_score <= 0.7:
+                elif (
+                    sample.user_feedback == "partial"
+                    and 0.4 <= sample.relevance_score <= 0.7
+                ):
                     correct_predictions += 1
                 elif sample.user_feedback == "unknown":
                     correct_predictions += 1
@@ -74,7 +80,9 @@ class LearnedRelevanceModel:
         query_score = self._score_query_source_match(query, source)
         return (base_weight + query_score) / 2.0
 
-    def update_with_feedback(self, query: str, source: str, feedback: FeedbackType) -> None:
+    def update_with_feedback(
+        self, query: str, source: str, feedback: FeedbackType
+    ) -> None:
         """Update model with user feedback."""
         score = {"useful": 0.9, "irrelevant": 0.1, "partial": 0.6, "unknown": 0.5}.get(
             feedback, 0.5

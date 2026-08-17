@@ -1,28 +1,18 @@
-import os
+# Static project metadata (name, version, description, license,
+# classifiers, dependencies, URLs) lives in pyproject.toml, which is the
+# single source of truth read by `pip install`/build tooling. This file
+# exists only to supply the `packages`/`package_dir` layout (the package
+# source lives under python/, not the repo root) that pyproject.toml's
+# [build-system] setuptools backend doesn't infer on its own.
+#
+# Previously this file *also* redeclared name/version/license/classifiers
+# with stale values (version 1.1.0, MIT license) that silently diverged
+# from pyproject.toml's real ones (3.x, Proprietary) — setuptools prefers
+# pyproject.toml's [project] table so those installs were never actually
+# wrong, but the duplication was misleading. Don't re-add them here.
 from setuptools import setup, find_packages
 
 setup(
-    name="PyStreamMCP",
-    version="1.1.0",
-    description="Intelligent MCP orchestration hub - Intent understanding, capability matching, tool ranking with cohesive foundation",
-    author="Georgi Mammen Mullassery",
-    author_email="mullassery@gmail.com",
-    license="Proprietary License - Free to use with explicit attribution",
     packages=find_packages(where="python"),
     package_dir={"": "python"},
-    install_requires=["pydantic>=2.0"],
-    python_requires=">=3.9",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
-    url="https://github.com/Mullassery/PyStreamMCP",
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-    ],
 )

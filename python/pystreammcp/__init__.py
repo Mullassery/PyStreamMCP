@@ -7,19 +7,26 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "3.0.0"
+__version__ = "3.2.0"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
 from .context import Context, ContextType, ContextWindow
 from .discovery import Discovery, DiscoveredSource, SourceType
+
 # Optimization imports
 try:
-    from .optimization import OptimizationStrategy, StrategyType, OptimizationTechnique, CostMetrics
+    from .optimization import (
+        OptimizationStrategy,
+        StrategyType,
+        OptimizationTechnique,
+        CostMetrics,
+    )
 except (ImportError, AttributeError):
     # Fallback: Phase 3+ uses new optimization module structure
     try:
         from .optimization import StrategyType, OptimizationTechnique
+
         OptimizationStrategy = None
         CostMetrics = None
     except (ImportError, AttributeError):
@@ -43,6 +50,7 @@ from .adapters import (
     FrameworkType,
     QueryResult as AdapterQueryResult,
 )
+
 # Optional: MCP and API servers (require additional dependencies)
 try:
     from .mcp_server import PyStreamMCPServer

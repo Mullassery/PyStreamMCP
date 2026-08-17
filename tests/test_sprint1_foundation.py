@@ -52,6 +52,24 @@ class MockAdapter(AgentFrameworkAdapter):
 class TestAdapterPattern:
     """Test adapter base class and registry."""
 
+    @pytest.fixture(autouse=True)
+    def _restore_adapter_registry(self):
+        """Snapshot and restore AdapterRegistry's global state.
+
+        AdapterRegistry is a process-wide singleton: tests in this class
+        register MockAdapter under FrameworkType.LANGCHAIN, which — without
+        this fixture — permanently overwrites the real LangchainAdapter
+        registration for every test that runs afterward in the same
+        session (e.g. test_sprint2_langchain.py's registry test).
+        """
+        original_adapters = dict(AdapterRegistry._adapters)
+        original_instances = dict(AdapterRegistry._instances)
+        yield
+        AdapterRegistry._adapters.clear()
+        AdapterRegistry._adapters.update(original_adapters)
+        AdapterRegistry._instances.clear()
+        AdapterRegistry._instances.update(original_instances)
+
     def test_adapter_config(self):
         """Test adapter configuration."""
         config = AdapterConfig(

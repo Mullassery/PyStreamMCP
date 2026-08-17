@@ -94,7 +94,10 @@ class N8nWebhookTrigger:
                     "description": "Execute optimized query",
                     "parameters": {
                         "text": {"type": "string", "required": True},
-                        "intent": {"type": "string", "enum": ["retrieve", "discover", "optimize"]},
+                        "intent": {
+                            "type": "string",
+                            "enum": ["retrieve", "discover", "optimize"],
+                        },
                     },
                 },
                 {
@@ -264,16 +267,20 @@ class RoboticProcessAdapter:
             agent = Agent(agent_id=self.agent_id)
             result = agent.query(query)
 
-            results.append({
-                "query": query,
-                "query_id": result.query_id,
-                "reduction": result.cost_reduction_percent,
-            })
+            results.append(
+                {
+                    "query": query,
+                    "query_id": result.query_id,
+                    "reduction": result.cost_reduction_percent,
+                }
+            )
 
             total_baseline += result.baseline_tokens
             total_optimized += result.optimized_tokens
 
-        avg_reduction = 100 * (1 - total_optimized / total_baseline) if total_baseline > 0 else 0
+        avg_reduction = (
+            100 * (1 - total_optimized / total_baseline) if total_baseline > 0 else 0
+        )
 
         return {
             "batch_size": len(queries),

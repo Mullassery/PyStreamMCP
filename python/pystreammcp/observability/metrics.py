@@ -130,25 +130,37 @@ class MetricsCollector:
         }
 
         # Record metrics
-        self.metrics["query_duration_ms"].points.append(MetricPoint(timestamp, duration_ms, labels))
-        self.metrics["baseline_tokens"].points.append(MetricPoint(timestamp, baseline_tokens, labels))
-        self.metrics["optimized_tokens"].points.append(MetricPoint(timestamp, optimized_tokens, labels))
-        self.metrics["cost_reduction_percent"].points.append(MetricPoint(timestamp, cost_reduction, labels))
+        self.metrics["query_duration_ms"].points.append(
+            MetricPoint(timestamp, duration_ms, labels)
+        )
+        self.metrics["baseline_tokens"].points.append(
+            MetricPoint(timestamp, baseline_tokens, labels)
+        )
+        self.metrics["optimized_tokens"].points.append(
+            MetricPoint(timestamp, optimized_tokens, labels)
+        )
+        self.metrics["cost_reduction_percent"].points.append(
+            MetricPoint(timestamp, cost_reduction, labels)
+        )
 
         # Increment counters
         query_metric = self.metrics["query_count"]
-        query_metric.points.append(MetricPoint(timestamp, len(query_metric.points) + 1, labels))
+        query_metric.points.append(
+            MetricPoint(timestamp, len(query_metric.points) + 1, labels)
+        )
 
-        self.buffer.append({
-            "type": "query",
-            "timestamp": timestamp,
-            "duration_ms": duration_ms,
-            "baseline_tokens": baseline_tokens,
-            "optimized_tokens": optimized_tokens,
-            "cost_reduction": cost_reduction,
-            "agent_id": agent_id,
-            "intent": intent,
-        })
+        self.buffer.append(
+            {
+                "type": "query",
+                "timestamp": timestamp,
+                "duration_ms": duration_ms,
+                "baseline_tokens": baseline_tokens,
+                "optimized_tokens": optimized_tokens,
+                "cost_reduction": cost_reduction,
+                "agent_id": agent_id,
+                "intent": intent,
+            }
+        )
 
     def record_model_accuracy(self, accuracy: float, model_version: str) -> None:
         """Record model accuracy.
@@ -163,7 +175,9 @@ class MetricsCollector:
             "service": self.service_name,
         }
 
-        self.metrics["model_accuracy"].points.append(MetricPoint(timestamp, accuracy, labels))
+        self.metrics["model_accuracy"].points.append(
+            MetricPoint(timestamp, accuracy, labels)
+        )
 
     def record_error(self, error_type: str, agent_id: str) -> None:
         """Record an error.
@@ -203,7 +217,7 @@ class MetricsCollector:
 
             for point in metric.points[-10:]:  # Last 10 points
                 labels_str = ",".join(f'{k}="{v}"' for k, v in point.labels.items())
-                line = f'{metric.name}{{{labels_str}}} {point.value}'
+                line = f"{metric.name}{{{labels_str}}} {point.value}"
                 lines.append(line)
 
         return "\n".join(lines)
@@ -221,9 +235,15 @@ class MetricsCollector:
         return {
             "total_queries": len(queries),
             "avg_duration_ms": sum(durations) / len(durations) if durations else 0,
-            "avg_cost_reduction": sum(reductions) / len(reductions) if reductions else 0,
-            "total_baseline_tokens": sum(p.value for p in self.metrics["baseline_tokens"].points),
-            "total_optimized_tokens": sum(p.value for p in self.metrics["optimized_tokens"].points),
+            "avg_cost_reduction": (
+                sum(reductions) / len(reductions) if reductions else 0
+            ),
+            "total_baseline_tokens": sum(
+                p.value for p in self.metrics["baseline_tokens"].points
+            ),
+            "total_optimized_tokens": sum(
+                p.value for p in self.metrics["optimized_tokens"].points
+            ),
             "total_errors": len(self.metrics["errors"].points),
         }
 

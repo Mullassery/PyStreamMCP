@@ -8,6 +8,7 @@ from datetime import datetime
 
 class ContextType(str, Enum):
     """Type of context."""
+
     ENTITY_DATA = "entity_data"
     RELATIONSHIP = "relationship"
     METRIC = "metric"
@@ -19,6 +20,7 @@ class ContextType(str, Enum):
 @dataclass
 class Context:
     """Context information for queries."""
+
     context_type: ContextType
     content: Dict[str, Any]
     source: str
@@ -30,10 +32,12 @@ class Context:
     def __post_init__(self):
         if not self.context_id:
             import uuid
+
             self.context_id = str(uuid.uuid4())
         if self.token_count == 0:
             # Rough estimation: ~1 token per 4 chars
             import json
+
             serialized = json.dumps(self.content)
             self.token_count = len(serialized) // 4
 
@@ -46,6 +50,7 @@ class Context:
 @dataclass
 class ContextWindow:
     """Window of contexts for a query."""
+
     query_id: str
     contexts: List[Context] = field(default_factory=list)
     token_budget: int = 2000

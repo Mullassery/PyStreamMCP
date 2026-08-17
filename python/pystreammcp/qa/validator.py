@@ -11,6 +11,7 @@ from datetime import datetime
 
 class ValidationStatus(str, Enum):
     """Validation status."""
+
     PASS = "pass"
     WARN = "warn"
     FAIL = "fail"
@@ -72,32 +73,38 @@ class QualityValidator:
 
     def _setup_default_rules(self) -> None:
         """Setup default validation rules."""
-        self.add_rule(ValidationRule(
-            name="minimum_cost_reduction",
-            description="Ensure minimum 60% cost reduction",
-            metric="cost_reduction",
-            operator=">=",
-            threshold=60.0,
-            severity="error",
-        ))
+        self.add_rule(
+            ValidationRule(
+                name="minimum_cost_reduction",
+                description="Ensure minimum 60% cost reduction",
+                metric="cost_reduction",
+                operator=">=",
+                threshold=60.0,
+                severity="error",
+            )
+        )
 
-        self.add_rule(ValidationRule(
-            name="maximum_latency",
-            description="Ensure latency under 500ms",
-            metric="latency_ms",
-            operator="<=",
-            threshold=500.0,
-            severity="warning",
-        ))
+        self.add_rule(
+            ValidationRule(
+                name="maximum_latency",
+                description="Ensure latency under 500ms",
+                metric="latency_ms",
+                operator="<=",
+                threshold=500.0,
+                severity="warning",
+            )
+        )
 
-        self.add_rule(ValidationRule(
-            name="accuracy_threshold",
-            description="Ensure model accuracy above 75%",
-            metric="model_accuracy",
-            operator=">=",
-            threshold=75.0,
-            severity="warning",
-        ))
+        self.add_rule(
+            ValidationRule(
+                name="accuracy_threshold",
+                description="Ensure model accuracy above 75%",
+                metric="model_accuracy",
+                operator=">=",
+                threshold=75.0,
+                severity="warning",
+            )
+        )
 
     def add_rule(self, rule: ValidationRule) -> None:
         """Add validation rule.
@@ -140,7 +147,9 @@ class QualityValidator:
 
         return results
 
-    def _check_rule(self, operator: str, actual: float, expected: float) -> ValidationStatus:
+    def _check_rule(
+        self, operator: str, actual: float, expected: float
+    ) -> ValidationStatus:
         """Check if actual value satisfies rule.
 
         Args:
@@ -173,8 +182,12 @@ class QualityValidator:
         if not self.validation_history:
             return {"total": 0, "passed": 0, "failed": 0, "pass_rate": 0.0}
 
-        passed = sum(1 for r in self.validation_history if r.status == ValidationStatus.PASS)
-        failed = sum(1 for r in self.validation_history if r.status == ValidationStatus.FAIL)
+        passed = sum(
+            1 for r in self.validation_history if r.status == ValidationStatus.PASS
+        )
+        failed = sum(
+            1 for r in self.validation_history if r.status == ValidationStatus.FAIL
+        )
         total = len(self.validation_history)
 
         return {
@@ -211,7 +224,9 @@ class SLAChecker:
         # Check latency SLA
         latency = metrics.get("latency_ms", 0)
         if latency > self.slas["latency"]["threshold_ms"]:
-            report["violations"].append(f"Latency SLA: {latency}ms > {self.slas['latency']['threshold_ms']}ms")
+            report["violations"].append(
+                f"Latency SLA: {latency}ms > {self.slas['latency']['threshold_ms']}ms"
+            )
             report["compliant"] = False
 
         # Check cost reduction SLA
@@ -333,12 +348,20 @@ class AuditLogger:
             return {"total_operations": 0, "compliance_rate": 0.0}
 
         total = len(self.audit_log)
-        compliant = sum(1 for e in self.audit_log if e.validation_status == ValidationStatus.PASS)
+        compliant = sum(
+            1 for e in self.audit_log if e.validation_status == ValidationStatus.PASS
+        )
 
         return {
             "total_operations": total,
             "compliant_operations": compliant,
             "compliance_rate": (compliant / total * 100) if total > 0 else 0.0,
-            "avg_cost_reduction": sum(e.cost_reduction for e in self.audit_log) / total if total > 0 else 0.0,
-            "avg_duration_ms": sum(e.duration_ms for e in self.audit_log) / total if total > 0 else 0.0,
+            "avg_cost_reduction": (
+                sum(e.cost_reduction for e in self.audit_log) / total
+                if total > 0
+                else 0.0
+            ),
+            "avg_duration_ms": (
+                sum(e.duration_ms for e in self.audit_log) / total if total > 0 else 0.0
+            ),
         }

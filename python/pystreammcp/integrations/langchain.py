@@ -11,10 +11,16 @@ Provides both:
 from typing import Optional, Dict, Any, List, Type
 import asyncio
 from pystreammcp import (
-    Agent, Query, QueryIntent,
-    AgentFrameworkAdapter, AdapterConfig, AdapterRegistry, FrameworkType,
-    QueryResult as AdapterQueryResult,
+    Agent,
+    Query,
+    QueryIntent,
+    AgentFrameworkAdapter,
+    AdapterConfig,
+    AdapterRegistry,
+    FrameworkType,
 )
+
+from pystreammcp.adapters import QueryResult as AdapterQueryResult
 
 
 class LangchainAdapter(AgentFrameworkAdapter):
@@ -38,7 +44,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             max_tokens=config.max_tokens,
         )
 
-    def query(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    def query(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query with PyStreamMCP optimization.
 
         Args:
@@ -65,7 +73,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def query_async(self, text: str, intent: str = "retrieve", **kwargs) -> AdapterQueryResult:
+    async def query_async(
+        self, text: str, intent: str = "retrieve", **kwargs
+    ) -> AdapterQueryResult:
         """Execute a query asynchronously.
 
         Args:
@@ -108,7 +118,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.discover, context)
 
-    def optimize(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    def optimize(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize a query for cost reduction.
 
         Args:
@@ -135,7 +147,9 @@ class LangchainAdapter(AgentFrameworkAdapter):
             },
         )
 
-    async def optimize_async(self, query_text: str, strategy: Optional[str] = None, **kwargs) -> AdapterQueryResult:
+    async def optimize_async(
+        self, query_text: str, strategy: Optional[str] = None, **kwargs
+    ) -> AdapterQueryResult:
         """Optimize query asynchronously."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.optimize, query_text, strategy)
@@ -147,12 +161,16 @@ class LangchainAdapter(AgentFrameworkAdapter):
             Langchain Tool instance
         """
         try:
-            from langchain.tools import Tool
+            # langchain >=0.2 moved Tool to langchain_core; try that first.
+            from langchain_core.tools import Tool
         except ImportError:
-            raise ImportError(
-                "langchain is not installed. "
-                "Install it with: pip install langchain"
-            )
+            try:
+                from langchain.tools import Tool
+            except ImportError:
+                raise ImportError(
+                    "langchain is not installed. "
+                    "Install it with: pip install langchain"
+                )
 
         def execute_query(query_text: str, intent: str = "retrieve") -> str:
             """Execute query through Langchain tool."""
@@ -180,19 +198,26 @@ Meets Target: {60 <= result.cost_reduction_percent <= 75}
             Langchain BaseRetriever instance
         """
         try:
-            from langchain.schema import BaseRetriever, Document
+            # langchain >=0.2 moved these to langchain_core; try that first.
+            from langchain_core.retrievers import BaseRetriever
+            from langchain_core.documents import Document
         except ImportError:
-            raise ImportError(
-                "langchain is not installed. "
-                "Install it with: pip install langchain"
-            )
+            try:
+                from langchain.schema import BaseRetriever, Document
+            except ImportError:
+                raise ImportError(
+                    "langchain is not installed. "
+                    "Install it with: pip install langchain"
+                )
 
         adapter = self
 
         class PyStreamMCPLangchainRetriever(BaseRetriever):
             """Langchain retriever backed by PyStreamMCP."""
 
-            def _get_relevant_documents(self, query: str) -> List["Document"]:
+            def _get_relevant_documents(self, query: str, **kwargs) -> List["Document"]:
+                # **kwargs absorbs the `run_manager` callback argument that
+                # modern langchain_core's BaseRetriever ABC passes in.
                 result = adapter.query(query)
                 return [
                     Document(
@@ -209,6 +234,7 @@ Meets Target: {60 <= result.cost_reduction_percent <= 75}
 
 
 # Legacy interfaces (backward compatible)
+
 
 class PyStreamMCPTool:
     """Langchain tool wrapper for PyStreamMCP (legacy).
@@ -233,6 +259,7 @@ class PyStreamMCPTool:
         )
         self.adapter = LangchainAdapter(config)
         self.agent = self.adapter.agent
+        self.agent_id = agent_id
         self.name = "pystreammcp_optimize"
         self.description = (
             "Optimize and execute a query using PyStreamMCP. "
@@ -240,11 +267,14 @@ class PyStreamMCPTool:
             "Use this when you need to get information efficiently."
         )
 
-    def __call__(self, query_text: str, intent: str = "retrieve", **kwargs) -> Dict[str, Any]:
+    def __call__(
+        self, query_text: str, intent: str = "retrieve", **kwargs
+    ) -> Dict[str, Any]:
         """Execute a query through PyStreamMCP."""
         result = self.adapter.query(query_text, intent, **kwargs)
 
         return {
+            "status": "success",
             "query_text": query_text,
             "query_id": result.query_id,
             "intent": intent,
@@ -259,8 +289,16 @@ class PyStreamMCPTool:
         }
 
     def get_tool_for_langchain(self) -> "LangchainTool":
-        """Get a Langchain-compatible tool wrapper."""
-        return self.adapter.get_tool_for_langchain()
+        """Get a Langchain-compatible tool wrapper.
+
+        Renamed to match this legacy tool's own advertised `self.name`
+        (`pystreammcp_optimize`), rather than the adapter's internal
+        `pystreammcp_query` tool name, so callers see one consistent
+        identity for this tool regardless of which entry point they used.
+        """
+        langchain_tool = self.adapter.get_tool_for_langchain()
+        langchain_tool.name = self.name
+        return langchain_tool
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get agent metrics."""
@@ -339,8 +377,7 @@ def create_pystreammcp_agent(
         from langchain.agents import initialize_agent, AgentType
     except ImportError:
         raise ImportError(
-            "langchain is not installed. "
-            "Install it with: pip install langchain"
+            "langchain is not installed. " "Install it with: pip install langchain"
         )
 
     # Create LangchainAdapter

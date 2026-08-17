@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Tool:
     """MCP tool metadata"""
+
     name: str
     project_name: str
     description: str
@@ -21,6 +22,7 @@ class Tool:
 @dataclass
 class MCPEndpoint:
     """MCP project endpoint"""
+
     project_name: str
     port: int
     mcp_version: str
@@ -34,6 +36,7 @@ class MCPEndpoint:
 @dataclass
 class ToolInvocation:
     """Tool invocation request and metadata"""
+
     tool_name: str
     project_name: str
     invocation_id: str
@@ -51,9 +54,13 @@ class ServiceRegistry:
 
     def __init__(self):
         self.endpoints: Dict[str, MCPEndpoint] = {}
-        self.tools_by_name: Dict[str, List[Tuple[str, MCPEndpoint]]] = {}  # tool_name -> [(project, endpoint)]
+        self.tools_by_name: Dict[str, List[Tuple[str, MCPEndpoint]]] = (
+            {}
+        )  # tool_name -> [(project, endpoint)]
         self.tools_by_project: Dict[str, List[Tool]] = {}  # project_name -> [tools]
-        self.health_history: Dict[str, List[Dict[str, Any]]] = {}  # project_name -> [health_checks]
+        self.health_history: Dict[str, List[Dict[str, Any]]] = (
+            {}
+        )  # project_name -> [health_checks]
         self.max_history_size = 100
 
     def register_mcp_endpoint(self, endpoint: MCPEndpoint) -> None:
@@ -83,7 +90,8 @@ class ServiceRegistry:
             for tool in endpoint.tools:
                 if tool.name in self.tools_by_name:
                     self.tools_by_name[tool.name] = [
-                        (p, e) for p, e in self.tools_by_name[tool.name]
+                        (p, e)
+                        for p, e in self.tools_by_name[tool.name]
                         if p != project_name
                     ]
                     if not self.tools_by_name[tool.name]:
@@ -123,7 +131,9 @@ class ServiceRegistry:
         """Get all tools in a project"""
         return self.tools_by_project.get(project_name, [])
 
-    def mark_mcp_available(self, project_name: str, metrics: Optional[Dict[str, Any]] = None) -> None:
+    def mark_mcp_available(
+        self, project_name: str, metrics: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Mark MCP as available"""
         if project_name in self.endpoints:
             self.endpoints[project_name].status = "healthy"
@@ -132,11 +142,15 @@ class ServiceRegistry:
             self.endpoints[project_name].last_heartbeat = datetime.utcnow()
             logger.info(f"MCP marked available: {project_name}")
 
-    def mark_mcp_unavailable(self, project_name: str, reason: Optional[str] = None) -> None:
+    def mark_mcp_unavailable(
+        self, project_name: str, reason: Optional[str] = None
+    ) -> None:
         """Mark MCP as unavailable"""
         if project_name in self.endpoints:
             self.endpoints[project_name].status = "unavailable"
-            logger.warning(f"MCP marked unavailable: {project_name} ({reason or 'unknown'})")
+            logger.warning(
+                f"MCP marked unavailable: {project_name} ({reason or 'unknown'})"
+            )
 
     def mark_mcp_degraded(self, project_name: str) -> None:
         """Mark MCP as degraded but operational"""
@@ -163,7 +177,9 @@ class ServiceRegistry:
 
             # Trim history
             if len(self.health_history[project_name]) > self.max_history_size:
-                self.health_history[project_name] = self.health_history[project_name][-self.max_history_size:]
+                self.health_history[project_name] = self.health_history[project_name][
+                    -self.max_history_size :
+                ]
 
     def get_registry_snapshot(self) -> Dict[str, Any]:
         """Get current registry state"""
@@ -202,8 +218,12 @@ class ToolChainOrchestrator:
         """Route tool invocation to appropriate MCP"""
         chain_id = chain_context.get("chain_id") if chain_context else None
         position = chain_context.get("position_in_chain", 0) if chain_context else 0
-        total_length = chain_context.get("total_chain_length", 1) if chain_context else 1
-        upstream_results = chain_context.get("upstream_results", []) if chain_context else []
+        total_length = (
+            chain_context.get("total_chain_length", 1) if chain_context else 1
+        )
+        upstream_results = (
+            chain_context.get("upstream_results", []) if chain_context else []
+        )
 
         # Find tool location
         result = self.registry.find_tool(tool_name)
@@ -273,7 +293,9 @@ class ToolChainOrchestrator:
             priority = trigger.get("priority", "normal")
 
             # Check if cascade condition is met
-            should_cascade = self._check_cascade_condition(tool_result, trigger_condition)
+            should_cascade = self._check_cascade_condition(
+                tool_result, trigger_condition
+            )
 
             if should_cascade:
                 logger.info(
@@ -327,7 +349,9 @@ class FallbackManager:
 
     def __init__(self, service_registry: ServiceRegistry):
         self.registry = service_registry
-        self.fallback_mappings: Dict[str, List[str]] = {}  # tool_name -> [fallback_tools]
+        self.fallback_mappings: Dict[str, List[str]] = (
+            {}
+        )  # tool_name -> [fallback_tools]
         self.retry_queue: List[Dict[str, Any]] = []
         self.max_queue_size = 10000
 
@@ -366,9 +390,7 @@ class FallbackManager:
                 fallback_result = self.registry.find_tool(fallback_tool)
                 if fallback_result:
                     project_name, endpoint = fallback_result
-                    logger.warning(
-                        f"Using fallback: {fallback_tool} for {tool_name}"
-                    )
+                    logger.warning(f"Using fallback: {fallback_tool} for {tool_name}")
                     return {
                         "status": "fallback",
                         "primary_tool": tool_name,
@@ -411,11 +433,13 @@ class FallbackManager:
     def _queue_for_retry(self, tool_name: str, params: Dict[str, Any]) -> None:
         """Queue tool for retry"""
         if len(self.retry_queue) < self.max_queue_size:
-            self.retry_queue.append({
-                "tool_name": tool_name,
-                "params": params,
-                "queued_at": datetime.utcnow().isoformat(),
-            })
+            self.retry_queue.append(
+                {
+                    "tool_name": tool_name,
+                    "params": params,
+                    "queued_at": datetime.utcnow().isoformat(),
+                }
+            )
             logger.info(f"Tool queued for retry: {tool_name}")
 
     def get_retry_queue_status(self) -> Dict[str, Any]:
