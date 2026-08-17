@@ -153,6 +153,21 @@ pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
 pytest tests/ -v
 ```
 
+## Known Issues
+
+- **Per-query context discovery is stubbed, not real.** The tagline above
+  mentions "context discovery" — that refers to two different features.
+  `Orchestrator.discover_mcp_projects()` (MCP endpoint federation) is real
+  and does what the section above describes. But the `/discover` FastAPI
+  endpoint (`python/pystreammcp/api.py`) always returns an empty
+  `sources: []`, and the MCP server's `discover_context` tool handler
+  (`python/pystreammcp/mcp_server.py`) returns fabricated placeholder
+  results (`source_0`, `source_1`, ... with made-up relevance scores) —
+  neither is wired to a real data source yet.
+- The LangChain adapter has an unfinished integration point with the
+  discovery module (`python/pystreammcp/integrations/langchain.py`).
+- No open GitHub issues as of this pass.
+
 ## Rust workspace (not shipped)
 
 `core/` and `python/src/lib.rs` are an in-progress Rust workspace intended
