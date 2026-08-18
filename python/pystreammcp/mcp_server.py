@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 
 from .agent import Agent
+from .discovery import SourceRegistry
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,7 @@ class PyStreamMCPServer:
             optimization_strategy="balanced",
             max_tokens=2000,
         )
+        self.registry = SourceRegistry()
         self.tools = self._define_tools()
 
     def _define_tools(self) -> Dict[str, MCPTool]:
@@ -90,6 +92,30 @@ class PyStreamMCPServer:
                         },
                     },
                     "required": ["context"],
+                },
+            ),
+            "register_source": MCPTool(
+                name="pystreammcp_register_source",
+                description="Register a data source (name, description, tags) so pystreammcp_discover can find it",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Unique source name"},
+                        "description": {
+                            "type": "string",
+                            "description": "What this source contains, in plain text",
+                        },
+                        "type": {
+                            "type": "string",
+                            "description": "Source type, e.g. database, api, docs",
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional keyword tags",
+                        },
+                    },
+                    "required": ["name", "description"],
                 },
             ),
             "optimize": MCPTool(
@@ -145,6 +171,8 @@ class PyStreamMCPServer:
             return self._tool_query(arguments)
         elif name == "pystreammcp_discover":
             return self._tool_discover(arguments)
+        elif name == "pystreammcp_register_source":
+            return self._tool_register_source(arguments)
         elif name == "pystreammcp_optimize":
             return self._tool_optimize(arguments)
         else:
@@ -180,7 +208,12 @@ class PyStreamMCPServer:
         }
 
     def _tool_discover(self, args: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute discovery tool."""
+        """Execute discovery tool.
+
+        Ranks *registered* sources (see pystreammcp_register_source) by
+        real token overlap against `context`. Returns an empty list if
+        nothing is registered or nothing overlaps — never fabricated data.
+        """
         context = args.get("context")
         limit = args.get("limit", 10)
 
@@ -190,21 +223,33 @@ class PyStreamMCPServer:
                 "message": "context parameter required",
             }
 
-        # TODO: Implement actual discovery logic
-        sources = [
-            {
-                "name": f"source_{i}",
-                "relevance": 0.95 - (i * 0.05),
-                "type": "database",
-            }
-            for i in range(min(limit, 5))
-        ]
+        sources = self.registry.discover(context, limit=limit)
 
         return {
             "status": "success",
             "sources": sources,
             "total_sources": len(sources),
         }
+
+    def _tool_register_source(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a data source for discovery."""
+        name = args.get("name")
+        description = args.get("description")
+
+        if not name or not description:
+            return {
+                "status": "error",
+                "message": "name and description parameters required",
+            }
+
+        self.registry.register(
+            name=name,
+            description=description,
+            type=args.get("type", "unknown"),
+            tags=args.get("tags", []),
+        )
+
+        return {"status": "success", "name": name}
 
     def _tool_optimize(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Execute optimization tool."""

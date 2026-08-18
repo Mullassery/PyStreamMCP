@@ -163,10 +163,11 @@ class TestMCPServer:
         server = PyStreamMCPServer()
         tools = server.get_tools()
 
-        assert len(tools) == 3
+        assert len(tools) == 4
         tool_names = [t["name"] for t in tools]
         assert "pystreammcp_query" in tool_names
         assert "pystreammcp_discover" in tool_names
+        assert "pystreammcp_register_source" in tool_names
         assert "pystreammcp_optimize" in tool_names
 
     def test_mcp_server_query_tool(self):
@@ -218,7 +219,7 @@ class TestMCPServer:
         msg = {"type": "list_tools"}
         response = server.process_message(msg)
         assert response["type"] == "tools"
-        assert len(response["tools"]) == 3
+        assert len(response["tools"]) == 4
 
         # Info message
         msg = {"type": "get_info"}

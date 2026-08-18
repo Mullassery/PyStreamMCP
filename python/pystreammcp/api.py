@@ -13,6 +13,7 @@ import logging
 
 from .adapters import AdapterRegistry, AdapterConfig, FrameworkType, QueryResult
 from .agent import Agent
+from .discovery import SourceRegistry
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,15 @@ class DiscoveryResponse(BaseModel):
     status: str
     sources: List[Dict[str, Any]]
     total_sources: int
+
+
+class SourceRegistration(BaseModel):
+    """Register a data source for discovery."""
+
+    name: str = Field(..., description="Unique source name")
+    description: str = Field(..., description="What this source contains, in plain text")
+    type: str = Field("unknown", description="Source type, e.g. database, api, docs")
+    tags: List[str] = Field(default_factory=list, description="Optional keyword tags")
 
 
 class OptimizationRequest(BaseModel):
@@ -117,6 +127,7 @@ class PyStreamMCPAPI:
         self.title = title
         self.version = version
         self.agents: Dict[str, Agent] = {}
+        self.registry = SourceRegistry()
         self.app = self._create_app()
 
     def _create_app(self) -> FastAPI:
@@ -260,13 +271,45 @@ class PyStreamMCPAPI:
             }
 
         # Discovery Endpoints
+        @app.post("/sources", response_model=Dict[str, Any])
+        async def register_source(source: SourceRegistration):
+            """Register a data source so /discover can find it."""
+            self.registry.register(
+                name=source.name,
+                description=source.description,
+                type=source.type,
+                tags=source.tags,
+            )
+            return {"status": "success", "name": source.name}
+
+        @app.delete("/sources/{name}")
+        async def unregister_source(name: str):
+            """Remove a registered data source."""
+            removed = self.registry.unregister(name)
+            if not removed:
+                raise HTTPException(status_code=404, detail=f"Source {name} not found")
+            return {"status": "success", "name": name}
+
+        @app.get("/sources")
+        async def list_sources():
+            """List all registered data sources."""
+            return {
+                "status": "success",
+                "sources": [
+                    {"name": s.name, "type": s.type, "tags": s.tags}
+                    for s in self.registry.list_sources()
+                ],
+            }
+
         @app.post("/discover", response_model=DiscoveryResponse)
         async def discover(request: DiscoveryRequest):
-            """Discover relevant data sources."""
-            agent = self._get_agent(request.agent_id)
+            """Discover data sources relevant to `context`.
 
-            # TODO: Implement discovery logic
-            sources = []
+            Ranks *registered* sources (see POST /sources) by real token
+            overlap against `context`. Returns an empty list if nothing is
+            registered or nothing overlaps — never a fabricated result.
+            """
+            sources = self.registry.discover(request.context)
 
             return {
                 "status": "success",

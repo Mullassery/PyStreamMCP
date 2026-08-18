@@ -12,7 +12,7 @@ __version__ = "3.2.0"
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
 from .context import Context, ContextType, ContextWindow
-from .discovery import Discovery, DiscoveredSource, SourceType
+from .discovery import Discovery, DiscoveredSource, SourceType, SourceRegistry, DataSource
 
 # Optimization imports
 try:
@@ -79,6 +79,8 @@ __all__ = [
     "Discovery",
     "DiscoveredSource",
     "SourceType",
+    "SourceRegistry",
+    "DataSource",
     # Legacy optimization (optional, phase 1-2)
     *((["OptimizationStrategy"]) if OptimizationStrategy else []),
     *((["StrategyType"]) if StrategyType else []),

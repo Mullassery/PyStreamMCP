@@ -21,6 +21,7 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.discovery import SourceRegistry
 
 
 class LangchainAdapter(AgentFrameworkAdapter):
@@ -30,11 +31,15 @@ class LangchainAdapter(AgentFrameworkAdapter):
     Supports both sync and async execution.
     """
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(self, config: AdapterConfig, registry: Optional[SourceRegistry] = None):
         """Initialize Langchain adapter.
 
         Args:
             config: Adapter configuration
+            registry: Optional shared SourceRegistry (e.g. the same one used
+                by a PyStreamMCPAPI or PyStreamMCPServer instance, so sources
+                registered on one surface are discoverable from another). A
+                new, empty registry is created if not given.
         """
         super().__init__(config)
         self.agent = Agent(
@@ -43,6 +48,7 @@ class LangchainAdapter(AgentFrameworkAdapter):
             optimization_strategy=config.optimization_strategy,
             max_tokens=config.max_tokens,
         )
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def query(
         self, text: str, intent: str = "retrieve", **kwargs
@@ -92,6 +98,11 @@ class LangchainAdapter(AgentFrameworkAdapter):
     def discover(self, context: str, **kwargs) -> Dict[str, Any]:
         """Discover relevant data sources for context.
 
+        Ranks sources registered on `self.registry` (see
+        `SourceRegistry.register` / pass a shared registry to `__init__`)
+        by real token overlap against `context`. Returns an empty list if
+        nothing is registered or nothing overlaps — never fabricated data.
+
         Args:
             context: Context for discovery
             **kwargs: Additional arguments
@@ -99,17 +110,10 @@ class LangchainAdapter(AgentFrameworkAdapter):
         Returns:
             Dictionary with discovered sources
         """
-        # TODO: Integrate with discovery module
+        sources = self.registry.discover(context, limit=kwargs.get("limit", 10))
         return {
-            "sources": [
-                {
-                    "name": "data_warehouse",
-                    "relevance": 0.95,
-                    "type": "database",
-                    "estimated_tokens": 500,
-                }
-            ],
-            "total_sources": 1,
+            "sources": sources,
+            "total_sources": len(sources),
             "search_context": context,
         }
 

@@ -53,7 +53,12 @@ class TestLangchainAdapter:
         assert result.execution_time_ms > 0
 
     def test_adapter_discover(self):
-        """Test discovery through adapter."""
+        """Test discovery through adapter.
+
+        discover() ranks *registered* sources by real token overlap
+        against the context -- with nothing registered it returns an
+        empty list, not a fabricated result.
+        """
         config = AdapterConfig(
             framework=FrameworkType.LANGCHAIN,
             agent_id="discover_test",
@@ -61,6 +66,11 @@ class TestLangchainAdapter:
         )
         adapter = LangchainAdapter(config)
 
+        assert adapter.discover("high-value customers")["sources"] == []
+
+        adapter.registry.register(
+            "customers_db", "high-value customer revenue and purchase history"
+        )
         result = adapter.discover("high-value customers")
 
         assert "sources" in result
@@ -216,6 +226,7 @@ class TestWorkflows:
             optimization_strategy="token_efficient",
         )
         adapter = LangchainAdapter(config)
+        adapter.registry.register("customers_db", "customers data and LTV history")
 
         # Step 1: Discover
         discovery = adapter.discover("customers data")
