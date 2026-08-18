@@ -27,7 +27,11 @@ pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
 pip install "PyStreamMCP[all-integrations]" # every framework adapter
 ```
 
-Requires Python 3.9+.
+Requires Python 3.9+ for the core SDK (`Agent`, `SourceRegistry`,
+`Orchestrator`). The `mcp` and `semantic-kernel` extras require Python
+3.10+ — their upstream packages don't publish Python 3.9-compatible
+releases, so `pip install` for those extras will fail on 3.9. CI tests
+3.10, 3.11, and 3.12 only; 3.9 is not covered by CI.
 
 ## Quick start
 
@@ -179,6 +183,10 @@ has its own network boundary.
 pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
 pytest tests/ -v
 ```
+
+Note: this exact command needs Python 3.10+ (see [Install](#install)); on
+3.9 the `mcp` and `semantic-kernel` extras fail to resolve, so drop them
+from the extras list if you're on 3.9.
 
 ## Known Issues
 
