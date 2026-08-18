@@ -56,6 +56,33 @@ for a full runnable walkthrough, including framework adapters for
 LangChain, LlamaIndex, CrewAI, Semantic Kernel, PydanticAI, and Haystack
 under [`pystreammcp.integrations`](python/pystreammcp/integrations/).
 
+## Data source discovery
+
+`SourceRegistry` (`pystreammcp.SourceRegistry`) ranks *registered* data
+sources by real word-overlap relevance to a query — not a fabricated or
+hardcoded result:
+
+```python
+from pystreammcp import SourceRegistry
+
+registry = SourceRegistry()
+registry.register(
+    "orders_db",
+    description="customer order history and revenue by quarter",
+    type="database",
+    tags=["orders", "revenue"],
+)
+
+results = registry.discover("customer revenue by quarter")
+# [{"name": "orders_db", "type": "database", "relevance": 0.4444, "matched_terms": [...]}]
+```
+
+The same registry backs `POST /discover` (REST), the `pystreammcp_discover`
+MCP tool, and `LangchainAdapter.discover()` — register sources once via
+`POST /sources` / `pystreammcp_register_source` / `registry.register()`,
+then discover against them from any of the three surfaces. This is a
+simple Jaccard token-overlap heuristic, not semantic/embedding search.
+
 ## MCP orchestration & federation
 
 `Orchestrator` (`pystreammcp.Orchestrator`) discovers and routes across
@@ -155,17 +182,14 @@ pytest tests/ -v
 
 ## Known Issues
 
-- **Per-query context discovery is stubbed, not real.** The tagline above
-  mentions "context discovery" — that refers to two different features.
-  `Orchestrator.discover_mcp_projects()` (MCP endpoint federation) is real
-  and does what the section above describes. But the `/discover` FastAPI
-  endpoint (`python/pystreammcp/api.py`) always returns an empty
-  `sources: []`, and the MCP server's `discover_context` tool handler
-  (`python/pystreammcp/mcp_server.py`) returns fabricated placeholder
-  results (`source_0`, `source_1`, ... with made-up relevance scores) —
-  neither is wired to a real data source yet.
-- The LangChain adapter has an unfinished integration point with the
-  discovery module (`python/pystreammcp/integrations/langchain.py`).
+- **Per-query context discovery** now has a real implementation
+  (`pystreammcp.discovery.SourceRegistry`): register data sources (name,
+  description, type, tags), and `/discover` (REST), `pystreammcp_discover`
+  (MCP), and `LangchainAdapter.discover()` all rank *registered* sources
+  by real Jaccard token-overlap against the query — an empty registry or
+  a non-matching context returns an empty list, not fabricated data. This
+  is a simple word-overlap heuristic, not semantic/embedding search — if
+  you need that, wrap `SourceRegistry` with your own similarity scoring.
 - No open GitHub issues as of this pass.
 
 ## Rust workspace (not shipped)
