@@ -190,6 +190,9 @@ from the extras list if you're on 3.9.
 
 ## Known Issues
 
+- **No end-to-end tests for LLM failure states** (rate limits, context-window overruns, malformed model JSON) — no fixtures or tests simulate these; only happy-path unit tests exist, and there's no `except RateLimitError`/`APIError` handling anywhere in `python/pystreammcp/*.py`.
+- **No Pydantic validation for the MCP tool protocol itself** — `mcp_server.py`'s `MCPTool.input_schema` is a raw `Dict[str, Any]`, and `call_tool`/`_tool_query` only do manual `if not text` checks, no schema validation. (Pydantic *is* used for the separate REST layer in `api.py` — this gap is specific to the MCP tool-call path.)
+- **No shipped mock MCP server / mock LLM fixture** for downstream testing — no `conftest.py` exists; the only mock (`MockAdapter` in `tests/test_sprint1_foundation.py`) is test-local, not exported or reusable.
 - **Per-query context discovery** now has a real implementation
   (`pystreammcp.discovery.SourceRegistry`): register data sources (name,
   description, type, tags), and `/discover` (REST), `pystreammcp_discover`
