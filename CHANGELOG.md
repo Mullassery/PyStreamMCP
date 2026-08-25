@@ -2,6 +2,43 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [3.3.0] - 2026-08-25
+
+### Added
+- **Pydantic validation for the MCP tool protocol**: each of the four MCP
+  tools (`pystreammcp_query`/`_discover`/`_register_source`/`_optimize`)
+  now has a Pydantic arg model (`mcp_server.py`), validated in `call_tool`
+  before dispatch. Wrong types, invalid enum values, and missing required
+  fields now return a structured `validation_errors` response instead of
+  reaching the handler unchecked (previously only `text`/`context`/
+  `name`+`description` had manual `if not x` checks; `max_tokens`, `limit`,
+  `strategy`, `intent`, `type`, `tags` had none). `MCPTool.input_schema` is
+  now generated from those same models via `model_json_schema()`, so the
+  advertised schema and the schema actually enforced can't drift apart.
+- **Failure isolation in the MCP tool-call path**: `call_tool` and
+  `process_message` now catch exceptions raised during tool execution
+  (including from a real LLM/framework adapter wired in via the new
+  `PyStreamMCPServer(agent=...)` constructor param) and return a
+  structured `{"status": "error", "error_type": ..., "message": ...}`
+  response instead of propagating uncaught.
+- **`pystreammcp.testing`**: exports `MockAdapter` (promoted from the old
+  test-local copy in `tests/test_sprint1_foundation.py`),
+  `RateLimitError`/`ContextWindowExceededError`/`MalformedModelResponseError`,
+  and `FailingAgent`/`FailingAdapter` failure-injection stand-ins, for
+  downstream projects' own test suites.
+- **`tests/conftest.py`**: centralizes the `sys.path` setup 5 test files
+  were each duplicating, and exposes `mock_adapter`/`failing_agent`/
+  `failing_adapter`/`llm_failure` pytest fixtures.
+
+Closes the three gaps listed under "Known Issues" in the README as of
+3.2.0: no Pydantic validation for the MCP tool protocol, no shipped mock
+fixtures, no tests for LLM failure states. On that last one: PyStreamMCP's
+own code never calls a model provider directly, so there's no
+`except RateLimitError` call site to add here — what's now tested is that
+the MCP tool dispatcher stays resilient when whatever it's orchestrating
+fails, which is the part of that gap actually within this package's
+boundary. See `tests/test_mcp_server_resilience.py`.
+
 ## [3.2.0] - 2026-08-16
 
 ### Fixed (Correctness & Security)

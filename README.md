@@ -190,9 +190,33 @@ from the extras list if you're on 3.9.
 
 ## Known Issues
 
-- **No end-to-end tests for LLM failure states** (rate limits, context-window overruns, malformed model JSON) — no fixtures or tests simulate these; only happy-path unit tests exist, and there's no `except RateLimitError`/`APIError` handling anywhere in `python/pystreammcp/*.py`.
-- **No Pydantic validation for the MCP tool protocol itself** — `mcp_server.py`'s `MCPTool.input_schema` is a raw `Dict[str, Any]`, and `call_tool`/`_tool_query` only do manual `if not text` checks, no schema validation. (Pydantic *is* used for the separate REST layer in `api.py` — this gap is specific to the MCP tool-call path.)
-- **No shipped mock MCP server / mock LLM fixture** for downstream testing — no `conftest.py` exists; the only mock (`MockAdapter` in `tests/test_sprint1_foundation.py`) is test-local, not exported or reusable.
+- ~~No end-to-end tests for LLM failure states~~ **Fixed.** PyStreamMCP's
+  own code never calls a model provider directly (no code path here to add
+  `except RateLimitError`/`APIError` handling *to* — see `AgentFrameworkAdapter`
+  below), so what's now tested is the part this repo actually owns: that the
+  MCP tool-call path doesn't crash when whatever it's orchestrating fails.
+  `pystreammcp.testing` exports `RateLimitError`, `ContextWindowExceededError`,
+  `MalformedModelResponseError`, and `FailingAgent`/`FailingAdapter` stand-ins
+  that raise them; `mcp_server.py`'s `call_tool`/`process_message` now catch
+  exceptions raised during tool execution and return a structured
+  `{"status": "error", "error_type": ..., "message": ...}` response instead
+  of propagating uncaught. See `tests/test_mcp_server_resilience.py`.
+- ~~No Pydantic validation for the MCP tool protocol itself~~ **Fixed.**
+  Each of the four MCP tools now has a Pydantic arg model
+  (`QueryToolArgs`/`DiscoverToolArgs`/`RegisterSourceToolArgs`/`OptimizeToolArgs`
+  in `mcp_server.py`) validated in `call_tool` before dispatch (wrong types,
+  invalid enum values, and missing required fields all now return a
+  structured `validation_errors` response instead of reaching the handler
+  unchecked), and `MCPTool.input_schema` is generated from those same models
+  via `model_json_schema()` — the advertised schema and the schema actually
+  enforced can no longer drift apart the way a hand-duplicated dict could.
+- ~~No shipped mock MCP server / mock LLM fixture~~ **Fixed.** Added
+  `tests/conftest.py` (centralizing the `sys.path` setup 5 test files were
+  duplicating, plus `mock_adapter`/`failing_agent`/`failing_adapter`/
+  `llm_failure` pytest fixtures) and `pystreammcp/testing.py`, exporting
+  `MockAdapter` (promoted from the old test-local copy) and the
+  failure-injection stand-ins above for downstream projects' own test
+  suites to import directly.
 - **Per-query context discovery** now has a real implementation
   (`pystreammcp.discovery.SourceRegistry`): register data sources (name,
   description, type, tags), and `/discover` (REST), `pystreammcp_discover`
