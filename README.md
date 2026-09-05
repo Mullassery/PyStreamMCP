@@ -237,5 +237,4 @@ from the Python package described in this README.
 
 ## License
 
-Proprietary License — Free to use with explicit attribution. See
-[LICENSE](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
