@@ -10,6 +10,18 @@ orchestration/federation layer for coordinating multiple MCP endpoints.
 Pure Python — `pip install` just works, no Rust toolchain or compiler
 required.
 
+## Use cases
+
+- **Giving an AI agent a query-planning layer over multiple data
+  sources**, exposed as real MCP tools rather than hand-rolled per-agent
+  glue code.
+- **Coordinating multiple MCP endpoints** through the event-driven
+  orchestration/federation layer instead of wiring each one separately.
+- **Tracking token-cost optimization** across agent queries.
+- **Not yet a good fit for:** anything depending on the Rust workspace —
+  see [Rust workspace (not shipped)](#rust-workspace-not-shipped) below;
+  the published package is pure Python only.
+
 ## Install
 
 ```bash
