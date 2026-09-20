@@ -2,6 +2,56 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- Relicensed from Proprietary to Apache License 2.0 (`LICENSE`,
+  `pyproject.toml`'s `license` field); `CONTRIBUTING.md` still said "MIT"
+  at the bottom from an even earlier state — fixed to say Apache-2.0.
+- `pyproject.toml` classifier downgraded from `Development Status :: 5 -
+  Production/Stable` to `4 - Beta` — not honest given the known-broken
+  CLI, fabricated orchestration-adapter discovery, and non-compiling Rust
+  workspace documented in `ROADMAP_HONEST.md`.
+- Replaced the broken `Dockerfile` (invalid `"""` comment syntax at the
+  top, built the non-compiling Rust workspace via `maturin`, and its
+  runtime `CMD` never actually started a server since `pystreammcp.api`
+  has no `__main__` guard) with a working single-stage pure-Python image
+  matching the real setuptools-based package.
+- `.github/workflows/ci.yml`: bumped `actions/checkout` v4→v7 and
+  `actions/setup-python` v4→v7 (flagged by `actionlint`); added
+  non-blocking `lint` (ruff) and `security-audit` (pip-audit) jobs.
+- Archived two actively-misleading docs to `docs/archive/`: root
+  `ARCHITECTURE.md` (described the unshipped, non-compiling Rust
+  workspace's cross-project integrations as real, closed with a
+  fabricated "target met" metrics claim) and `docs/PRODUCT_VISION.md`
+  (claimed a nonexistent "MCP 2.0 Platform", fixed port, and "Production
+  Ready" status inconsistent with this repo). Replaced the previously
+  content-free `docs/ARCHITECTURE.md` template with a real architecture
+  doc.
+
+### Added
+- `ROADMAP_HONEST.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+  `.github/pull_request_template.md`.
+- `!ROADMAP_HONEST.md` negation in `.gitignore` — its broad `ROADMAP_*`
+  "don't expose internal strategy docs" pattern was silently matching
+  this file too.
+
+### Found, not fixed (see `ROADMAP_HONEST.md` for full detail)
+- `orchestration/{temporal,airflow,nocode_rpa}.py`'s discovery
+  activities/operators return hardcoded fake `source_0..source_4` results
+  instead of calling the real `SourceRegistry`.
+- The `pystreammcp` CLI (`cli.py`) is unreachable dead code: no
+  `[project.scripts]` entry, and its own `__main__` guard calls a
+  different, smaller legacy command set than the Click group it appears
+  to define.
+- `pip-audit` found 7 known CVEs in transitive dependencies (`werkzeug`
+  via the `api` extra's `flask`, `nltk` via `llama-index`), unpinned.
+- 951 pre-existing `ruff` findings, not previously run in CI.
+- Rust workspace confirmed to fail with 43 compile errors
+  (`cargo build --workspace`); two Rust test files
+  (`tests/metadata_filtering_tests.rs`, `tests/selective_retrieval_tests.rs`)
+  contain zero assertions.
+
 ## [3.3.0] - 2026-08-25
 
 ### Added
@@ -166,6 +216,7 @@ None - fully backward compatible
 - OKF native support
 - StatGuardian integration
 
-[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/Mullassery/PyStreamMCP/compare/v3.2.0...v3.3.0
 [1.1.0]: https://github.com/Mullassery/PyStreamMCP/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Mullassery/PyStreamMCP/releases/tag/v1.0.0

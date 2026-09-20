@@ -183,11 +183,31 @@ events" fallback.
 
 ### Network defaults
 
-The HTTP/CLI servers (`pystreammcp server`, `PyStreamMCPServer`,
+The HTTP servers (`PyStreamMCPServer` / `create_flask_app()`,
 `PyStreamMCPAPI.run`) bind to `127.0.0.1` (localhost-only) by default.
-Pass `--host 0.0.0.0` (CLI) or `host="0.0.0.0"` explicitly if you need the
-server reachable from other hosts — e.g. inside a container that already
-has its own network boundary.
+Pass `host="0.0.0.0"` explicitly if you need the server reachable from
+other hosts — e.g. inside a container that already has its own network
+boundary.
+
+**Note on the `pystreammcp` CLI**: `python/pystreammcp/cli.py` defines a
+Click CLI (`query`/`server`/`version`/`dashboard` subcommands) — but it is
+**dead code, unreachable two different ways**: (1) `pyproject.toml` has no
+`[project.scripts]` entry for it, so `pip install PyStreamMCP` gives you
+no `pystreammcp` command at all (verified: `which pystreammcp` → not
+found after a clean install); (2) even running the module directly
+(`python -m pystreammcp.cli`) does not reach the Click group — the file's
+own `if __name__ == "__main__":` guard calls a second, separate,
+hand-rolled `main()` further down the same file with a *different and
+smaller* command set (`query`/`create-agent`/`metrics`/`help` — no
+`server`, `version`, or `dashboard`). Verified directly: `python -m
+pystreammcp.cli version` → `{"error": "Unknown command: version"}`;
+`python -m pystreammcp.cli query "test"` → works (hits the legacy
+interface). So the only currently-working CLI-shaped entry point is
+`python -m pystreammcp.cli query <text> [intent] [agent_id]` (also
+`create-agent`, `metrics`, `help`). To actually run the server, use it as
+a library: `PyStreamMCPAPI().run(host=..., port=...)`. See
+[`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2 for the full detail and why
+this isn't a one-line fix.
 
 ## Testing
 
@@ -237,7 +257,33 @@ from the extras list if you're on 3.9.
   a non-matching context returns an empty list, not fabricated data. This
   is a simple word-overlap heuristic, not semantic/embedding search — if
   you need that, wrap `SourceRegistry` with your own similarity scoring.
+- **The `pystreammcp` CLI is dead code** (see [Network defaults](#network-defaults)
+  above and [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2) — not
+  installed, and its own `__main__` guard doesn't reach the documented
+  `server`/`version`/`dashboard` commands. Not fixed this pass.
+- **Three orchestration-tool discovery adapters
+  (`orchestration/temporal.py`, `airflow.py`, `nocode_rpa.py`) return
+  fabricated results** instead of calling the real `SourceRegistry` — see
+  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.1. Not fixed this pass.
+- `pip-audit` (run 2026-09-20 against the `dev,api,mcp,langchain,
+  llamaindex,semantic-kernel` extras) found 7 known CVEs in transitive
+  dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`) — see
+  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §4. Not fixed this pass.
 - No open GitHub issues as of this pass.
+
+## Documentation
+
+- [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) — full, unhedged status:
+  what's tested, what's fabricated/broken, technical debt, what's
+  explicitly not built.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the shipped
+  package is structured, with a diagram.
+- [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md) — the OKF (Open Knowledge
+  Format) catalog/discovery/query-planner feature (real, tested, not
+  mentioned elsewhere in this README).
+- [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md),
+  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md),
+  [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Rust workspace (not shipped)
 

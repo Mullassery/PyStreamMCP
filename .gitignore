@@ -49,6 +49,10 @@ roadmap_*
 *_roadmap.md
 STRATEGY.md
 STRATEGIC_*
+# ROADMAP_HONEST.md is the deliberately-public, honest status/roadmap doc —
+# exempt it from the broad ROADMAP_* pattern above (it previously silently
+# matched, which would have made `git add ROADMAP_HONEST.md` a no-op).
+!ROADMAP_HONEST.md
 
 # Developer docs (DO NOT EXPOSE)
 ARCHITECTURE_NOTES.md

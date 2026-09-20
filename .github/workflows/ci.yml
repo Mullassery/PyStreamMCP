@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -43,9 +43,9 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -54,3 +54,54 @@ jobs:
 
       - name: Run pytest
         run: pytest tests/ -v --tb=short
+
+  # Non-blocking: the codebase currently has ~950 pre-existing ruff
+  # findings (mostly typing.Dict/List/Optional -> dict/list/X|None
+  # modernization, plus a handful of real issues — see ROADMAP_HONEST.md
+  # "Technical debt"). continue-on-error keeps this visible without
+  # blocking merges until that backlog is worked down; promote to
+  # blocking once the count is at/near zero.
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Run ruff check
+        run: ruff check python/ tests/
+
+  # Dependency vulnerability scan. Added in this pass; running it locally
+  # (pip-audit against the [dev,api,mcp,langchain,llamaindex,semantic-kernel]
+  # extras) found 7 known CVEs today: werkzeug 3.1.1 (pulled in by the
+  # `api` extra's flask>=2.3.0 — PYSEC-2026-2046/2044/2320, fixed in
+  # 3.1.4/3.1.5/3.1.6) and nltk 3.10.3 (pulled in transitively by
+  # llama-index — PYSEC-2026-3740). Neither is pinned in pyproject.toml,
+  # so `pip install` today can resolve a vulnerable version. Not fixed in
+  # this pass — see ROADMAP_HONEST.md. continue-on-error until that's
+  # triaged so this job doesn't immediately fail every PR.
+  security-audit:
+    name: Dependency audit (pip-audit)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install package + pip-audit
+        run: |
+          pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
+          pip install pip-audit
+
+      - name: Run pip-audit
+        run: pip-audit

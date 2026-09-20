@@ -19,7 +19,7 @@ dependencies = [
     "toml>=0.10; python_version < \"3.11\"",
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",

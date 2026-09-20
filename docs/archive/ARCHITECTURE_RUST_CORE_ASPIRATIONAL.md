@@ -1,3 +1,11 @@
+> **Archived 2026-09-20.** Kept for reference only. Describes the
+> unshipped `core`/`python` Rust workspace's cross-project integration
+> points as if real and enforced, and its "Success Metrics" section
+> states targets as met without evidence. The workspace does not compile
+> (43 errors, verified) and is not part of the published PyPI package.
+> See [`../ARCHITECTURE.md`](../ARCHITECTURE.md) for the current,
+> accurate architecture doc and [`../../ROADMAP_HONEST.md`](../../ROADMAP_HONEST.md) §2.4.
+
 # PyStreamMCP Architecture & Ecosystem Boundaries
 
 ## Mission
