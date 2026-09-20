@@ -59,29 +59,58 @@ Non-trivial because it changes the constructor signature of all three
 classes (need a registry passed in or looked up) — left for a dedicated
 follow-up.
 
-### 2.2. `pystreammcp` CLI is not actually installable
+### 2.2. `pystreammcp` CLI is dead code — unreachable two independent ways
 
-`python/pystreammcp/cli.py` defines a full Click CLI (`query`, `server`,
-`version`, `dashboard` subcommands) with a `main()` at line 181 and an
-`if __name__ == "__main__"` guard at line 284. **`pyproject.toml` has no
-`[project.scripts]` entry pointing to it.** Verified directly: after
-`pip install -e .` into a clean venv, `which pystreammcp` → not found.
+`python/pystreammcp/cli.py` actually contains **two different, conflicting
+CLI implementations** in one file:
+
+1. A Click-based `@click.group() def cli()` (top of the file) with
+   `query`/`server`/`version`/`dashboard` subcommands (`server` at line
+   84, `version` at line 92, `dashboard` at line 103).
+2. A second, separate, hand-rolled `sys.argv`-parsing `main()` (line 181)
+   with a *different, smaller* command set:
+   `query`/`create-agent`/`metrics`/`help` — no `server`, `version`, or
+   `dashboard` at all.
+
+Both are unreachable as shipped:
+
+- **No installed command at all**: `pyproject.toml` has no
+  `[project.scripts]` entry. Verified: `pip install -e .` into a clean
+  venv, then `which pystreammcp` → not found.
+- **`python -m pystreammcp.cli` doesn't even reach the Click group**: the
+  file's own `if __name__ == "__main__":` guard (line 284) calls the
+  *legacy* `main()`, not the Click `cli()` group. Verified directly:
+  `python -m pystreammcp.cli version` → `{"error": "Unknown command:
+  version"}` (proves it hit the legacy interface, not Click — Click would
+  have printed `PyStreamMCP v3.3.0`). `python -m pystreammcp.cli query
+  "test query"` does work (hits the legacy interface) and returns a real
+  `Agent.query()` result.
+
+Net effect: the entire Click-based `server`/`version`/`dashboard`
+implementation (lines ~1-124) is **dead code that nothing in the codebase
+ever invokes** — not an installed script, not the module's own
+`__main__` guard, not imported and called anywhere else (checked: no
+other file imports `cli.cli`). Only `query`/`create-agent`/`metrics`/
+`help` via the legacy `main()` actually work, and only when run as
+`python -m pystreammcp.cli <command>` from a source checkout.
 
 This matters because the README (pre-this-pass) referenced `pystreammcp
 server` as one of three ways to run the HTTP server, implying it's an
-installed command — it is not. Fixed in this pass: the README wording now
-says the CLI exists in source but isn't wired up as an installed command.
+installed, working command — it was neither. Fixed in this pass: README
+now describes the actual, verified-working entry points.
 
-**Not fixed**: adding `pystreammcp = "pystreammcp.cli:main"` to
-`[project.scripts]` is not a safe one-line fix, because `cli.py` line 9
-unconditionally does `from pystreammcp.api import PyStreamMCPAPI`, and
-`api.py` line 8 unconditionally does `from fastapi import FastAPI, ...`.
-`fastapi` is only in the optional `api` extra — so a plain `pip install
-PyStreamMCP` (no extras) would get an installed `pystreammcp` command
-that immediately raises `ModuleNotFoundError: No module named 'fastapi'`
-on any invocation, including `pystreammcp version`. Needs the `api` import
-moved inside the `server` command function (lazy import) before an entry
-point can be added safely. Left for a dedicated follow-up.
+**Not fixed**: making the Click CLI reachable requires (a) deciding which
+of the two implementations to keep (the legacy one has real working
+callers in `scripts/setup_shortcuts.sh`'s aliases, which assume a
+`pystreammcp dashboard`/`pystreammcp query` command exists on `PATH` and
+would currently fail), (b) adding `[project.scripts]`, and (c) — if
+keeping the Click version — lazy-importing `pystreammcp.api` inside the
+`server` command function instead of at module top, since `cli.py` line 9
+unconditionally does `from pystreammcp.api import PyStreamMCPAPI` and
+`api.py` line 8 unconditionally does `from fastapi import FastAPI, ...`;
+`fastapi` is only in the optional `api` extra, so a naively-wired
+entry point would `ModuleNotFoundError` on `pystreammcp version` for
+anyone who installed without `[api]`. Left for a dedicated follow-up.
 
 ### 2.3. `Dockerfile` was fundamentally broken (fixed this pass)
 
