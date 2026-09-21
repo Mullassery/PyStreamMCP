@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import os
 from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from pystreammcp import Agent
 from .webhook_router import EventRouter, MCPEndpoint, Tool
 from .webhook_handlers import OrchestrationWebhookHandlers
@@ -194,7 +194,7 @@ class PyStreamMCPServer:
             "secret_key": secret_key,
             "headers": headers or {},
             "active": True,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         return {
             "status": "success",
@@ -342,7 +342,7 @@ class PyStreamMCPServer:
             "status": "success",
             "orchestration": status,
             "webhooks": len(self.webhook_configs),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 

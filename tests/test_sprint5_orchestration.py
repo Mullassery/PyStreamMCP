@@ -15,6 +15,7 @@ from pystreammcp.orchestration.airflow import (
 from pystreammcp.orchestration.nocode_rpa import (
     N8nWebhookTrigger, PowerAutomateConnector, RoboticProcessAdapter,
 )
+from pystreammcp.discovery import SourceRegistry
 
 
 class TestTemporalIntegration:
@@ -34,8 +35,8 @@ class TestTemporalIntegration:
         assert result["cost_reduction_percent"] > 0
         assert result["baseline_tokens"] > result["optimized_tokens"]
 
-    def test_temporal_discovery_activity(self):
-        """Test discovery activity."""
+    def test_temporal_discovery_activity_returns_nothing_without_registration(self):
+        """An untouched registry must not fabricate source_0..source_4."""
         activity = TemporalDiscoveryActivity(
             agent_id="temporal_test",
             context="test context",
@@ -43,8 +44,26 @@ class TestTemporalIntegration:
         result = activity.execute()
 
         assert result["status"] == "completed"
-        assert len(result["sources"]) > 0
-        assert "relevance" in result["sources"][0]
+        assert result["sources"] == []
+        assert result["total_sources"] == 0
+
+    def test_temporal_discovery_activity_finds_real_registered_source(self):
+        """Discovery must return the actual registered source, not a fake one."""
+        registry = SourceRegistry()
+        registry.register("orders_db", "customer revenue and order data")
+
+        activity = TemporalDiscoveryActivity(
+            agent_id="temporal_test",
+            context="customer revenue",
+            registry=registry,
+        )
+        result = activity.execute()
+
+        assert result["status"] == "completed"
+        assert result["total_sources"] == 1
+        assert result["sources"][0]["name"] == "orders_db"
+        assert 0.0 < result["sources"][0]["relevance"] <= 1.0
+        assert not any(s["name"].startswith("source_") for s in result["sources"])
 
     def test_temporal_workflow_definition(self):
         """Test workflow definition."""
@@ -102,8 +121,8 @@ class TestAirflowIntegration:
         assert result["baseline_tokens"] > 0
         assert result["cost_reduction_percent"] > 0
 
-    def test_discovery_operator(self):
-        """Test discovery operator."""
+    def test_discovery_operator_returns_nothing_without_registration(self):
+        """An untouched registry must not fabricate source_0..source_4."""
         operator = PyStreamMCPDiscoveryOperator(
             task_id="discover_task",
             agent_id="airflow_agent",
@@ -114,7 +133,28 @@ class TestAirflowIntegration:
         result = operator.execute(context)
 
         assert result["task_id"] == "discover_task"
-        assert len(result["sources"]) > 0
+        assert result["sources"] == []
+        assert result["total_sources"] == 0
+
+    def test_discovery_operator_finds_real_registered_source(self):
+        """Discovery must return the actual registered source, not a fake one."""
+        registry = SourceRegistry()
+        registry.register("orders_db", "customer revenue and order data")
+
+        operator = PyStreamMCPDiscoveryOperator(
+            task_id="discover_task",
+            agent_id="airflow_agent",
+            context_text="customer revenue",
+            registry=registry,
+        )
+
+        context = {"execution_date": "2024-01-01"}
+        result = operator.execute(context)
+
+        assert result["task_id"] == "discover_task"
+        assert result["total_sources"] == 1
+        assert result["sources"][0]["name"] == "orders_db"
+        assert not any(s["name"].startswith("source_") for s in result["sources"])
 
     def test_optimize_operator(self):
         """Test optimization operator."""
@@ -181,13 +221,27 @@ class TestN8nIntegration:
         assert result["query_id"] is not None
         assert result["cost_reduction"] > 0
 
-    def test_n8n_webhook_discovery(self):
-        """Test n8n discovery webhook."""
+    def test_n8n_webhook_discovery_returns_nothing_without_registration(self):
+        """An untouched registry must not fabricate source_0..source_4."""
         trigger = N8nWebhookTrigger()
         result = trigger.handle_discovery({"context": "test"})
 
         assert result["success"] is True
-        assert len(result["sources"]) > 0
+        assert result["sources"] == []
+        assert result["total_sources"] == 0
+
+    def test_n8n_webhook_discovery_finds_real_registered_source(self):
+        """Discovery must return the actual registered source, not a fake one."""
+        registry = SourceRegistry()
+        registry.register("orders_db", "customer revenue and order data")
+        trigger = N8nWebhookTrigger(registry=registry)
+
+        result = trigger.handle_discovery({"context": "customer revenue"})
+
+        assert result["success"] is True
+        assert result["total_sources"] == 1
+        assert result["sources"][0]["name"] == "orders_db"
+        assert not any(s["name"].startswith("source_") for s in result["sources"])
 
     def test_n8n_webhook_missing_params(self):
         """Test n8n webhook error handling."""
@@ -272,11 +326,15 @@ class TestOrchestrationWorkflows:
 
     def test_temporal_multi_step_workflow(self):
         """Test multi-step Temporal workflow."""
-        workflow = TemporalWorkflow("multistep", "agent_1")
+        registry = SourceRegistry()
+        registry.register("data_lake", "raw data context for analytics")
+        workflow = TemporalWorkflow("multistep", "agent_1", registry=registry)
 
-        # Step 1: Discover
+        # Step 1: Discover -- must find the real registered source, not
+        # a fabricated one.
         sources = workflow.discover_sources("data context")
-        assert sources["total_sources"] > 0
+        assert sources["total_sources"] == 1
+        assert sources["sources"][0]["name"] == "data_lake"
 
         # Step 2: Optimize
         optimized = workflow.optimize_query("Complex query")
@@ -294,12 +352,16 @@ class TestOrchestrationWorkflows:
         # Simulate task execution
         context = {"execution_date": "2024-01-01"}
 
-        # Discovery phase
+        # Discovery phase -- must find the real registered source, not a
+        # fabricated one.
+        registry = SourceRegistry()
+        registry.register("test_source", "test data for the pipeline")
         discover_op = PyStreamMCPDiscoveryOperator(
-            "discover", "agent_1", "test"
+            "discover", "agent_1", "test", registry=registry
         )
         discover_result = discover_op.execute(context)
-        assert discover_result["total_sources"] > 0
+        assert discover_result["total_sources"] == 1
+        assert discover_result["sources"][0]["name"] == "test_source"
 
         # Optimization phase
         optimize_op = PyStreamMCPOptimizeOperator(

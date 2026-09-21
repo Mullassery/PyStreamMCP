@@ -1,16 +1,19 @@
 # PyStreamMCP — Honest Status & Roadmap
 
-Last verified: 2026-09-20, against commit `9292af4` + this pass's changes.
-Every claim below was checked against the actual code/tests in this repo,
-not against what a doc says. See [`README.md`](README.md) for the
-user-facing quickstart and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-for how the shipped package is structured.
+Last verified: 2026-09-22, against commit `7bbda43` + this pass's changes
+(quick-fix pass: fabricated orchestration-adapter discovery, dead CLI
+entry point, `datetime.utcnow()` migration where safe). Every claim below
+was checked against the actual code/tests in this repo, not against what
+a doc says. See [`README.md`](README.md) for the user-facing quickstart
+and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the shipped
+package is structured.
 
 ## 1. What works (tested by me, this pass)
 
 - `pytest tests/ -v --tb=short` on Python 3.11 with
   `pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"`:
-  **375 passed, 0 failed**, 1 unrelated deprecation warning
+  **383 passed, 0 failed** (was 375; +8 from this pass's new/updated
+  orchestration-discovery and CLI tests), 1 unrelated deprecation warning
   (`anyio.abc.BlockingPortal`, from `starlette`'s test client, not this
   project's code).
 - `Agent.query()`, `SourceRegistry.discover()`, `Orchestrator` federation
@@ -31,7 +34,24 @@ for how the shipped package is structured.
 
 ## 2. Confirmed bugs / fabrications found this pass (not fixed — documented per the disclosure-first policy)
 
-### 2.1. Fabricated discovery data in three orchestration-tool adapters (real bug, non-trivial)
+### 2.1. Fabricated discovery data in three orchestration-tool adapters (FIXED in the quick-fix pass, 2026-09-22)
+
+**Fixed**: turned out to be mechanical, not the non-trivial constructor
+redesign originally estimated below — `SourceRegistry.discover()` is a
+drop-in replacement for the fake dict shape (`name`/`type`/`relevance`,
+plus a `matched_terms` field the fake data never had). All three classes
+now accept an optional `registry: Optional[SourceRegistry] = None`
+constructor/dataclass field (defaulting to a fresh, empty registry —
+same pattern `LangchainAdapter` already used) and call
+`registry.discover(context, limit=...)` instead of synthesizing
+`source_0..source_4`. `TemporalWorkflow` also got a `registry` param so
+`discover_sources()` can pass one through to the activity it creates.
+`tests/test_sprint5_orchestration.py` now has paired tests per adapter:
+one confirming an untouched registry honestly returns zero sources (not
+fake ones), one confirming a real registered source is actually found by
+name — content assertions, not just shape, so this can't regress
+silently again. Original analysis (now superseded) kept below for
+context.
 
 `python/pystreammcp/orchestration/temporal.py`
 (`TemporalDiscoveryActivity.execute()`, line 61-76),
@@ -59,7 +79,26 @@ Non-trivial because it changes the constructor signature of all three
 classes (need a registry passed in or looked up) — left for a dedicated
 follow-up.
 
-### 2.2. `pystreammcp` CLI is dead code — unreachable two independent ways
+### 2.2. `pystreammcp` CLI is dead code — unreachable two independent ways (FIXED in the quick-fix pass, 2026-09-22)
+
+**Fixed**: added `[project.scripts]` (`pystreammcp = "pystreammcp.cli:cli"`)
+to `pyproject.toml`, and changed `cli.py`'s `if __name__ == "__main__":`
+guard to call the real Click `cli()` group. Decided to keep the Click
+implementation (not the legacy one) since `scripts/setup_shortcuts.sh`'s
+aliases already assume `pystreammcp dashboard`/`pystreammcp query` exist
+on `PATH` — those now actually work. The legacy `CLIInterface`/`main()`/
+`print_help()` (had no callers, no tests, no docs referencing it) was
+deleted rather than left as unreachable dead code. Fixed the
+`ModuleNotFoundError` risk noted below by lazy-importing
+`pystreammcp.api` inside the `server` command function; without the
+`api` extra, `pystreammcp server` now prints a clear "install
+`pystreammcp[api]`" message and exits 1 instead of crashing. Verified for
+real: clean venv install, `which pystreammcp`, `pystreammcp version`,
+`--help`, `query --json`, `dashboard --static`, `python -m
+pystreammcp.cli version` — and separately, a second clean venv without
+the `api` extra to confirm `version`/`query`/`dashboard` still work and
+`server` fails cleanly. Added `tests/test_cli.py`. Original analysis (now
+superseded) kept below for context.
 
 `python/pystreammcp/cli.py` actually contains **two different, conflicting
 CLI implementations** in one file:
@@ -232,9 +271,11 @@ core next.
 
 ## 4. Technical debt (concrete, file:line, not fixed this pass)
 
-- **951 ruff findings** across `python/` + `tests/`
-  (`ruff check python/ tests/`), never previously run in CI (now added as
-  a non-blocking `lint` job in `.github/workflows/ci.yml`). Breakdown:
+- **910 ruff findings** across `python/` + `tests/` (was 951; the
+  41-finding drop is the `datetime.utcnow()` fixes below — see
+  `CHANGELOG.md`) (`ruff check python/ tests/`), never previously run in
+  CI (now added as a non-blocking `lint` job in
+  `.github/workflows/ci.yml`). Breakdown:
   - 468× `UP006` (`typing.Dict`/`List` instead of `dict`/`list`) + 144×
     `FA100` + 76× `UP035` (deprecated `typing` imports) — cosmetic/
     modernization, safe to bulk-fix with `ruff check --fix`, but 688
@@ -242,13 +283,21 @@ core next.
     into a docs pass.
   - 71× `I001` unsorted imports, 55× `F401` unused imports — safe
     autofixes, same reasoning.
-  - **43× `DTZ003`** (`datetime.utcnow()`) + **23× `DTZ005`**
-    (`datetime.now()` without `tzinfo`) — real correctness risk
-    (`datetime.utcnow()` is deprecated since Python 3.12 and naive
-    datetimes break comparisons against aware ones). Concentrated in
-    `python/pystreammcp/webhook_handlers.py` (29 occurrences — by far the
-    worst offender), `webhook_router.py` (5), `observability/metrics.py`
-    (3), `cli_dashboard.py` (3).
+  - **2× `DTZ003`** (`datetime.utcnow()`, was 43 — FIXED in the
+    quick-fix pass, 2026-09-22, in `webhook_handlers.py` (29),
+    `webhook_router.py` (7, incl. the `MCPEndpoint.last_heartbeat`
+    field default), `quality.py` (4, incl. `QualityCheck.checked_at`/
+    `ValidationResult.last_validated`, migrated together with their 3
+    staleness-check subtractions since they interact), `server.py` (2),
+    `multi_agent.py` (1); see `CHANGELOG.md`. The 2 remaining are
+    self-contained inside a test-local helper in
+    `tests/test_integration_phase2.py`, not tied to production code —
+    left as-is, not worth touching) + **23× `DTZ005`** (`datetime.now()`
+    without `tzinfo` — a different call pattern, not touched this pass;
+    real correctness risk, same class of bug as `DTZ003`) — naive
+    datetimes break comparisons against aware ones. Not concentrated in
+    the files listed in the previous version of this doc — recheck with
+    `ruff check --select DTZ005` for current locations.
   - **11× `BLE001`** blind `except Exception` + **1× `E722`/`S110`** bare
     `except: pass` at `python/pystreammcp/integrations/langsmith.py:150`
     (silently swallows any error computing span duration — no logging,
@@ -267,11 +316,11 @@ core next.
     (`"BaseRetriever"`),
     `python/pystreammcp/integrations/semantic_kernel.py:156`
     (`"KernelPlugin"`).
-  - `F841` unused variable `python/pystreammcp/orchestration/temporal.py:61`
-    — `agent = Agent(agent_id=self.agent_id)` is created and never used
-    (this is the discovery-fabrication bug in §2.1; the unused-variable
-    lint is the tell).
-  - No `[tool.ruff]` section in `pyproject.toml` at all — the 951 count is
+  - ~~`F841` unused variable `python/pystreammcp/orchestration/temporal.py:61`~~
+    FIXED — removed along with the §2.1 fabrication fix; the unused
+    `agent = Agent(agent_id=self.agent_id)` was the lint's tell that
+    `execute()` never actually used real discovery logic.
+  - No `[tool.ruff]` section in `pyproject.toml` at all — the 910 count is
     against ruff's full default rule set, not a set the project has
     actually opted into. Whoever does the lint-cleanup pass should also
     decide which rules to actually enable/ignore intentionally rather
@@ -315,29 +364,24 @@ core next.
 - **Cross-database joins**: same — `_mcp_connector.py:448-459`,
   `{"status": "not_implemented", "message": "Cross-database join
   execution is not yet implemented."}`. Does not exist.
-- **`SourceRegistry` discovery in Temporal/Airflow/RPA adapters**: see
-  §2.1 — fabricated, not partially working.
-- **`pystreammcp` CLI as an installed command**: see §2.2 — code exists,
-  not installable, and not safely installable without a lazy-import fix
-  first.
+- ~~**`SourceRegistry` discovery in Temporal/Airflow/RPA adapters**~~
+  FIXED — see §2.1.
+- ~~**`pystreammcp` CLI as an installed command**~~ FIXED — see §2.2.
 - **Rust performance backend** (`core/`, `python/src/lib.rs`): does not
   compile (§3), not shipped, no timeline. Anyone relying on it should
   not.
 
 ## 6. Explicitly out of scope for this pass (and why)
 
-- **Fixing the 951 ruff findings**: mixing a 688-cosmetic-finding autofix
-  PR into a docs/disclosure pass would make the diff unreviewable and
-  bury the real findings (DTZ, BLE001, B006, F821) in noise. Left as a
-  dedicated follow-up; CI now surfaces the count via the new non-blocking
-  `lint` job so it can't silently grow further unnoticed.
-- **Fixing the fabricated discovery adapters (§2.1)**: requires an actual
-  interface change (passing/looking up a `SourceRegistry` in three
-  classes' constructors) plus new tests that assert on *real* registry
-  content, not just response shape. Dedicated follow-up.
-- **Wiring the CLI entry point (§2.2)**: requires restructuring
-  `cli.py`'s imports (lazy-import `api.py` inside the `server` command)
-  before it's safe to add `[project.scripts]`. Dedicated follow-up.
+- **Fixing the remaining 910 ruff findings**: mixing a 688-cosmetic-finding
+  autofix PR into a quick-fix pass would make the diff unreviewable and
+  bury the real findings (`DTZ005`, `BLE001`, `B006`, `F821`) in noise.
+  Left as a dedicated follow-up; CI now surfaces the count via the
+  non-blocking `lint` job so it can't silently grow further unnoticed.
+  (§2.1's fabricated-discovery fix and the `DTZ003` `datetime.utcnow()`
+  migration *were* done this pass — see §2.1/§2.2 and `CHANGELOG.md`;
+  turned out to be mechanical, not the non-trivial follow-up originally
+  estimated.)
 - **Pinning `werkzeug`/investigating `nltk`**: needs compatibility testing
   against the `flask>=2.3.0` floor and confirming `llama-index` still
   works with a patched `nltk`; not a same-session change.

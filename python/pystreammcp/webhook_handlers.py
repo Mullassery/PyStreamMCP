@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .webhook_router import EventRouter, Tool, MCPEndpoint
 
@@ -108,7 +108,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "tools_registered": len(tools),
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def handle_mcp_unavailable(self, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -160,7 +160,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "affected_tools": len(affected_tools),
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def handle_tool_invoked(self, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -183,7 +183,7 @@ class OrchestrationWebhookHandlers:
         self.active_invocations[invocation_id] = {
             "tool_name": tool_name,
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "chain_context": chain_context,
         }
 
@@ -239,7 +239,7 @@ class OrchestrationWebhookHandlers:
             "tool_name": tool_name,
             "project_name": route_result.get("project_name"),
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def handle_tool_result(self, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -288,7 +288,7 @@ class OrchestrationWebhookHandlers:
                     "invocation_id": invocation_id,
                     "source_tool": tool_name,
                     "cascaded_tools": cascaded_results,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
 
@@ -322,7 +322,7 @@ class OrchestrationWebhookHandlers:
             "tool_name": tool_name,
             "cascaded_count": len(cascaded_results),
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def handle_health_update(self, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -383,7 +383,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "current_status": current_status,
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def handle_tool_dependency(self, event: Dict[str, Any]) -> Dict[str, Any]:
@@ -452,7 +452,7 @@ class OrchestrationWebhookHandlers:
             "required_tool": required_tool,
             "dependency_type": dependency_type,
             "actions_triggered": actions,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # Private action methods
@@ -467,7 +467,7 @@ class OrchestrationWebhookHandlers:
             "tool_count": tool_count,
             "mcp_version": mcp_version,
             "status": "registered",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _update_mcp_health(
@@ -480,7 +480,7 @@ class OrchestrationWebhookHandlers:
             "health_status": status,
             "metrics": metrics,
             "status": "updated",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _process_retry_queue_for_mcp(
@@ -494,7 +494,7 @@ class OrchestrationWebhookHandlers:
             "processed_count": result.get("retried", 0),
             "succeeded_count": result.get("succeeded", 0),
             "status": "processed",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _notify_mcp_available(
@@ -506,7 +506,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "tool_count": tool_count,
             "status": "notified",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _mark_mcp_unavailable(
@@ -519,7 +519,7 @@ class OrchestrationWebhookHandlers:
             "reason": reason,
             "is_temporary": is_temporary,
             "status": "unavailable",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _queue_tools_for_retry(
@@ -534,7 +534,7 @@ class OrchestrationWebhookHandlers:
             "tool_count": len(tools),
             "failed_mcp": failed_mcp,
             "status": "queued",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _activate_fallbacks(self, tools: List[str]) -> Dict[str, Any]:
@@ -548,7 +548,7 @@ class OrchestrationWebhookHandlers:
             "tool_count": len(tools),
             "fallbacks_activated": activated,
             "status": "fallbacks_ready",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _alert_mcp_unavailable(
@@ -567,7 +567,7 @@ class OrchestrationWebhookHandlers:
             "is_temporary": is_temporary,
             "severity": "warning" if is_temporary else "critical",
             "status": "alerted",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _track_invocation(
@@ -585,7 +585,7 @@ class OrchestrationWebhookHandlers:
             "user_id": user_id,
             "chain_id": chain_id,
             "status": "tracked",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _monitor_invocation_timeout(
@@ -597,7 +597,7 @@ class OrchestrationWebhookHandlers:
             "invocation_id": invocation_id,
             "timeout_ms": timeout_ms,
             "status": "monitoring",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _audit_invocation(
@@ -615,7 +615,7 @@ class OrchestrationWebhookHandlers:
             "user_id": user_id,
             "severity": severity,
             "status": "audited",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _process_tool_result(
@@ -631,7 +631,7 @@ class OrchestrationWebhookHandlers:
             "tool_name": tool_name,
             "result_status": result.get("status"),
             "status": "processed",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _update_chain_metrics(
@@ -649,7 +649,7 @@ class OrchestrationWebhookHandlers:
             "total_length": total_length,
             "result_status": result_status,
             "status": "updated",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _update_registry_health(
@@ -661,7 +661,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "metrics_keys": list(metrics.keys()),
             "status": "updated",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _handle_health_status_transition(
@@ -674,7 +674,7 @@ class OrchestrationWebhookHandlers:
             "previous_status": previous_status,
             "current_status": current_status,
             "status": "handled",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _handle_mcp_degradation(
@@ -686,7 +686,7 @@ class OrchestrationWebhookHandlers:
             "project_name": project_name,
             "priority_adjustment": "reduce_load",
             "status": "degradation_handled",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _has_critical_metrics(self, metrics: Dict[str, Any]) -> bool:
@@ -720,7 +720,7 @@ class OrchestrationWebhookHandlers:
             "critical_metrics": critical_metrics,
             "severity": "critical",
             "status": "alerted",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _establish_dependency(
@@ -736,7 +736,7 @@ class OrchestrationWebhookHandlers:
             "required_tool": required_tool,
             "dependency_type": dependency_type,
             "status": "established",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _determine_execution_order(
@@ -747,7 +747,7 @@ class OrchestrationWebhookHandlers:
             "action": "determine_execution_order",
             "execution_order": [required_tool, dependent_tool],
             "status": "determined",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _check_tools_available(self, tools: List[str]) -> Dict[str, Any]:
@@ -761,7 +761,7 @@ class OrchestrationWebhookHandlers:
             "total_tools": len(tools),
             "available_tools": available_count,
             "status": "available" if available_count == len(tools) else "partial",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _plan_cross_mcp_execution(
@@ -780,5 +780,5 @@ class OrchestrationWebhookHandlers:
             "required_tool": required_tool,
             "cross_mcp": True,
             "status": "planned",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }

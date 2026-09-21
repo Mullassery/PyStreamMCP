@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 import json
 
 from pystreammcp import Agent
+from pystreammcp.discovery import SourceRegistry
 
 
 class N8nWebhookTrigger:
@@ -22,13 +23,17 @@ class N8nWebhookTrigger:
     3. Add query in body: {"text": "your query", "agent_id": "agent_1"}
     """
 
-    def __init__(self, agent_id: str = "n8n_agent"):
+    def __init__(self, agent_id: str = "n8n_agent", registry: Optional[SourceRegistry] = None):
         """Initialize webhook trigger.
 
         Args:
             agent_id: PyStreamMCP agent ID
+            registry: Optional shared SourceRegistry sources were
+                registered on elsewhere (e.g. via the FastAPI `/sources`
+                endpoint). Defaults to a fresh, empty registry.
         """
         self.agent_id = agent_id
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def handle_query(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming webhook request.
@@ -61,23 +66,22 @@ class N8nWebhookTrigger:
         }
 
     def handle_discovery(self, body: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle discovery webhook."""
+        """Handle discovery webhook.
+
+        Uses the real `SourceRegistry.discover()` instead of fabricating
+        `source_0..source_4` results. With nothing registered on this
+        trigger's registry, honestly returns zero sources.
+        """
         context = body.get("context", "")
 
         if not context:
             return {"error": "Missing 'context' parameter"}
 
+        sources = self.registry.discover(context)
         return {
             "context": context,
-            "sources": [
-                {
-                    "name": f"source_{i}",
-                    "relevance": 0.95 - (i * 0.05),
-                    "type": "data_source",
-                }
-                for i in range(5)
-            ],
-            "total_sources": 5,
+            "sources": sources,
+            "total_sources": len(sources),
             "success": True,
         }
 

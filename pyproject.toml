@@ -33,6 +33,9 @@ classifiers = [
 Repository = "https://github.com/Mullassery/PyStreamMCP"
 Issues = "https://github.com/Mullassery/PyStreamMCP/issues"
 
+[project.scripts]
+pystreammcp = "pystreammcp.cli:cli"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",

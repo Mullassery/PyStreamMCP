@@ -6,7 +6,7 @@ Ensures all context included in queries has passed data quality checks.
 
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import logging
 
@@ -31,7 +31,7 @@ class QualityCheck:
     passed: bool
     score: float  # 0.0-1.0
     message: str = ""
-    checked_at: datetime = field(default_factory=datetime.utcnow)
+    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self):
         self.score = max(0.0, min(1.0, self.score))
@@ -46,7 +46,7 @@ class ValidationResult:
     quality_score: float  # 0.0-1.0
     checks: List[QualityCheck] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
-    last_validated: datetime = field(default_factory=datetime.utcnow)
+    last_validated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     validation_id: str = ""
 
     def __post_init__(self):
@@ -66,7 +66,7 @@ class ValidationResult:
             return True
 
         if self.status == QualityStatus.STALE and max_staleness_seconds:
-            age = (datetime.utcnow() - self.last_validated).total_seconds()
+            age = (datetime.now(timezone.utc) - self.last_validated).total_seconds()
             return age <= max_staleness_seconds
 
         if self.status == QualityStatus.DEGRADED:
@@ -148,7 +148,7 @@ class QualityValidator:
         # Check cache first
         cached = self._validation_cache.get(dataset_id)
         if cached:
-            age = (datetime.utcnow() - cached.last_validated).total_seconds()
+            age = (datetime.now(timezone.utc) - cached.last_validated).total_seconds()
             if age < gate.max_staleness_seconds:
                 logger.debug(f"Using cached validation for {dataset_id}")
                 return cached
@@ -379,7 +379,7 @@ class QualityValidator:
                     "status": result.status,
                     "quality_score": result.quality_score,
                     "age_seconds": (
-                        datetime.utcnow() - result.last_validated
+                        datetime.now(timezone.utc) - result.last_validated
                     ).total_seconds(),
                 }
                 for dataset_id, result in self._validation_cache.items()

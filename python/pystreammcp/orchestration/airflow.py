@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 from pystreammcp import Agent
+from pystreammcp.discovery import SourceRegistry
 
 
 @dataclass
@@ -110,30 +111,38 @@ class PyStreamMCPDiscoveryOperator:
         agent_id: str,
         context_text: str,
         max_sources: int = 10,
+        registry: Optional[SourceRegistry] = None,
         **kwargs,
     ):
-        """Initialize discovery operator."""
+        """Initialize discovery operator.
+
+        Args:
+            registry: Optional shared SourceRegistry sources were
+                registered on elsewhere (e.g. via the FastAPI `/sources`
+                endpoint or another operator sharing the same registry).
+                Defaults to a fresh, empty registry.
+        """
         self.task_id = task_id
         self.agent_id = agent_id
         self.context_text = context_text
         self.max_sources = max_sources
+        self.registry = registry if registry is not None else SourceRegistry()
         self.kwargs = kwargs
 
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute discovery."""
+        """Execute discovery using the real SourceRegistry.
+
+        Uses the same relevance ranking as the REST/MCP/LangChain
+        surfaces instead of fabricating `source_0..source_4` results. An
+        operator given no registry (or one with nothing registered)
+        honestly returns zero sources rather than padding in fake ones.
+        """
+        sources = self.registry.discover(self.context_text, limit=self.max_sources)
         return {
             "task_id": self.task_id,
             "context": self.context_text,
-            "sources": [
-                {
-                    "name": f"source_{i}",
-                    "relevance": 0.95 - (i * 0.05),
-                    "type": "database",
-                    "estimated_tokens": 500 + (i * 100),
-                }
-                for i in range(min(self.max_sources, 5))
-            ],
-            "total_sources": min(self.max_sources, 5),
+            "sources": sources,
+            "total_sources": len(sources),
             "timestamp": str(context.get("execution_date", "")),
         }
 

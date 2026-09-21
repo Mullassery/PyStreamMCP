@@ -1,5 +1,6 @@
 """Multi-agent context sharing and collaboration for PyStreamMCP."""
 
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from .context import Context
@@ -46,7 +47,7 @@ class ContextHub:
             optimized_context=context,
             usage_count=1,
             agents_using=[],
-            created_at=__import__("datetime").datetime.utcnow().isoformat(),
+            created_at=datetime.now(timezone.utc).isoformat(),
             cost_savings=cost_savings,
         )
         self.shared_contexts[context_id] = shared

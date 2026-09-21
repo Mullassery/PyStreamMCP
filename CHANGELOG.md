@@ -4,6 +4,49 @@ All notable changes to PyStreamMCP will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Fabricated discovery data in three orchestration adapters**:
+  `orchestration/temporal.py`'s `TemporalDiscoveryActivity`/
+  `TemporalWorkflow`, `orchestration/airflow.py`'s
+  `PyStreamMCPDiscoveryOperator`, and `orchestration/nocode_rpa.py`'s
+  `N8nWebhookTrigger.handle_discovery` no longer synthesize
+  `source_0..source_4` with fake relevance scores. Each now takes an
+  optional shared `SourceRegistry` (same pattern already used by
+  `LangchainAdapter`) and calls its real `discover()`; with nothing
+  registered they honestly return zero sources instead of padding in
+  fake ones. `tests/test_sprint5_orchestration.py` now asserts on real
+  registered-source content (name/relevance), not just response shape,
+  so this class of bug can't silently pass CI again.
+- **`pystreammcp` CLI was unreachable dead code**: added a
+  `[project.scripts]` entry (`pyproject.toml`) so `pip install
+  PyStreamMCP` installs a real `pystreammcp` command; fixed `cli.py`'s
+  `if __name__ == "__main__":` guard to invoke the actual Click group
+  instead of a second, smaller, hand-rolled command set (which has been
+  removed as genuinely dead code — no callers, no tests, no docs
+  referenced it). `server`'s `pystreammcp.api` import is now lazy so
+  `pystreammcp version`/`query`/`dashboard` work without the `api`
+  extra installed, and `pystreammcp server` without it prints a clear
+  install instruction instead of crashing with `ModuleNotFoundError`.
+  Verified by installing into a clean venv and running `pystreammcp
+  version`/`--help`/`query --json`/`dashboard --static` and `python -m
+  pystreammcp.cli version` for real; added `tests/test_cli.py`.
+- **`datetime.utcnow()` → `datetime.now(timezone.utc)`** in the 5
+  production files where it was genuinely safe (verified no
+  naive/aware comparison would break): `webhook_handlers.py` (29,
+  pure `.isoformat()` serialization), `webhook_router.py` (7, including
+  the `MCPEndpoint.last_heartbeat` field — checked it's never compared
+  elsewhere), `quality.py` (4, `QualityCheck.checked_at` +
+  `ValidationResult.last_validated` + the 3 staleness-check
+  subtractions — migrated together since they interact; also updated
+  `tests/test_statguardian_integration.py`'s `past_time` fixture to stay
+  aware-consistent), `server.py` (2), `multi_agent.py` (1, also removed
+  an `__import__("datetime")` workaround in favor of a normal import).
+  Left two self-contained `datetime.utcnow()` calls in
+  `tests/test_integration_phase2.py` untouched — they're internal to a
+  test-local duplicate-detection helper, not tied to production code.
+  `timezone.utc` used (not `datetime.UTC`) since `pyproject.toml`
+  supports Python 3.9+ and the latter needs 3.11+.
+
 ### Changed
 - Relicensed from Proprietary to Apache License 2.0 (`LICENSE`,
   `pyproject.toml`'s `license` field); `CONTRIBUTING.md` still said "MIT"
@@ -37,16 +80,13 @@ All notable changes to PyStreamMCP will be documented in this file.
   this file too.
 
 ### Found, not fixed (see `ROADMAP_HONEST.md` for full detail)
-- `orchestration/{temporal,airflow,nocode_rpa}.py`'s discovery
-  activities/operators return hardcoded fake `source_0..source_4` results
-  instead of calling the real `SourceRegistry`.
-- The `pystreammcp` CLI (`cli.py`) is unreachable dead code: no
-  `[project.scripts]` entry, and its own `__main__` guard calls a
-  different, smaller legacy command set than the Click group it appears
-  to define.
 - `pip-audit` found 7 known CVEs in transitive dependencies (`werkzeug`
-  via the `api` extra's `flask`, `nltk` via `llama-index`), unpinned.
-- 951 pre-existing `ruff` findings, not previously run in CI.
+  via the `api` extra's `flask`, `nltk` via `llama-index`), unpinned —
+  left unpinned this pass; needs compatibility testing against the
+  `flask>=2.3.0` floor before bumping.
+- 910 remaining pre-existing `ruff` findings (was 951; the 41-finding
+  drop is the `datetime.utcnow()` fixes above), not previously run in
+  CI, out of scope for a mechanical quick-fix pass.
 - Rust workspace confirmed to fail with 43 compile errors
   (`cargo build --workspace`); two Rust test files
   (`tests/metadata_filtering_tests.rs`, `tests/selective_retrieval_tests.rs`)

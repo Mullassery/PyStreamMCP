@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 from pystreammcp import Agent
+from pystreammcp.discovery import SourceRegistry
 
 
 @dataclass
@@ -55,23 +56,26 @@ class TemporalDiscoveryActivity:
     agent_id: str
     context: str
     max_sources: int = 10
+    registry: Optional[SourceRegistry] = None
 
     def execute(self) -> Dict[str, Any]:
-        """Execute discovery as a durable activity."""
-        agent = Agent(agent_id=self.agent_id)
+        """Execute discovery as a durable activity.
 
-        # In production, use actual discovery logic
+        Uses the real `SourceRegistry.discover()` -- the same relevance
+        ranking used by the REST/MCP/LangChain surfaces -- instead of
+        fabricating `source_0..source_4` results. Pass `registry=` a
+        shared `SourceRegistry` instance (the one sources were registered
+        on elsewhere) so this activity can actually find them; an
+        activity given no registry gets a fresh, empty one and will
+        honestly report zero sources rather than padding in fake ones.
+        """
+        registry = self.registry if self.registry is not None else SourceRegistry()
+        sources = registry.discover(self.context, limit=self.max_sources)
+
         return {
             "context": self.context,
-            "sources": [
-                {
-                    "name": f"source_{i}",
-                    "relevance": 0.95 - (i * 0.05),
-                    "type": "database",
-                }
-                for i in range(min(self.max_sources, 5))
-            ],
-            "total_sources": min(self.max_sources, 5),
+            "sources": sources,
+            "total_sources": len(sources),
             "status": "completed",
         }
 
@@ -87,15 +91,21 @@ class TemporalWorkflow:
     5. Handle failures with retries
     """
 
-    def __init__(self, workflow_id: str, agent_id: str):
+    def __init__(
+        self, workflow_id: str, agent_id: str, registry: Optional[SourceRegistry] = None
+    ):
         """Initialize workflow.
 
         Args:
             workflow_id: Unique workflow identifier
             agent_id: PyStreamMCP agent ID
+            registry: Optional shared SourceRegistry sources were
+                registered on elsewhere (e.g. via the FastAPI `/sources`
+                endpoint). Defaults to a fresh, empty registry.
         """
         self.workflow_id = workflow_id
         self.agent_id = agent_id
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def discover_sources(self, context: str) -> Dict[str, Any]:
         """Activity: Discover relevant sources.
@@ -104,11 +114,11 @@ class TemporalWorkflow:
         ```python
         sources = await workflow.execute_activity(
             TemporalDiscoveryActivity,
-            TemporalDiscoveryActivity(self.agent_id, context),
+            TemporalDiscoveryActivity(self.agent_id, context, registry=self.registry),
         )
         ```
         """
-        activity = TemporalDiscoveryActivity(self.agent_id, context)
+        activity = TemporalDiscoveryActivity(self.agent_id, context, registry=self.registry)
         return activity.execute()
 
     def optimize_query(self, query_text: str) -> Dict[str, Any]:

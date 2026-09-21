@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class MCPEndpoint:
     tools: List[Tool] = field(default_factory=list)
     status: str = "healthy"  # healthy, degraded, unavailable
     health_metrics: Dict[str, Any] = field(default_factory=dict)
-    last_heartbeat: datetime = field(default_factory=datetime.utcnow)
+    last_heartbeat: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     fallback_endpoints: List[str] = field(default_factory=list)
 
 
@@ -46,7 +46,7 @@ class ToolInvocation:
     total_chain_length: int = 1
     upstream_results: List[Dict[str, Any]] = field(default_factory=list)
     user_id: Optional[str] = None
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class ServiceRegistry:
@@ -139,7 +139,7 @@ class ServiceRegistry:
             self.endpoints[project_name].status = "healthy"
             if metrics:
                 self.endpoints[project_name].health_metrics = metrics
-            self.endpoints[project_name].last_heartbeat = datetime.utcnow()
+            self.endpoints[project_name].last_heartbeat = datetime.now(timezone.utc)
             logger.info(f"MCP marked available: {project_name}")
 
     def mark_mcp_unavailable(
@@ -162,14 +162,14 @@ class ServiceRegistry:
         """Update health metrics for MCP"""
         if project_name in self.endpoints:
             self.endpoints[project_name].health_metrics = metrics
-            self.endpoints[project_name].last_heartbeat = datetime.utcnow()
+            self.endpoints[project_name].last_heartbeat = datetime.now(timezone.utc)
 
             # Track history
             if project_name not in self.health_history:
                 self.health_history[project_name] = []
 
             history_entry = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "metrics": metrics,
                 "status": self.endpoints[project_name].status,
             }
@@ -254,7 +254,7 @@ class ToolChainOrchestrator:
         self.invocation_history[invocation_id] = {
             "invocation": invocation,
             "routed_to": f"{project_name}:{endpoint.port}",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Trim history
@@ -437,7 +437,7 @@ class FallbackManager:
                 {
                     "tool_name": tool_name,
                     "params": params,
-                    "queued_at": datetime.utcnow().isoformat(),
+                    "queued_at": datetime.now(timezone.utc).isoformat(),
                 }
             )
             logger.info(f"Tool queued for retry: {tool_name}")

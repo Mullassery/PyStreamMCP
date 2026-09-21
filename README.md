@@ -189,25 +189,17 @@ Pass `host="0.0.0.0"` explicitly if you need the server reachable from
 other hosts — e.g. inside a container that already has its own network
 boundary.
 
-**Note on the `pystreammcp` CLI**: `python/pystreammcp/cli.py` defines a
-Click CLI (`query`/`server`/`version`/`dashboard` subcommands) — but it is
-**dead code, unreachable two different ways**: (1) `pyproject.toml` has no
-`[project.scripts]` entry for it, so `pip install PyStreamMCP` gives you
-no `pystreammcp` command at all (verified: `which pystreammcp` → not
-found after a clean install); (2) even running the module directly
-(`python -m pystreammcp.cli`) does not reach the Click group — the file's
-own `if __name__ == "__main__":` guard calls a second, separate,
-hand-rolled `main()` further down the same file with a *different and
-smaller* command set (`query`/`create-agent`/`metrics`/`help` — no
-`server`, `version`, or `dashboard`). Verified directly: `python -m
-pystreammcp.cli version` → `{"error": "Unknown command: version"}`;
-`python -m pystreammcp.cli query "test"` → works (hits the legacy
-interface). So the only currently-working CLI-shaped entry point is
-`python -m pystreammcp.cli query <text> [intent] [agent_id]` (also
-`create-agent`, `metrics`, `help`). To actually run the server, use it as
-a library: `PyStreamMCPAPI().run(host=..., port=...)`. See
-[`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2 for the full detail and why
-this isn't a one-line fix.
+**The `pystreammcp` CLI**: `pip install PyStreamMCP` now installs a real
+`pystreammcp` command (`[project.scripts]` in `pyproject.toml`) backed by
+the Click group in `python/pystreammcp/cli.py`:
+`query`/`server`/`version`/`dashboard`. `python -m pystreammcp.cli` reaches
+the same Click group (the file's old, separate, smaller hand-rolled
+command set has been removed). `server` lazy-imports `pystreammcp.api`, so
+`pystreammcp version`/`query`/`dashboard` work without installing the
+`api` extra; running `pystreammcp server` without it prints a clear
+"install `pystreammcp[api]`" error instead of crashing with
+`ModuleNotFoundError`. See [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2
+(now marked fixed) for how this was previously broken.
 
 ## Testing
 
@@ -257,14 +249,18 @@ from the extras list if you're on 3.9.
   a non-matching context returns an empty list, not fabricated data. This
   is a simple word-overlap heuristic, not semantic/embedding search — if
   you need that, wrap `SourceRegistry` with your own similarity scoring.
-- **The `pystreammcp` CLI is dead code** (see [Network defaults](#network-defaults)
-  above and [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2) — not
-  installed, and its own `__main__` guard doesn't reach the documented
-  `server`/`version`/`dashboard` commands. Not fixed this pass.
-- **Three orchestration-tool discovery adapters
-  (`orchestration/temporal.py`, `airflow.py`, `nocode_rpa.py`) return
-  fabricated results** instead of calling the real `SourceRegistry` — see
-  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.1. Not fixed this pass.
+- ~~The `pystreammcp` CLI is dead code~~ **Fixed.** `pyproject.toml` now
+  has a `[project.scripts]` entry, and the module's `__main__` guard
+  invokes the real Click group. See [Network defaults](#network-defaults)
+  above and [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2.
+- ~~Three orchestration-tool discovery adapters return fabricated
+  results~~ **Fixed.** `orchestration/temporal.py`'s
+  `TemporalDiscoveryActivity`/`TemporalWorkflow`, `airflow.py`'s
+  `PyStreamMCPDiscoveryOperator`, and `nocode_rpa.py`'s
+  `N8nWebhookTrigger` now take an optional shared `SourceRegistry` and
+  call its real `discover()` instead of synthesizing `source_0..
+  source_4`. With nothing registered they honestly return zero sources
+  (see [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.1).
 - `pip-audit` (run 2026-09-20 against the `dev,api,mcp,langchain,
   llamaindex,semantic-kernel` extras) found 7 known CVEs in transitive
   dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`) — see

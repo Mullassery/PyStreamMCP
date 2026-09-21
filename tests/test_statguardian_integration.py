@@ -1,7 +1,7 @@
 """Tests for PyStreamMCP ↔ StatGuardian integration."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pystreammcp.quality import (
     QualityValidator,
     ValidationGate,
@@ -67,7 +67,7 @@ class TestQualityValidator:
 
     def test_validation_result_stale_usable(self):
         """Test stale result that's still usable."""
-        past_time = datetime.utcnow() - timedelta(minutes=30)
+        past_time = datetime.now(timezone.utc) - timedelta(minutes=30)
         result = ValidationResult(
             dataset_id="dataset_3",
             status=QualityStatus.STALE,
