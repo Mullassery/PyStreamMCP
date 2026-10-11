@@ -39,6 +39,9 @@ pub enum Error {
 
     #[error("Timeout: {0}")]
     Timeout(String),
+
+    #[error("Generic error: {0}")]
+    Generic(String),
 }
 
 // NOTE: Architectural Boundaries

@@ -69,6 +69,7 @@ impl ComplexityDetector {
             has_aggregations,
             requires_temporal,
             requires_spatial,
+            Self::analytical_terms(query),
         );
 
         let confidence = Self::confidence(word_count, &tier);
@@ -104,12 +105,24 @@ impl ComplexityDetector {
         keywords.iter().any(|k| query.to_lowercase().contains(k))
     }
 
+    /// Count analytical/reasoning indicators that raise reasoning depth
+    fn analytical_terms(query: &str) -> usize {
+        let keywords = [
+            "analysis", "analyt", "correlat", "anomal", "pattern", "compar",
+            "versus", "predict", "forecast", "simulat", "model", "seasonal",
+            "optimi", "trade-off", "scenario",
+        ];
+        let q = query.to_lowercase();
+        keywords.iter().filter(|k| q.contains(*k)).count()
+    }
+
     fn classify(
         word_count: usize,
         has_filters: bool,
         has_aggregations: bool,
         temporal: bool,
         spatial: bool,
+        analytical_terms: usize,
     ) -> ComplexityTier {
         let mut score = 0;
 
@@ -127,11 +140,12 @@ impl ComplexityDetector {
         if has_aggregations { score += 2; }
         if temporal { score += 1; }
         if spatial { score += 1; }
+        score += analytical_terms.min(3);
 
         match score {
             0..=1 => ComplexityTier::Simple,
             2..=3 => ComplexityTier::Moderate,
-            4..=5 => ComplexityTier::Complex,
+            4..=7 => ComplexityTier::Complex,
             _ => ComplexityTier::VeryComplex,
         }
     }

@@ -8,7 +8,7 @@ pub mod orchestrator;
 
 pub use complexity::{QueryComplexity, ComplexityDetector, ComplexityTier};
 pub use token_filter::{TokenBudget, TokenFilter, RelevanceRanker};
-pub use reranking::{RerankedCandidate, ContextualReranker};
+pub use reranking::{RerankedCandidate, ContextualReranker, UserContext, ExpertiseLevel};
 pub use orchestrator::{RetrievalOrchestrator, OrchestrationConfig, OrchestrationResult};
 pub mod multimodal;
 

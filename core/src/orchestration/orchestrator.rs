@@ -92,7 +92,7 @@ impl RetrievalOrchestrator {
         Ok(OrchestrationResult {
             selected_sources: final_selected,
             stage1_decisions: stage1_decision,
-            stage2_decisions,
+            stage2_decisions: stage2_decision,
             total_candidates: candidates.len(),
             total_processing_time_ms: total_time,
             recommendations,
@@ -183,7 +183,7 @@ impl RetrievalOrchestrator {
     ) -> Vec<(String, f64)> {
         candidates
             .iter()
-            .map(|c| (c.source.clone(), 1.0 + (c.score * 0.5)))
+            .map(|c| (c.metadata.id(), 1.0 + (c.score * 0.5)))
             .collect()
     }
 }

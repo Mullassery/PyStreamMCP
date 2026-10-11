@@ -11,7 +11,7 @@ pub struct RankingMode {
     pub enabled: bool,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum RankingStrategy {
     ContentBased,      // Score based on content characteristics
     CollaborativeFiltering, // Similar user preferences
@@ -26,7 +26,7 @@ pub struct MultiModalRanker {
     pub fusion_method: FusionMethod,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum FusionMethod {
     WeightedAverage,   // Simple weighted average
     RRF,               // Reciprocal Rank Fusion

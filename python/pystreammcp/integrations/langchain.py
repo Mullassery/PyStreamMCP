@@ -8,7 +8,7 @@ Provides both:
 2. Legacy PyStreamMCPTool & PyStreamMCPRetriever (backward compatible)
 """
 
-from typing import Optional, Dict, Any, List, Type
+from typing import Optional, Dict, Any, List, Type, TYPE_CHECKING
 import asyncio
 from pystreammcp import (
     Agent,
@@ -22,6 +22,10 @@ from pystreammcp import (
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
 from pystreammcp.discovery import SourceRegistry
+
+if TYPE_CHECKING:
+    from langchain_core.tools import Tool as LangchainTool
+    from langchain_core.retrievers import BaseRetriever
 
 
 class LangchainAdapter(AgentFrameworkAdapter):

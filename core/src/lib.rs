@@ -36,7 +36,7 @@ pub use quality_gates::{QualityGatesEngine, ConfidenceScore, FallbackChain, Poli
 pub use observability::{ObservabilityEngine, DecisionTracer, MetricsCollector, StructuredLogger};
 pub use orchestration::{
     ComplexityTier, ComplexityDetector, QueryComplexity,
-    TokenBudget, TokenFilter, RelevanceRanker,
+    TokenFilter, RelevanceRanker,
     ContextualReranker, RerankedCandidate, UserContext, ExpertiseLevel,
     RetrievalOrchestrator, OrchestrationConfig, OrchestrationResult,
 };

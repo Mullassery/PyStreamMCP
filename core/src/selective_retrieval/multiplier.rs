@@ -52,7 +52,7 @@ impl TokenMultiplier {
         for (keyword, multiplier, category) in defaults {
             let key = keyword.to_lowercase();
             if !map.contains_key(&key) {
-                map.insert(key, (multiplier, category));
+                map.insert(key, (multiplier, category.map(|c| c.to_string())));
             }
         }
 

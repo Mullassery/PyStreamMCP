@@ -8,7 +8,7 @@ Provides both:
 2. Legacy StreamMCPRetriever (backward compatible)
 """
 
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, TYPE_CHECKING
 import asyncio
 from pystreammcp import (
     Agent,
@@ -21,6 +21,9 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+
+if TYPE_CHECKING:
+    from llama_index.core.retrievers import BaseRetriever
 
 
 class LlamaIndexAdapter(AgentFrameworkAdapter):

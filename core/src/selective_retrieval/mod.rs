@@ -7,10 +7,10 @@ pub mod budgets;
 pub mod intent;
 pub mod multiplier;
 
-pub use types::{RetrievedContent, ContentItem, ItemType, RerankingScore};
-pub use reranker::{ContextualReranker, RankingCriteria};
+pub use types::{RetrievedContent, ContentItem, ItemType, RerankingScore, QueryIntent, IntentScore};
+pub use reranker::{ContextualReranker, RankingCriteria, RerankerConfig};
 pub use budgets::{TokenBudget, BudgetTier, BudgetConfig};
-pub use intent::{IntentClassifier, QueryIntent, IntentScore};
+pub use intent::IntentClassifier;
 pub use multiplier::{TokenMultiplier, MultiplierRule};
 
 use crate::Result;
@@ -134,28 +134,4 @@ pub struct TokenBudgetEstimate {
     pub intent_allocation: u32,
     pub multiplier_factor: f64,
     pub final_budget: u32,
-}
-
-/// Reranker configuration
-#[derive(Debug, Clone)]
-pub struct RerankerConfig {
-    /// Weight for semantic relevance (0-1)
-    pub relevance_weight: f64,
-    /// Weight for informativeness (0-1)
-    pub informativeness_weight: f64,
-    /// Weight for uniqueness (0-1)
-    pub uniqueness_weight: f64,
-    /// Weight for recency (0-1)
-    pub recency_weight: f64,
-}
-
-impl Default for RerankerConfig {
-    fn default() -> Self {
-        Self {
-            relevance_weight: 0.4,
-            informativeness_weight: 0.3,
-            uniqueness_weight: 0.2,
-            recency_weight: 0.1,
-        }
-    }
 }

@@ -43,10 +43,10 @@ impl BudgetTier {
     pub fn multiplier_ceiling(&self) -> f64 {
         // Allow multipliers to expand tier, but cap expansion
         match self {
-            BudgetTier::Minimal => 1.5,      // Can expand to 150 (1.5x)
-            BudgetTier::Standard => 1.5,     // Can expand to 1500 (1.5x)
-            BudgetTier::Large => 1.5,        // Can expand to 4500 (1.5x)
-            BudgetTier::Comprehensive => 1.3, // Can expand to 10400 (1.3x)
+            BudgetTier::Minimal { .. } => 1.5,      // Can expand to 150 (1.5x)
+            BudgetTier::Standard { .. } => 1.5,     // Can expand to 1500 (1.5x)
+            BudgetTier::Large { .. } => 1.5,        // Can expand to 4500 (1.5x)
+            BudgetTier::Comprehensive { .. } => 1.3, // Can expand to 10400 (1.3x)
         }
     }
 

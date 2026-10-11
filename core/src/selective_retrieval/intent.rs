@@ -85,7 +85,7 @@ impl IntentClassifier {
         // Entity count signal (words with capitals)
         let entity_count = words.iter().filter(|w| w.chars().next().map_or(false, |c| c.is_uppercase())).count();
         if entity_count > 3 {
-            complexity_score += 2;
+            complexity_score += 3;
         } else if entity_count > 1 {
             complexity_score += 1;
         }
@@ -108,6 +108,12 @@ impl IntentClassifier {
         let question_count = query.matches('?').count();
 
         if has_semicolon || has_colon || question_count > 1 {
+            complexity_score += 1;
+        }
+
+        // Enumeration signal (lists of items)
+        let comma_count = query.matches(',').count();
+        if comma_count >= 2 {
             complexity_score += 1;
         }
 

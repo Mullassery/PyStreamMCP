@@ -58,15 +58,6 @@ pub struct PolicyViolation {
     pub timestamp: i64,
 }
 
-/// SLA check result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SLACheckResult {
-    pub quality_met: bool,
-    pub latency_met: bool,
-    pub overall_met: bool,
-    pub violations: Vec<String>,
-}
-
 impl PolicyEnforcer {
     /// Create new policy enforcer
     pub fn new(policy: QualityPolicy) -> Result<Self> {
@@ -78,7 +69,7 @@ impl PolicyEnforcer {
     }
 
     /// Check SLA compliance
-    pub fn check_sla(&self, quality_score: f64, latency_ms: u32) -> Result<SLACheckResult> {
+    pub fn check_sla(&self, quality_score: f64, latency_ms: u32) -> Result<super::SLACheckResult> {
         let quality_met = quality_score >= self.policy.min_quality_score;
         let latency_met = latency_ms <= self.policy.max_latency_ms;
         let overall_met = quality_met && latency_met;
@@ -99,7 +90,7 @@ impl PolicyEnforcer {
             ));
         }
 
-        Ok(SLACheckResult {
+        Ok(super::SLACheckResult {
             quality_met,
             latency_met,
             overall_met,

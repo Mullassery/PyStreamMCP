@@ -8,15 +8,9 @@ use std::sync::{Arc, Mutex};
 
 /// Metrics collector
 pub struct MetricsCollector {
-    config: MetricsConfig,
+    config: super::MetricsConfig,
     stage_metrics: Arc<Mutex<HashMap<String, StageMetrics>>>,
     reduction_metrics: Arc<Mutex<ReductionMetrics>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct MetricsConfig {
-    pub enabled: bool,
-    pub export_format: String,
 }
 
 /// Metrics for a single stage
@@ -57,7 +51,7 @@ pub struct ReductionMetrics {
 
 impl MetricsCollector {
     /// Create new metrics collector
-    pub fn new(config: MetricsConfig) -> Result<Self> {
+    pub fn new(config: super::MetricsConfig) -> Result<Self> {
         Ok(Self {
             config,
             stage_metrics: Arc::new(Mutex::new(HashMap::new())),
@@ -274,10 +268,7 @@ mod tests {
 
     #[test]
     fn test_metrics_collection() {
-        let config = MetricsConfig {
-            enabled: true,
-            export_format: "prometheus".to_string(),
-        };
+        let config = crate::observability::MetricsConfig::default();
         let collector = MetricsCollector::new(config).unwrap();
 
         collector.record_stage_performance("Stage1", 45, 1000, 150, 85).unwrap();
@@ -291,10 +282,7 @@ mod tests {
 
     #[test]
     fn test_cache_metrics() {
-        let config = MetricsConfig {
-            enabled: true,
-            export_format: "json".to_string(),
-        };
+        let config = crate::observability::MetricsConfig::default();
         let collector = MetricsCollector::new(config).unwrap();
 
         collector.record_cache_hit().unwrap();

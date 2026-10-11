@@ -11,7 +11,7 @@ pub use types::{
     MCPToolMetadata, MetadataProfile, RankedCandidate,
 };
 pub use filter::{MetadataFilter, FilterConfig, RankingStrategy};
-pub use cache::{MetadataCache, CacheEntry, CacheConfig};
+pub use cache::{MetadataCache, CacheEntry, CacheConfig, CacheStats};
 pub use profiles::{WebProfiles, DatabaseProfiles, MCPToolProfiles};
 
 use crate::Result;
@@ -43,7 +43,7 @@ impl MetadataIntelligence {
     ) -> Result<Vec<RankedCandidate>> {
         // Check cache first
         let cache_key = self.cache.make_key(query, &source_type);
-        if let Ok(cached) = self.cache.get(&cache_key) {
+        if let Ok(cached) = self.cache.get(&cache_key).await {
             return Ok(cached);
         }
 
@@ -51,7 +51,7 @@ impl MetadataIntelligence {
         let ranked = self.filter.rank(query, source_type, candidates).await?;
 
         // Cache the decision
-        self.cache.set(&cache_key, ranked.clone())?;
+        self.cache.set(&cache_key, ranked.clone()).await?;
 
         Ok(ranked)
     }
@@ -69,20 +69,12 @@ impl MetadataIntelligence {
     }
 
     /// Clear cache (for testing or manual refresh)
-    pub fn clear_cache(&self) -> Result<()> {
-        self.cache.clear()
+    pub async fn clear_cache(&self) -> Result<()> {
+        self.cache.clear().await
     }
 
     /// Get cache statistics
-    pub fn cache_stats(&self) -> Result<CacheStats> {
-        self.cache.stats()
+    pub async fn cache_stats(&self) -> Result<CacheStats> {
+        self.cache.stats().await
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct CacheStats {
-    pub total_entries: usize,
-    pub hit_count: u64,
-    pub miss_count: u64,
-    pub hit_rate: f64,
 }

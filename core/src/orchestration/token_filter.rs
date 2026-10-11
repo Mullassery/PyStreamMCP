@@ -53,7 +53,7 @@ pub struct TokenFilterResult {
     pub relevance_score: f64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentSegment {
     pub text: String,
     pub relevance: f64,

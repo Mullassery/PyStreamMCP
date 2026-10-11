@@ -1,6 +1,7 @@
 // Metadata Filtering Engine - Stage 1
 // Ranks candidates by metadata (no data retrieval needed)
 
+use crate::metadata::cache::CacheConfig;
 use crate::metadata::types::*;
 use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
@@ -35,24 +36,6 @@ pub enum RankingStrategy {
     Freshness,
     /// Balanced approach (default)
     Balanced,
-}
-
-/// Cache configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CacheConfig {
-    /// TTL for cache entries (seconds, 0 = no expiry)
-    pub ttl_seconds: u64,
-    /// Maximum cache size (entries)
-    pub max_entries: usize,
-}
-
-impl Default for CacheConfig {
-    fn default() -> Self {
-        Self {
-            ttl_seconds: 3600, // 1 hour
-            max_entries: 1000,
-        }
-    }
 }
 
 /// Metadata filtering engine

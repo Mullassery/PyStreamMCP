@@ -7,14 +7,8 @@ use std::collections::HashMap;
 
 /// Decision tracer for OpenTelemetry
 pub struct DecisionTracer {
-    config: TraceConfig,
+    config: super::TraceConfig,
     trace_counter: std::sync::atomic::AtomicU64,
-}
-
-#[derive(Debug, Clone)]
-pub struct TraceConfig {
-    pub enabled: bool,
-    pub sample_rate: f64,
 }
 
 /// Trace context for a complete decision
@@ -60,7 +54,7 @@ pub struct SpanEvent {
 
 impl DecisionTracer {
     /// Create new tracer
-    pub fn new(config: TraceConfig) -> Result<Self> {
+    pub fn new(config: super::TraceConfig) -> Result<Self> {
         Ok(Self {
             config,
             trace_counter: std::sync::atomic::AtomicU64::new(0),
@@ -196,10 +190,7 @@ mod tests {
 
     #[test]
     fn test_trace_id_generation() {
-        let config = TraceConfig {
-            enabled: true,
-            sample_rate: 1.0,
-        };
+        let config = crate::observability::TraceConfig::default();
         let tracer = DecisionTracer::new(config).unwrap();
 
         let id1 = tracer.generate_trace_id();
@@ -211,10 +202,7 @@ mod tests {
 
     #[test]
     fn test_create_context() {
-        let config = TraceConfig {
-            enabled: true,
-            sample_rate: 1.0,
-        };
+        let config = crate::observability::TraceConfig::default();
         let tracer = DecisionTracer::new(config).unwrap();
 
         let context = tracer.create_context("trace-123".to_string());
@@ -224,10 +212,7 @@ mod tests {
 
     #[test]
     fn test_create_child_span() {
-        let config = TraceConfig {
-            enabled: true,
-            sample_rate: 1.0,
-        };
+        let config = crate::observability::TraceConfig::default();
         let tracer = DecisionTracer::new(config).unwrap();
 
         let parent = tracer.create_context("trace-123".to_string());
@@ -240,10 +225,7 @@ mod tests {
 
     #[test]
     fn test_span_lifecycle() {
-        let config = TraceConfig {
-            enabled: true,
-            sample_rate: 1.0,
-        };
+        let config = crate::observability::TraceConfig::default();
         let tracer = DecisionTracer::new(config).unwrap();
 
         let mut span = tracer.create_root_span("trace-123".to_string(), "test query");

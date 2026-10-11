@@ -113,8 +113,12 @@ impl MetadataCache {
         // Check if we need to evict
         if entries.len() >= self.config.max_entries {
             // Simple eviction: remove entry with lowest access count
-            if let Some((evict_key, _)) = entries.iter().min_by_key(|(_, v)| v.access_count) {
-                entries.remove(evict_key);
+            let evict_key = entries
+                .iter()
+                .min_by_key(|(_, v)| v.access_count)
+                .map(|(k, _)| k.clone());
+            if let Some(evict_key) = evict_key {
+                entries.remove(&evict_key);
                 let mut stats = self.stats.write().await;
                 stats.evictions += 1;
             }
@@ -160,6 +164,7 @@ impl MetadataCache {
             hit_count: stats.hits,
             miss_count: stats.misses,
             hit_rate,
+            evictions: stats.evictions,
         })
     }
 
@@ -190,6 +195,7 @@ pub struct CacheStats {
     pub hit_count: u64,
     pub miss_count: u64,
     pub hit_rate: f64,
+    pub evictions: u64,
 }
 
 #[cfg(test)]

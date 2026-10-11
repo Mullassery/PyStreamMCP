@@ -8,16 +8,8 @@ use std::sync::{Arc, Mutex};
 
 /// Decision audit trail
 pub struct DecisionAuditTrail {
-    config: AuditConfig,
+    config: super::AuditConfig,
     decisions: Arc<Mutex<Vec<DecisionRecord>>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct AuditConfig {
-    pub enabled: bool,
-    pub retention_days: u32,
-    pub include_decisions: bool,
-    pub include_performance: bool,
 }
 
 /// Single decision record
@@ -34,7 +26,7 @@ pub struct DecisionRecord {
 
 impl DecisionAuditTrail {
     /// Create new audit trail
-    pub fn new(config: AuditConfig) -> Result<Self> {
+    pub fn new(config: super::AuditConfig) -> Result<Self> {
         Ok(Self {
             config,
             decisions: Arc::new(Mutex::new(Vec::new())),
@@ -138,12 +130,7 @@ mod tests {
 
     #[test]
     fn test_record_decision() {
-        let config = AuditConfig {
-            enabled: true,
-            retention_days: 90,
-            include_decisions: true,
-            include_performance: true,
-        };
+        let config = crate::observability::AuditConfig::default();
         let trail = DecisionAuditTrail::new(config).unwrap();
 
         let now = std::time::SystemTime::now()
@@ -168,12 +155,7 @@ mod tests {
 
     #[test]
     fn test_generate_report() {
-        let config = AuditConfig {
-            enabled: true,
-            retention_days: 90,
-            include_decisions: true,
-            include_performance: true,
-        };
+        let config = crate::observability::AuditConfig::default();
         let trail = DecisionAuditTrail::new(config).unwrap();
 
         let now = std::time::SystemTime::now()

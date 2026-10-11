@@ -53,31 +53,12 @@ impl std::fmt::Display for ConfidenceLevel {
 
 /// Confidence calculator
 pub struct ConfidenceCalculator {
-    config: ConfidenceConfig,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConfidenceConfig {
-    pub min_confidence: f64,
-    pub relevance_weight: f64,
-    pub freshness_weight: f64,
-    pub completeness_weight: f64,
-}
-
-impl Default for ConfidenceConfig {
-    fn default() -> Self {
-        Self {
-            min_confidence: 0.7,
-            relevance_weight: 0.4,
-            freshness_weight: 0.3,
-            completeness_weight: 0.3,
-        }
-    }
+    config: super::ConfidenceConfig,
 }
 
 impl ConfidenceCalculator {
     /// Create new confidence calculator
-    pub fn new(config: ConfidenceConfig) -> Result<Self> {
+    pub fn new(config: super::ConfidenceConfig) -> Result<Self> {
         Ok(Self { config })
     }
 
@@ -220,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_calculate_quality_score() {
-        let config = ConfidenceConfig::default();
+        let config = crate::quality_gates::ConfidenceConfig::default();
         let calc = ConfidenceCalculator::new(config).unwrap();
 
         let checks = vec![

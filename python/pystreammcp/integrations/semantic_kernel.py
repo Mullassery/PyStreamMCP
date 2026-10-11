@@ -8,7 +8,7 @@ Provides both:
 2. Legacy PyStreamMCPPlugin (backward compatible)
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 import asyncio
 from pystreammcp import (
     Agent,
@@ -21,6 +21,9 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+
+if TYPE_CHECKING:
+    from semantic_kernel.functions import KernelPlugin
 
 
 class SemanticKernelAdapter(AgentFrameworkAdapter):

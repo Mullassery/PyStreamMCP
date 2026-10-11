@@ -35,19 +35,12 @@ pub struct AuditLog {
 
 /// Structured logger
 pub struct StructuredLogger {
-    config: LogConfig,
-}
-
-#[derive(Debug, Clone)]
-pub struct LogConfig {
-    pub enabled: bool,
-    pub level: String,
-    pub format: String,
+    config: super::LogConfig,
 }
 
 impl StructuredLogger {
     /// Create new structured logger
-    pub fn new(config: LogConfig) -> crate::Result<Self> {
+    pub fn new(config: super::LogConfig) -> crate::Result<Self> {
         Ok(Self { config })
     }
 
@@ -108,11 +101,7 @@ mod tests {
 
     #[test]
     fn test_structured_logger() {
-        let config = LogConfig {
-            enabled: true,
-            level: "INFO".to_string(),
-            format: "json".to_string(),
-        };
+        let config = crate::observability::LogConfig::default();
         let logger = StructuredLogger::new(config).unwrap();
 
         logger.info("Test message").unwrap();

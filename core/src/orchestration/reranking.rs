@@ -69,7 +69,7 @@ impl ContextualReranker {
     }
 
     fn calculate_adjustment(&self, _candidate: &RankedCandidate) -> f64 {
-        let mut adjustment = 1.0;
+        let mut adjustment: f64 = 1.0;
 
         // User expertise adjustment
         if let Some(context) = &self.user_context {
@@ -90,12 +90,13 @@ impl ContextualReranker {
     }
 
     fn generate_reason(&self, candidate: &RankedCandidate, adjustment: f64) -> String {
+        let source = candidate.metadata.id();
         if adjustment > 1.1 {
-            format!("Boosted for {} - contextual match", candidate.source)
+            format!("Boosted for {} - contextual match", source)
         } else if adjustment < 0.9 {
-            format!("Adjusted for {} - expertise level mismatch", candidate.source)
+            format!("Adjusted for {} - expertise level mismatch", source)
         } else {
-            format!("Contextually relevant - {}", candidate.source)
+            format!("Contextually relevant - {}", source)
         }
     }
 }
@@ -132,11 +133,7 @@ mod tests {
         let reranker = ContextualReranker::new("python".to_string())
             .with_user_context(context);
         let adjustment = reranker.calculate_adjustment(
-            &RankedCandidate {
-                source: "github".to_string(),
-                score: 0.8,
-                rank: 1,
-            }
+            &test_candidate("github")
         );
         assert!(adjustment < 1.0);
     }
@@ -151,12 +148,27 @@ mod tests {
         let reranker = ContextualReranker::new("python".to_string())
             .with_user_context(context);
         let adjustment = reranker.calculate_adjustment(
-            &RankedCandidate {
-                source: "arxiv".to_string(),
-                score: 0.8,
-                rank: 1,
-            }
+            &test_candidate("arxiv")
         );
         assert!(adjustment > 1.0);
+    }
+
+    fn test_candidate(source: &str) -> RankedCandidate {
+        RankedCandidate {
+            metadata: crate::metadata::Metadata::Web(crate::metadata::WebMetadata {
+                url: format!("https://{}.example.com", source),
+                domain: source.to_string(),
+                publish_timestamp: 0,
+                size_bytes: 1000,
+                wayback_depth_years: 1,
+                has_ssl: true,
+                domain_age_years: 5,
+                topic_relevance: 0.8,
+                tags: vec![],
+            }),
+            rank: 1,
+            score: 0.8,
+            justification: "test".to_string(),
+        }
     }
 }

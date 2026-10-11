@@ -68,7 +68,7 @@ pub struct RerankingScore {
 }
 
 /// Query intent classification
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum QueryIntent {
     /// Factual lookup ("What is X?")
     Factual,

@@ -214,6 +214,50 @@ from the extras list if you're on 3.9.
 
 ## Known Issues
 
+**2026-10-11 pass — workspace-wide error sweep; the Rust backend now
+compiles and its tests pass, Python `ruff` is clean, and a stale
+integration test was rewritten against the real schema:**
+
+- **The `core/` Rust workspace compiles again.** It had accumulated 43
+  `cargo check` errors: `orchestration/` (reranking/orchestrator referenced
+  a stale `stage2_decision` field, `RankingStrategy`/`FusionMethod` were
+  missing `Serialize`/`Deserialize`, `ContentSegment` was missing
+  `PartialEq`, `TokenBudget` was re-exported from the wrong module);
+  `metadata/` (cache eviction borrow-checker error, missing
+  `CacheStats.evictions`, `clear_cache`/`cache_stats` were not `async`);
+  `selective_retrieval/` (`QueryIntent` missing `PartialEq`,
+  struct-variant `BudgetTier` match patterns, a duplicated
+  `RerankerConfig`); `quality_gates/` (duplicated `ConfidenceConfig`/
+  `SLACheckResult`); and `observability/` (per-subsystem `*Config`
+  constructors resolved to a non-existent path). All fixed; `cargo test`
+  is green — **138 library + 29 integration tests, 0 failures**.
+  - Build note: `rust-toolchain.toml` still pins `channel = "1.81"`, which
+    cannot even parse the committed lockfile — transitive deps such as
+    `idna_adapter 1.2.2` require `edition2024`, i.e. Cargo ≥ 1.85. The pin
+    was intentionally **left unchanged**; build with
+    `RUSTUP_TOOLCHAIN=1.97 cargo ...` until the pin is revisited.
+- **5 Python `F821` undefined-name errors fixed** in
+  `python/pystreammcp/integrations/{langchain,llamaindex,semantic_kernel}.py`
+  — the retriever/tool/plugin classes were referenced in annotations but
+  never imported. Added `TYPE_CHECKING`-guarded imports so the optional
+  dependency types are visible to type-checkers without forcing a hard
+  runtime import. `ruff check python/ --select E9,F63,F7,F82` is clean.
+- **`core/tests/phase_v05_metadata_tests.rs` was dead code** — it had never
+  compiled (it referenced an aspirational `MetadataEntry`/profile schema
+  that exists nowhere in the tree) and so was never run. Rewritten against
+  the real metadata API (`DatabaseMetadata`/`MCPToolMetadata`,
+  `Metadata::Web/Database/Mcp`, profile keys `public_postgres`,
+  `bigquery_analytics`, `ml_inference`, …); all 29 tests pass.
+- **3 pre-existing heuristic test failures fixed.**
+  `orchestration/complexity.rs`: a "very complex" query scored *lower* than
+  a merely "complex" one because reasoning terms (`analysis`, `correlation`,
+  `anomalies`, `pattern`, …) weren't recognised — added an
+  `analytical_terms()` signal and widened the `Complex` band.
+  `selective_retrieval/intent.rs`: added an enumeration (comma-list) signal
+  and raised the multi-entity weight so list-heavy and design-style queries
+  classify correctly. No production behaviour change (these tiers only feed
+  `budgets::assign_tier`, and the detectors are otherwise unused).
+
 - ~~No end-to-end tests for LLM failure states~~ **Fixed.** PyStreamMCP's
   own code never calls a model provider directly (no code path here to add
   `except RateLimitError`/`APIError` handling *to* — see `AgentFrameworkAdapter`
@@ -285,9 +329,12 @@ from the extras list if you're on 3.9.
 
 `core/` and `python/src/lib.rs` are an in-progress Rust workspace intended
 as a future performance backend. **It is not part of the published PyPI
-package** — the wheel built from `pyproject.toml` is pure Python — and it
-does not currently compile. Don't rely on it; it's tracked separately
-from the Python package described in this README.
+package** — the wheel built from `pyproject.toml` is pure Python. It now
+compiles and its unit/integration tests pass (see the 2026-10-11 entry in
+[Known Issues](#known-issues)), but note the `1.81` toolchain pin: build it
+with `RUSTUP_TOOLCHAIN=1.97 cargo ...`. Don't rely on it as a shipped
+artifact; it's tracked separately from the Python package described in this
+README.
 
 ## License
 
