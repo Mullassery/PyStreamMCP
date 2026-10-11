@@ -2,9 +2,34 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
-## [Unreleased]
+## [3.3.1] - 2026-10-11
 
 ### Fixed
+- **Rust `core/` workspace now compiles and its tests pass.** Fixed 43
+  `cargo check` errors across `orchestration/` (stale `stage2_decision`
+  field, missing `Serialize`/`Deserialize` on `RankingStrategy`/
+  `FusionMethod`, missing `PartialEq` on `ContentSegment`, wrong
+  `TokenBudget` re-export), `metadata/` (cache eviction borrow error,
+  missing `CacheStats.evictions`, `clear_cache`/`cache_stats` made
+  `async`), `selective_retrieval/` (`QueryIntent` `PartialEq`,
+  struct-variant `BudgetTier` patterns, duplicated `RerankerConfig`),
+  `quality_gates/` (duplicated `ConfidenceConfig`/`SLACheckResult`), and
+  `observability/` (per-subsystem `*Config` constructors resolved to a
+  non-existent path). `cargo test` is green (138 lib + 29 integration
+  tests). Build note: `rust-toolchain.toml` still pins `1.81`, which
+  cannot parse the committed lockfile — build with
+  `RUSTUP_TOOLCHAIN=1.97 cargo ...`.
+- **5 Python `F821` undefined-name errors** in
+  `python/pystreammcp/integrations/{langchain,llamaindex,semantic_kernel}.py`
+  — retriever/tool/plugin classes were referenced in annotations but never
+  imported; now imported under `typing.TYPE_CHECKING`.
+- **`core/tests/phase_v05_metadata_tests.rs` was dead code** (had never
+  compiled against a non-existent schema, so never ran); rewritten against
+  the real metadata API — 29 tests pass.
+- **3 heuristic-classifier test failures** in
+  `orchestration/complexity.rs` and `selective_retrieval/intent.rs`; added
+  analytical-term and enumeration signals so reasoning-heavy and list-heavy
+  queries classify correctly.
 - **Fabricated discovery data in three orchestration adapters**:
   `orchestration/temporal.py`'s `TemporalDiscoveryActivity`/
   `TemporalWorkflow`, `orchestration/airflow.py`'s
@@ -256,7 +281,8 @@ None - fully backward compatible
 - OKF native support
 - StatGuardian integration
 
-[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.1...HEAD
+[3.3.1]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/Mullassery/PyStreamMCP/compare/v3.2.0...v3.3.0
 [1.1.0]: https://github.com/Mullassery/PyStreamMCP/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Mullassery/PyStreamMCP/releases/tag/v1.0.0
