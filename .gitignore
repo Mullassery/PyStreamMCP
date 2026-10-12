@@ -69,3 +69,5 @@ design_*.md
 *.key
 *.pem
 secrets/
+
+graphify-out/
