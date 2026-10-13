@@ -1,51 +1,102 @@
 # PyStreamMCP
 
-[![Graphify](https://img.shields.io/badge/Graphify-knowledge%20graph-blue)](https://github.com/Graphify-Labs/graphify)
-
+[![PyPI](https://img.shields.io/pypi/v/pystreammcp)](https://pypi.org/project/pystreammcp/)
 [![CI](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/Mullassery/PyStreamMCP/actions/workflows/ci.yml)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 
-An AI-agent intelligence layer: query planning, context discovery, and
-token-cost optimization, exposed both as a Python SDK and as an MCP
-(Model Context Protocol) tool server, plus a small event-driven
-orchestration/federation layer for coordinating multiple MCP endpoints.
+Context and token optimization for AI agents — query planning, source discovery, and MCP orchestration.
 
-Pure Python — `pip install` just works, no Rust toolchain or compiler
-required.
+## What it is
 
-## Use cases
+PyStreamMCP is an AI-agent intelligence layer: query planning, context discovery, and
+token-cost optimization, exposed both as a Python SDK and as an MCP (Model Context
+Protocol) tool server. It also includes a small event-driven orchestration/federation
+layer for coordinating multiple MCP endpoints. The published package is **pure Python** —
+`pip install` works with no Rust toolchain or compiler.
 
-- **Giving an AI agent a query-planning layer over multiple data
-  sources**, exposed as real MCP tools rather than hand-rolled per-agent
-  glue code.
+## Features / Highlights
+
+- **Agent query planning** — `pystreammcp.Agent` with selectable optimization strategies
+  (`token_efficient`, `balanced`, `quality_first`) and token accounting.
+- **Source discovery** — `SourceRegistry` ranks registered data sources by real
+  word-overlap relevance (Jaccard) to a query; backs REST `/discover`, the
+  `pystreammcp_discover` MCP tool, and `LangchainAdapter.discover()`.
+- **MCP tool server** — `PyStreamMCPHandler` wires the MCP tool-call surface directly to a
+  live `Orchestrator`/`EventRouter`; MCP tool args are validated with Pydantic and the
+  advertised schema is generated from the same models.
+- **MCP orchestration & federation** — `Orchestrator` probes each configured endpoint's
+  real `tools/list` MCP method, with lexical tool-relevance ranking and capability
+  matching.
+- **Webhook event server** — `pystreammcp.server.create_flask_app()` exposes an
+  HMAC-SHA256-signed event endpoint; unsigned or invalid events are rejected, and the
+  endpoint fails closed (`503`) if no secret is configured.
+- **Framework adapters** — LangChain, LlamaIndex, CrewAI, Semantic Kernel, PydanticAI,
+  and Haystack under `pystreammcp.integrations`.
+- **CLI** — `pystreammcp` with `query` / `server` / `version` / `dashboard`.
+- **OKF integration** — an Open Knowledge Format catalog/discovery/query-planner feature
+  (see [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md)).
+
+## Who it's for / Use cases
+
+- **Giving an AI agent a query-planning layer over multiple data sources**, exposed as
+  real MCP tools rather than hand-rolled per-agent glue code.
 - **Coordinating multiple MCP endpoints** through the event-driven
   orchestration/federation layer instead of wiring each one separately.
 - **Tracking token-cost optimization** across agent queries.
-- **Not yet a good fit for:** anything depending on the Rust workspace —
-  see [Rust workspace (not shipped)](#rust-workspace-not-shipped) below;
-  the published package is pure Python only.
+- **Adding MCP support to an existing agent framework** through the shipped adapters.
 
-## Install
+## What it is not
+
+- **The Rust backend is not shipped.** `core/` and `python/src/lib.rs` are an in-progress
+  Rust workspace intended as a future performance backend; the wheel built from
+  `pyproject.toml` is pure Python. The workspace compiles and its tests pass, but it is
+  tracked separately and not part of the published package.
+- **Some orchestration capabilities are not fully implemented.** Cross-project federated
+  query *execution* and cross-database joins currently report
+  `"status": "not_implemented"` with an explanation, rather than fabricated result rows.
+- **Source discovery is a word-overlap heuristic, not semantic search.**
+  `SourceRegistry` uses Jaccard token overlap; wrap it with your own similarity scoring if
+  you need embeddings.
+- **Optional concurrency/framework packages have Python constraints.** The core SDK
+  (`Agent`, `SourceRegistry`, `Orchestrator`) supports Python 3.9+, but the `mcp` and
+  `semantic-kernel` extras require Python 3.10+ (their upstream packages don't publish
+  3.9-compatible releases). CI tests 3.10, 3.11, and 3.12 only.
+- **Known dependency CVEs.** `pip-audit` (run 2026-09-20) found 7 known CVEs in
+  transitive dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`). See
+  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §4.
+- **The HTTP servers have no auth layer of their own.** They bind to `127.0.0.1`
+  (localhost-only) by default; pass `host="0.0.0.0"` explicitly only inside a network
+  boundary you control. The event endpoint requires HMAC-SHA256 signatures. See
+  [SECURITY.md](SECURITY.md).
+
+## Project status
+
+**Beta.** Current version **3.3.1** (`Development Status :: 4 - Beta`). The pure-Python
+package is the shipped artifact and is under active hardening; the Rust workspace compiles
+and passes its tests but is not shipped. The most recent pass fixed the Rust build,
+Python `ruff` findings, and a stale integration test — see
+[`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) for the unhedged status.
+
+## Installation
 
 ```bash
 pip install PyStreamMCP
 ```
 
-Optional extras, install what you actually need:
+Optional extras — install only what you need:
 
 ```bash
-pip install "PyStreamMCP[api]"          # FastAPI + Flask HTTP servers
-pip install "PyStreamMCP[mcp]"          # MCP protocol client library
-pip install "PyStreamMCP[langchain]"    # LangChain adapter
-pip install "PyStreamMCP[llamaindex]"   # LlamaIndex adapter
+pip install "PyStreamMCP[api]"              # FastAPI + Flask HTTP servers
+pip install "PyStreamMCP[mcp]"              # MCP protocol client library
+pip install "PyStreamMCP[langchain]"        # LangChain adapter
+pip install "PyStreamMCP[llamaindex]"       # LlamaIndex adapter
 pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
 pip install "PyStreamMCP[all-integrations]" # every framework adapter
 ```
 
-Requires Python 3.9+ for the core SDK (`Agent`, `SourceRegistry`,
-`Orchestrator`). The `mcp` and `semantic-kernel` extras require Python
-3.10+ — their upstream packages don't publish Python 3.9-compatible
-releases, so `pip install` for those extras will fail on 3.9. CI tests
-3.10, 3.11, and 3.12 only; 3.9 is not covered by CI.
+Requires Python 3.9+ for the core SDK; the `mcp` and `semantic-kernel` extras require
+Python 3.10+.
 
 ## Quick start
 
@@ -66,19 +117,13 @@ print(f"Optimized tokens: {result.optimized_tokens}")
 print(f"Reduction:        {result.cost_reduction_percent:.1f}%")
 ```
 
-Token counts are estimated from the actual query text (a standard
-~4-characters-per-token heuristic) and the reduction percentage is
-computed from the selected `optimization_strategy` — not a fixed number
-returned regardless of input. See [`examples/basic_usage.py`](examples/basic_usage.py)
-for a full runnable walkthrough, including framework adapters for
-LangChain, LlamaIndex, CrewAI, Semantic Kernel, PydanticAI, and Haystack
-under [`pystreammcp.integrations`](python/pystreammcp/integrations/).
+Token counts are estimated from the actual query text (a ~4-characters-per-token
+heuristic) and the reduction is computed from the selected strategy — not a fixed number.
+See [`examples/basic_usage.py`](examples/basic_usage.py) for a full walkthrough.
 
-## Data source discovery
+## Usage
 
-`SourceRegistry` (`pystreammcp.SourceRegistry`) ranks *registered* data
-sources by real word-overlap relevance to a query — not a fabricated or
-hardcoded result:
+**Data source discovery:**
 
 ```python
 from pystreammcp import SourceRegistry
@@ -95,16 +140,7 @@ results = registry.discover("customer revenue by quarter")
 # [{"name": "orders_db", "type": "database", "relevance": 0.4444, "matched_terms": [...]}]
 ```
 
-The same registry backs `POST /discover` (REST), the `pystreammcp_discover`
-MCP tool, and `LangchainAdapter.discover()` — register sources once via
-`POST /sources` / `pystreammcp_register_source` / `registry.register()`,
-then discover against them from any of the three surfaces. This is a
-simple Jaccard token-overlap heuristic, not semantic/embedding search.
-
-## MCP orchestration & federation
-
-`Orchestrator` (`pystreammcp.Orchestrator`) discovers and routes across
-other MCP-enabled projects you configure in `pystreammcp.toml`:
+**MCP orchestration & federation** (`pystreammcp.toml`):
 
 ```toml
 [federation]
@@ -119,224 +155,48 @@ from pystreammcp import Orchestrator
 
 orch = Orchestrator()  # reads ./pystreammcp.toml
 result = orch.discover_mcp_projects()
-# {"projects": [{"project_name": ..., "endpoint": ..., "status": "healthy"|"unavailable", ...}], "total": N}
 ```
 
-This actually probes each configured endpoint's real `tools/list` MCP
-method — with nothing configured, or nothing reachable, it honestly
-reports zero/unavailable projects rather than a fixed fixture list.
-`Orchestrator` also does lexical tool-relevance ranking
-(`rank_tools_by_relevance`) and capability matching
-(`detect_compatible_projects`) against whatever it actually discovers.
-
-To expose these (plus tool-routing and webhook-event handling) as MCP
-tools, `PyStreamMCPHandler` (`pystreammcp._mcp_tools`) wires the MCP
-tool-call surface directly to a live `Orchestrator`/`EventRouter`
-instance — every handler call is backed by real, inspectable state, not
-a hardcoded response.
-
-**Honest limitations**: a few orchestration capabilities are accepted at
-the API level but not fully implemented yet — cross-project federated
-query *execution* and cross-database joins currently report
-`"status": "not_implemented"` with an explanation, rather than fabricated
-result rows, because there's no real query engine behind them yet.
-
-## Webhook event server
-
-`pystreammcp.server.create_flask_app()` exposes a small REST/webhook
-surface for orchestration events (agent MCPs reporting `mcp.available`,
-`tool.invoked`, health updates, etc. to `POST /orchestration/webhooks/events`).
-
-### Webhook security (HMAC-SHA256)
-
-Inbound events to `/orchestration/webhooks/events` must be signed:
+**Webhook event server (HMAC-SHA256):**
 
 ```bash
 export PYSTREAMMCP_WEBHOOK_SECRET="a long random shared secret"
 ```
 
-Senders compute `HMAC-SHA256(secret, raw_request_body)` and send it as:
+Senders compute `HMAC-SHA256(secret, raw_request_body)` and send it as
+`X-PyStreamMCP-Signature: sha256=<hex digest>`. Requests with a missing or invalid
+signature are rejected with `401`; with no secret configured, the endpoint rejects every
+request with `503`.
 
-```
-X-PyStreamMCP-Signature: sha256=<hex digest>
-```
-
-```python
-from pystreammcp.server import compute_webhook_signature
-import json, requests
-
-body = json.dumps({"event_type": "mcp.available", "data": {...}}).encode()
-signature = compute_webhook_signature(secret, body)
-
-requests.post(
-    "http://localhost:8000/orchestration/webhooks/events",
-    data=body,
-    headers={
-        "Content-Type": "application/json",
-        "X-PyStreamMCP-Signature": signature,
-    },
-)
-```
-
-Requests with a missing or invalid signature are rejected with `401`. If
-`PYSTREAMMCP_WEBHOOK_SECRET` isn't set at all, the endpoint fails closed
-and rejects every request with `503` — there is no "accept unsigned
-events" fallback.
-
-### Network defaults
-
-The HTTP servers (`PyStreamMCPServer` / `create_flask_app()`,
-`PyStreamMCPAPI.run`) bind to `127.0.0.1` (localhost-only) by default.
-Pass `host="0.0.0.0"` explicitly if you need the server reachable from
-other hosts — e.g. inside a container that already has its own network
-boundary.
-
-**The `pystreammcp` CLI**: `pip install PyStreamMCP` now installs a real
-`pystreammcp` command (`[project.scripts]` in `pyproject.toml`) backed by
-the Click group in `python/pystreammcp/cli.py`:
-`query`/`server`/`version`/`dashboard`. `python -m pystreammcp.cli` reaches
-the same Click group (the file's old, separate, smaller hand-rolled
-command set has been removed). `server` lazy-imports `pystreammcp.api`, so
-`pystreammcp version`/`query`/`dashboard` work without installing the
-`api` extra; running `pystreammcp server` without it prints a clear
-"install `pystreammcp[api]`" error instead of crashing with
-`ModuleNotFoundError`. See [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2
-(now marked fixed) for how this was previously broken.
-
-## Testing
+**Testing:**
 
 ```bash
 pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
 pytest tests/ -v
 ```
 
-Note: this exact command needs Python 3.10+ (see [Install](#install)); on
-3.9 the `mcp` and `semantic-kernel` extras fail to resolve, so drop them
-from the extras list if you're on 3.9.
-
-## Known Issues
-
-**2026-10-11 pass — workspace-wide error sweep; the Rust backend now
-compiles and its tests pass, Python `ruff` is clean, and a stale
-integration test was rewritten against the real schema:**
-
-- **The `core/` Rust workspace compiles again.** It had accumulated 43
-  `cargo check` errors: `orchestration/` (reranking/orchestrator referenced
-  a stale `stage2_decision` field, `RankingStrategy`/`FusionMethod` were
-  missing `Serialize`/`Deserialize`, `ContentSegment` was missing
-  `PartialEq`, `TokenBudget` was re-exported from the wrong module);
-  `metadata/` (cache eviction borrow-checker error, missing
-  `CacheStats.evictions`, `clear_cache`/`cache_stats` were not `async`);
-  `selective_retrieval/` (`QueryIntent` missing `PartialEq`,
-  struct-variant `BudgetTier` match patterns, a duplicated
-  `RerankerConfig`); `quality_gates/` (duplicated `ConfidenceConfig`/
-  `SLACheckResult`); and `observability/` (per-subsystem `*Config`
-  constructors resolved to a non-existent path). All fixed; `cargo test`
-  is green — **138 library + 29 integration tests, 0 failures**.
-  - Build note: `rust-toolchain.toml` still pins `channel = "1.81"`, which
-    cannot even parse the committed lockfile — transitive deps such as
-    `idna_adapter 1.2.2` require `edition2024`, i.e. Cargo ≥ 1.85. The pin
-    was intentionally **left unchanged**; build with
-    `RUSTUP_TOOLCHAIN=1.97 cargo ...` until the pin is revisited.
-- **5 Python `F821` undefined-name errors fixed** in
-  `python/pystreammcp/integrations/{langchain,llamaindex,semantic_kernel}.py`
-  — the retriever/tool/plugin classes were referenced in annotations but
-  never imported. Added `TYPE_CHECKING`-guarded imports so the optional
-  dependency types are visible to type-checkers without forcing a hard
-  runtime import. `ruff check python/ --select E9,F63,F7,F82` is clean.
-- **`core/tests/phase_v05_metadata_tests.rs` was dead code** — it had never
-  compiled (it referenced an aspirational `MetadataEntry`/profile schema
-  that exists nowhere in the tree) and so was never run. Rewritten against
-  the real metadata API (`DatabaseMetadata`/`MCPToolMetadata`,
-  `Metadata::Web/Database/Mcp`, profile keys `public_postgres`,
-  `bigquery_analytics`, `ml_inference`, …); all 29 tests pass.
-- **3 pre-existing heuristic test failures fixed.**
-  `orchestration/complexity.rs`: a "very complex" query scored *lower* than
-  a merely "complex" one because reasoning terms (`analysis`, `correlation`,
-  `anomalies`, `pattern`, …) weren't recognised — added an
-  `analytical_terms()` signal and widened the `Complex` band.
-  `selective_retrieval/intent.rs`: added an enumeration (comma-list) signal
-  and raised the multi-entity weight so list-heavy and design-style queries
-  classify correctly. No production behaviour change (these tiers only feed
-  `budgets::assign_tier`, and the detectors are otherwise unused).
-
-- ~~No end-to-end tests for LLM failure states~~ **Fixed.** PyStreamMCP's
-  own code never calls a model provider directly (no code path here to add
-  `except RateLimitError`/`APIError` handling *to* — see `AgentFrameworkAdapter`
-  below), so what's now tested is the part this repo actually owns: that the
-  MCP tool-call path doesn't crash when whatever it's orchestrating fails.
-  `pystreammcp.testing` exports `RateLimitError`, `ContextWindowExceededError`,
-  `MalformedModelResponseError`, and `FailingAgent`/`FailingAdapter` stand-ins
-  that raise them; `mcp_server.py`'s `call_tool`/`process_message` now catch
-  exceptions raised during tool execution and return a structured
-  `{"status": "error", "error_type": ..., "message": ...}` response instead
-  of propagating uncaught. See `tests/test_mcp_server_resilience.py`.
-- ~~No Pydantic validation for the MCP tool protocol itself~~ **Fixed.**
-  Each of the four MCP tools now has a Pydantic arg model
-  (`QueryToolArgs`/`DiscoverToolArgs`/`RegisterSourceToolArgs`/`OptimizeToolArgs`
-  in `mcp_server.py`) validated in `call_tool` before dispatch (wrong types,
-  invalid enum values, and missing required fields all now return a
-  structured `validation_errors` response instead of reaching the handler
-  unchecked), and `MCPTool.input_schema` is generated from those same models
-  via `model_json_schema()` — the advertised schema and the schema actually
-  enforced can no longer drift apart the way a hand-duplicated dict could.
-- ~~No shipped mock MCP server / mock LLM fixture~~ **Fixed.** Added
-  `tests/conftest.py` (centralizing the `sys.path` setup 5 test files were
-  duplicating, plus `mock_adapter`/`failing_agent`/`failing_adapter`/
-  `llm_failure` pytest fixtures) and `pystreammcp/testing.py`, exporting
-  `MockAdapter` (promoted from the old test-local copy) and the
-  failure-injection stand-ins above for downstream projects' own test
-  suites to import directly.
-- **Per-query context discovery** now has a real implementation
-  (`pystreammcp.discovery.SourceRegistry`): register data sources (name,
-  description, type, tags), and `/discover` (REST), `pystreammcp_discover`
-  (MCP), and `LangchainAdapter.discover()` all rank *registered* sources
-  by real Jaccard token-overlap against the query — an empty registry or
-  a non-matching context returns an empty list, not fabricated data. This
-  is a simple word-overlap heuristic, not semantic/embedding search — if
-  you need that, wrap `SourceRegistry` with your own similarity scoring.
-- ~~The `pystreammcp` CLI is dead code~~ **Fixed.** `pyproject.toml` now
-  has a `[project.scripts]` entry, and the module's `__main__` guard
-  invokes the real Click group. See [Network defaults](#network-defaults)
-  above and [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.2.
-- ~~Three orchestration-tool discovery adapters return fabricated
-  results~~ **Fixed.** `orchestration/temporal.py`'s
-  `TemporalDiscoveryActivity`/`TemporalWorkflow`, `airflow.py`'s
-  `PyStreamMCPDiscoveryOperator`, and `nocode_rpa.py`'s
-  `N8nWebhookTrigger` now take an optional shared `SourceRegistry` and
-  call its real `discover()` instead of synthesizing `source_0..
-  source_4`. With nothing registered they honestly return zero sources
-  (see [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §2.1).
-- `pip-audit` (run 2026-09-20 against the `dev,api,mcp,langchain,
-  llamaindex,semantic-kernel` extras) found 7 known CVEs in transitive
-  dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`) — see
-  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §4. Not fixed this pass.
-- No open GitHub issues as of this pass.
-
 ## Documentation
 
-- [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) — full, unhedged status:
-  what's tested, what's fabricated/broken, technical debt, what's
-  explicitly not built.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the shipped
-  package is structured, with a diagram.
-- [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md) — the OKF (Open Knowledge
-  Format) catalog/discovery/query-planner feature (real, tested, not
-  mentioned elsewhere in this README).
-- [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md),
-  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md),
-  [`CHANGELOG.md`](CHANGELOG.md).
+- [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) — full, unhedged status: what's tested, what's fabricated/broken, technical debt, what's explicitly not built
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the shipped package is structured, with a diagram
+- [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md) — the OKF catalog/discovery/query-planner feature
+- [`CHANGELOG.md`](CHANGELOG.md) — release history
+- [`examples/`](examples/) — runnable examples, including framework integrations and the MCP orchestrator
 
-## Rust workspace (not shipped)
+## Contributing
 
-`core/` and `python/src/lib.rs` are an in-progress Rust workspace intended
-as a future performance backend. **It is not part of the published PyPI
-package** — the wheel built from `pyproject.toml` is pure Python. It now
-compiles and its unit/integration tests pass (see the 2026-10-11 entry in
-[Known Issues](#known-issues)), but note the `1.81` toolchain pin: build it
-with `RUSTUP_TOOLCHAIN=1.97 cargo ...`. Don't rely on it as a shipped
-artifact; it's tracked separately from the Python package described in this
-README.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Report security issues per
+[SECURITY.md](SECURITY.md).
+
+## Related projects
+
+- [PyStreamXL](https://github.com/Mullassery/PyStreamXL) — stream large Excel workbooks with constant memory
+- [PyStreamPDF](https://github.com/Mullassery/PyStreamPDF) — token-efficient PDF extraction for RAG
+- [PyStreamMCP](https://github.com/Mullassery/PyStreamMCP) — context and token optimization for AI agents
+- [PyStreamAI](https://github.com/Mullassery/PyStreamAI) — ML deployment toolkit (canary/A-B, cost tracking, ONNX)
+- [PyTokenCalc](https://github.com/Mullassery/PyTokenCalc) — LLM token counting and cost estimation
+- [Browse all projects](https://github.com/Mullassery?tab=repositories)
 
 ## License
 
