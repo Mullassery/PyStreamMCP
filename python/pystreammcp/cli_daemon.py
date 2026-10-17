@@ -1,16 +1,28 @@
 """Dashboard daemon - runs in background, restarts on close"""
 
+import re
+import shlex
 import subprocess
 import time
 import signal
 import sys
 from pathlib import Path
 
+_PACKAGE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+
 
 class DashboardDaemon:
     def __init__(self, package_name: str, dashboard_cmd: str):
+        if not isinstance(package_name, str) or not _PACKAGE_NAME_RE.match(
+            package_name
+        ):
+            raise ValueError(f"Invalid package name: {package_name!r}")
         self.package_name = package_name
-        self.dashboard_cmd = dashboard_cmd
+        # Split into argv and run without a shell so that a caller-supplied
+        # command cannot inject shell metacharacters.
+        self.dashboard_cmd = shlex.split(dashboard_cmd)
+        if not self.dashboard_cmd:
+            raise ValueError("dashboard_cmd must not be empty")
         self.process = None
         self.running = True
 
@@ -27,7 +39,7 @@ class DashboardDaemon:
 
                 self.process = subprocess.Popen(
                     self.dashboard_cmd,
-                    shell=True,
+                    shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
