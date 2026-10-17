@@ -2,6 +2,11 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [3.3.2] - 2026-10-17
+
+### Fixed
+- Audit remediation: security hardening, correctness fixes, and lint/CI gates.
+
 ## [3.3.1] - 2026-10-11
 
 ### Fixed
