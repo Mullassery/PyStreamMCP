@@ -2,6 +2,17 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [3.3.3] - 2026-10-18
+
+### Added
+- **New `pystreammcp_crawl` MCP tool**, backed by the [MudFish](https://github.com/Mullassery/MudFish)
+  engine, giving agents SSRF-safe, budget-bounded web access: crawl a seed URL
+  to a chosen depth/URL cap with optional headless-Chrome rendering for
+  JS-dependent pages, returning each page's URL, status, title and link count
+  plus aggregate stats. `mudfish` is an optional dependency
+  (`pip install PyStreamMCP[crawl]`); when it's absent the tool returns a
+  structured `MissingDependency` error naming the fix instead of raising.
+
 ## [3.3.2] - 2026-10-17
 
 ### Fixed

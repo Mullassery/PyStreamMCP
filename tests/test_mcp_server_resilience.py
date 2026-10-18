@@ -170,3 +170,102 @@ class TestMockAdapterIsReusable:
     async def test_mock_adapter_async_methods_work(self, mock_adapter):
         result = await mock_adapter.query_async("test query")
         assert result.text == "test query"
+
+
+class TestCrawlTool:
+    """The pystreammcp_crawl tool bridges to MudFish. It must (a) advertise a
+    real schema, (b) fail with a structured, actionable error when the optional
+    dependency is absent (never a bare ImportError), and (c) shape a real
+    MudFish result faithfully."""
+
+    def test_crawl_is_advertised_with_schema(self):
+        server = PyStreamMCPServer()
+        tools = {t["name"]: t for t in server.get_tools()}
+        assert "pystreammcp_crawl" in tools
+        schema = tools["pystreammcp_crawl"]["inputSchema"]
+        assert "url" in schema["properties"]
+        assert "url" in schema.get("required", [])
+
+    def test_crawl_rejects_missing_url(self):
+        server = PyStreamMCPServer()
+        result = server.call_tool("pystreammcp_crawl", {})
+        assert result["status"] == "error"
+        assert "validation_errors" in result
+
+    def test_crawl_missing_dependency_returns_structured_error(self, monkeypatch):
+        """If `mudfish` isn't installed, the tool must say so (and how to fix
+        it) rather than raising ImportError out of call_tool."""
+        import sys
+
+        monkeypatch.setitem(sys.modules, "mudfish", None)
+        server = PyStreamMCPServer()
+
+        result = server.call_tool("pystreammcp_crawl", {"url": "https://example.com"})
+
+        assert result["status"] == "error"
+        assert result["error_type"] == "MissingDependency"
+        assert "mudfish" in result["message"]
+
+    def test_crawl_shapes_a_real_mudfish_result(self, monkeypatch):
+        """Feed the real `mudfish.crawl` signature a fake result object and
+        assert the tool maps it (pages, links, stats) instead of fabricating
+        output. Also asserts the SSRF-safe/budget options are actually passed
+        through to the engine."""
+        import sys
+        import types
+
+        captured: Dict[str, Any] = {}
+
+        class _Page:
+            def __init__(self, url, status_code, title, links):
+                self.url = url
+                self.status_code = status_code
+                self.title = title
+                self.links = links
+
+        class _Stats:
+            urls_discovered = 3
+            urls_fetched = 2
+            urls_skipped = 1
+            bytes_downloaded = 4096
+            duration_secs = 0.42
+
+        class _Result:
+            def __init__(self):
+                self.pages = [
+                    _Page("https://example.com/", 200, "Home", ["a", "b"]),
+                    _Page("https://example.com/about", 200, "About", []),
+                ]
+
+            def __iter__(self):
+                return iter(self.pages)
+
+            @property
+            def stats(self):
+                return _Stats()
+
+        def _fake_crawl(url, **kwargs):
+            captured["url"] = url
+            captured["kwargs"] = kwargs
+            return _Result()
+
+        fake = types.ModuleType("mudfish")
+        fake.crawl = _fake_crawl
+        monkeypatch.setitem(sys.modules, "mudfish", fake)
+
+        server = PyStreamMCPServer()
+        result = server.call_tool(
+            "pystreammcp_crawl",
+            {"url": "https://example.com", "depth": 2, "max_urls": 10, "same_domain": False},
+        )
+
+        assert result["status"] == "success"
+        assert result["total_pages"] == 2
+        assert result["pages"][0]["title"] == "Home"
+        assert result["pages"][0]["links"] == 2
+        assert result["stats"]["urls_fetched"] == 2
+        assert result["stats"]["duration_secs"] == 0.42
+        assert captured["url"] == "https://example.com"
+        assert captured["kwargs"]["depth"] == 2
+        assert captured["kwargs"]["max_urls"] == 10
+        assert captured["kwargs"]["same_domain"] is False

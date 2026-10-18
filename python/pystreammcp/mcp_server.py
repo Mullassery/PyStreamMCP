@@ -61,11 +61,31 @@ class OptimizeToolArgs(BaseModel):
     )
 
 
+class CrawlToolArgs(BaseModel):
+    url: str = Field(..., min_length=1, description="Seed URL to crawl (http/https)")
+    depth: int = Field(1, ge=0, le=5, description="Maximum link-following depth")
+    max_urls: int = Field(
+        25, gt=0, le=500, description="Stop after fetching this many URLs"
+    )
+    same_domain: bool = Field(
+        True, description="Restrict the crawl to the seed URL's domain"
+    )
+    render_js: bool = Field(
+        False,
+        description="Render JS-dependent pages in headless Chrome (slow; needs Chrome)",
+    )
+    timeout_secs: int = Field(30, gt=0, le=120, description="Per-request timeout")
+    max_response_bytes: int = Field(
+        5_000_000, gt=0, description="Per-response size cap, in bytes"
+    )
+
+
 _TOOL_ARG_MODELS: Dict[str, Type[BaseModel]] = {
     "pystreammcp_query": QueryToolArgs,
     "pystreammcp_discover": DiscoverToolArgs,
     "pystreammcp_register_source": RegisterSourceToolArgs,
     "pystreammcp_optimize": OptimizeToolArgs,
+    "pystreammcp_crawl": CrawlToolArgs,
 }
 
 
@@ -142,6 +162,14 @@ class PyStreamMCPServer:
                 description="Optimize a query for cost reduction while maintaining quality",
                 input_schema=OptimizeToolArgs.model_json_schema(),
             ),
+            "crawl": MCPTool(
+                name="pystreammcp_crawl",
+                description=(
+                    "Fetch and crawl a website (SSRF-safe, budget-bounded) and return its "
+                    "pages and links. Optional headless-Chrome rendering for JS pages."
+                ),
+                input_schema=CrawlToolArgs.model_json_schema(),
+            ),
         }
 
     def get_tools(self) -> List[Dict[str, Any]]:
@@ -196,6 +224,7 @@ class PyStreamMCPServer:
             "pystreammcp_discover": self._tool_discover,
             "pystreammcp_register_source": self._tool_register_source,
             "pystreammcp_optimize": self._tool_optimize,
+            "pystreammcp_crawl": self._tool_crawl,
         }[name]
 
         try:
@@ -272,6 +301,65 @@ class PyStreamMCPServer:
             ],
         }
 
+    def _tool_crawl(self, args: CrawlToolArgs) -> Dict[str, Any]:
+        """Fetch and crawl a website with MudFish and return its pages.
+
+        `mudfish` (the Rust engine's native Python binding) is an optional
+        dependency -- install it with `pip install mudfish` or
+        `pip install PyStreamMCP[crawl]`. When it isn't installed this returns
+        a structured error naming the fix instead of a bare ImportError. The
+        crawl itself is SSRF-safe (resolved-address filtering) and
+        budget-bounded (`max_urls`), so it is safe to hand arbitrary
+        user/agent-supplied URLs.
+        """
+        try:
+            import mudfish
+        except ImportError:
+            return {
+                "status": "error",
+                "error_type": "MissingDependency",
+                "message": (
+                    "Web crawling requires the optional 'mudfish' package. "
+                    "Install it with `pip install mudfish` (or "
+                    "`pip install PyStreamMCP[crawl]`)."
+                ),
+            }
+
+        result = mudfish.crawl(
+            args.url,
+            depth=args.depth,
+            same_domain=args.same_domain,
+            max_urls=args.max_urls,
+            timeout_secs=args.timeout_secs,
+            max_response_bytes=args.max_response_bytes,
+            render_js=args.render_js,
+        )
+
+        pages = [
+            {
+                "url": page.url,
+                "status_code": page.status_code,
+                "title": page.title,
+                "links": len(page.links) if page.links is not None else 0,
+            }
+            for page in result
+        ]
+        stats = result.stats
+
+        return {
+            "status": "success",
+            "url": args.url,
+            "pages": pages,
+            "total_pages": len(pages),
+            "stats": {
+                "urls_discovered": stats.urls_discovered,
+                "urls_fetched": stats.urls_fetched,
+                "urls_skipped": stats.urls_skipped,
+                "bytes_downloaded": stats.bytes_downloaded,
+                "duration_secs": stats.duration_secs,
+            },
+        }
+
     def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Process an MCP message.
 
@@ -308,7 +396,7 @@ class PyStreamMCPServer:
                 "type": "info",
                 "name": "PyStreamMCP",
                 "version": "0.2.0",
-                "capabilities": ["query", "discover", "optimize"],
+                "capabilities": ["query", "discover", "optimize", "crawl"],
             }
 
         else:
