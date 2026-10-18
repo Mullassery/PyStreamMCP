@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CodeAtlas</title>
+<script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.4.0/cytoscape-dagre.js"></script>
+<style>
+  body { margin: 0; font-family: -apple-system, sans-serif; }
+  #cy { width: 100vw; height: 100vh; }
+  header { padding: 12px 16px; border-bottom: 1px solid #eee; }
+</style>
+</head>
+<body>
+<header>
+  <strong>CodeAtlas</strong>
+  <p>Owns 101 symbols across 9 file(s).</p>
+</header>
+<div id="cy"></div>
+<script>
+const data = {"nodes": [{"data": {"id": "decomposition", "label": "decomposition", "description": "Owns 18 symbols across 2 file(s)."}}, {"data": {"id": "metadata", "label": "metadata", "description": "Owns 76 symbols across 5 file(s)."}}, {"data": {"id": "ml", "label": "ml", "description": "Owns 18 symbols across 2 file(s)."}}, {"data": {"id": "multi_agent", "label": "multi_agent", "description": "Owns 21 symbols across 2 file(s)."}}, {"data": {"id": "observability", "label": "observability", "description": "Owns 81 symbols across 5 file(s)."}}, {"data": {"id": "orchestration", "label": "orchestration", "description": "Owns 208 symbols across 10 file(s)."}}, {"data": {"id": "quality_gates", "label": "quality_gates", "description": "Owns 84 symbols across 5 file(s)."}}, {"data": {"id": "selective_retrieval", "label": "selective_retrieval", "description": "Owns 81 symbols across 6 file(s)."}}, {"data": {"id": "storage", "label": "storage", "description": "Owns 9 symbols across 3 file(s)."}}, {"data": {"id": "streaming", "label": "streaming", "description": "Owns 14 symbols across 2 file(s)."}}], "edges": [{"data": {"id": "edge_0", "source": "src", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_1", "source": "decomposition", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_2", "source": "metadata", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_3", "source": "ml", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_4", "source": "multi_agent", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_5", "source": "observability", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_6", "source": "orchestration", "target": "metadata", "label": "calls"}}, {"data": {"id": "edge_7", "source": "orchestration", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_8", "source": "quality_gates", "target": "metadata", "label": "calls"}}, {"data": {"id": "edge_9", "source": "quality_gates", "target": "selective_retrieval", "label": "calls"}}, {"data": {"id": "edge_10", "source": "selective_retrieval", "target": "metadata", "label": "calls"}}]};
+const cy = cytoscape({
+  container: document.getElementById('cy'),
+  elements: data,
+  style: [
+    { selector: 'node', style: {
+      'label': 'data(label)',
+      'shape': 'round-rectangle',
+      'background-color': '#eef2ff',
+      'border-color': '#6366f1',
+      'border-width': 1,
+      'width': 'label',
+      'padding': '10px',
+      'text-valign': 'center',
+      'text-halign': 'center',
+      'font-size': '12px',
+    }},
+    { selector: 'edge', style: {
+      'label': 'data(label)',
+      'curve-style': 'bezier',
+      'target-arrow-shape': 'triangle',
+      'font-size': '10px',
+      'text-rotation': 'autorotate',
+    }}
+  ],
+  layout: { name: 'dagre', rankDir: 'LR' }
+});
+cy.on('tap', 'node', evt => {
+  const node = evt.target;
+  if (node.data('linkUrl')) { window.location.href = node.data('linkUrl'); }
+});
+</script>
+</body>
+</html>

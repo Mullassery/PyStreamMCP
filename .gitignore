@@ -70,4 +70,4 @@ design_*.md
 *.pem
 secrets/
 
-graphify-out/
+codeatlas-out/
