@@ -1,5 +1,9 @@
 # PyStreamMCP Workflow Integration Guide
 
+The examples below call PyStreamMCP through its REST/CLI surfaces. The
+`pystreammcp.orchestration.temporal` and `pystreammcp.orchestration.airflow`
+modules are experimental in-process helpers, not vendor SDK integrations.
+
 PyStreamMCP integrates with popular workflow orchestration tools through:
 1. **Bash commands** - CLI interface for shell-based workflows
 2. **REST API** - HTTP endpoints for remote calls

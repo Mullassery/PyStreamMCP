@@ -1,6 +1,8 @@
-"""PydanticAI integration for PyStreamMCP.
+"""Experimental, unsupported PydanticAI-named helper for PyStreamMCP.
 
-Enables PydanticAI agents to use PyStreamMCP for optimized retrieval.
+This module does not import pydantic-ai and does not implement a PydanticAI
+tool, agent, or retriever. Constructing it raises unless explicitly opted in.
+It is not an integration.
 """
 
 from typing import Dict, Any, Optional
@@ -14,13 +16,15 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.experimental import require_experimental_opt_in
 
 
 class PydanticAIAdapter(AgentFrameworkAdapter):
     """PydanticAI adapter with native async support."""
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(self, config: AdapterConfig, *, experimental: bool = False):
         """Initialize PydanticAI adapter."""
+        require_experimental_opt_in("Pydantic AI", experimental)
         super().__init__(config)
         self.agent = Agent(
             agent_id=config.agent_id,
@@ -89,7 +93,13 @@ class PydanticAIAdapter(AgentFrameworkAdapter):
 class PyStreamMCPRetriever:
     """PydanticAI retriever (legacy)."""
 
-    def __init__(self, agent_id: str = "pydantic_ai", max_tokens: int = 2000):
+    def __init__(
+        self,
+        agent_id: str = "pydantic_ai",
+        max_tokens: int = 2000,
+        *,
+        experimental: bool = False,
+    ):
         """Initialize retriever."""
         config = AdapterConfig(
             framework=FrameworkType.PYDANTIC_AI,
@@ -98,7 +108,7 @@ class PyStreamMCPRetriever:
             optimization_strategy="token_efficient",
             max_tokens=max_tokens,
         )
-        self.adapter = PydanticAIAdapter(config)
+        self.adapter = PydanticAIAdapter(config, experimental=experimental)
 
     async def retrieve(self, query: str) -> Dict[str, Any]:
         """Retrieve optimized context."""
@@ -123,9 +133,13 @@ class PyStreamMCPRetriever:
 def create_pystreammcp_retriever_for_pydantic(
     agent_id: str = "pydantic_ai",
     max_tokens: int = 2000,
+    *,
+    experimental: bool = False,
 ) -> PyStreamMCPRetriever:
     """Create a PyStreamMCP retriever for PydanticAI."""
-    return PyStreamMCPRetriever(agent_id=agent_id, max_tokens=max_tokens)
+    return PyStreamMCPRetriever(
+        agent_id=agent_id, max_tokens=max_tokens, experimental=experimental
+    )
 
 
 # Register adapter

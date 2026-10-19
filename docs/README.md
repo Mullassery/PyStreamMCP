@@ -25,4 +25,6 @@
 - Fake-module tests are contract tests; they are not integration evidence.
 - Real cross-repo tests live in `tests/test_statguardian_live.py` and
   `tests/test_mudfish_live.py`.
+- `tests/test_support_matrix.py` asserts that the documented support matrix,
+  `pyproject.toml` extras, and runtime guards stay in sync.
 - A skipped test is documented as **not tested**.

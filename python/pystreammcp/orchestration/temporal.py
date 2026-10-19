@@ -1,7 +1,8 @@
-"""Temporal integration for PyStreamMCP.
+"""Experimental, unsupported Temporal-named helper for PyStreamMCP.
 
-Enables durable workflows with Temporal, with PyStreamMCP operations
-as resilient activities that survive failures and retries.
+This module does not import temporalio and does not define real Temporal
+workflows, activities, or clients. ``TemporalClient`` is an in-memory helper.
+Constructing anything here raises unless explicitly opted in.
 """
 
 from typing import Dict, Any, Optional
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 
 from pystreammcp import Agent
 from pystreammcp.discovery import SourceRegistry
+from pystreammcp.experimental import require_experimental_opt_in
 
 
 @dataclass
@@ -19,6 +21,10 @@ class TemporalQueryActivity:
     query_text: str
     intent: str = "retrieve"
     max_tokens: Optional[int] = None
+    experimental: bool = False
+
+    def __post_init__(self) -> None:
+        require_experimental_opt_in("Temporal", self.experimental)
 
     def execute(self) -> Dict[str, Any]:
         """Execute the query as a Temporal activity.
@@ -57,6 +63,10 @@ class TemporalDiscoveryActivity:
     context: str
     max_sources: int = 10
     registry: Optional[SourceRegistry] = None
+    experimental: bool = False
+
+    def __post_init__(self) -> None:
+        require_experimental_opt_in("Temporal", self.experimental)
 
     def execute(self) -> Dict[str, Any]:
         """Execute discovery as a durable activity.
@@ -92,7 +102,12 @@ class TemporalWorkflow:
     """
 
     def __init__(
-        self, workflow_id: str, agent_id: str, registry: Optional[SourceRegistry] = None
+        self,
+        workflow_id: str,
+        agent_id: str,
+        registry: Optional[SourceRegistry] = None,
+        *,
+        experimental: bool = False,
     ):
         """Initialize workflow.
 
@@ -103,9 +118,11 @@ class TemporalWorkflow:
                 registered on elsewhere (e.g. via the FastAPI `/sources`
                 endpoint). Defaults to a fresh, empty registry.
         """
+        require_experimental_opt_in("Temporal", experimental)
         self.workflow_id = workflow_id
         self.agent_id = agent_id
         self.registry = registry if registry is not None else SourceRegistry()
+        self.experimental = experimental
 
     def discover_sources(self, context: str) -> Dict[str, Any]:
         """Activity: Discover relevant sources.
@@ -118,7 +135,12 @@ class TemporalWorkflow:
         )
         ```
         """
-        activity = TemporalDiscoveryActivity(self.agent_id, context, registry=self.registry)
+        activity = TemporalDiscoveryActivity(
+            self.agent_id,
+            context,
+            registry=self.registry,
+            experimental=self.experimental,
+        )
         return activity.execute()
 
     def optimize_query(self, query_text: str) -> Dict[str, Any]:
@@ -133,7 +155,9 @@ class TemporalWorkflow:
         )
         ```
         """
-        activity = TemporalQueryActivity(self.agent_id, query_text)
+        activity = TemporalQueryActivity(
+            self.agent_id, query_text, experimental=self.experimental
+        )
         return activity.execute()
 
     def execute_parallel_queries(self, queries: list) -> list:
@@ -153,7 +177,9 @@ class TemporalWorkflow:
         """
         results = []
         for query in queries:
-            activity = TemporalQueryActivity(self.agent_id, query)
+            activity = TemporalQueryActivity(
+                self.agent_id, query, experimental=self.experimental
+            )
             results.append(activity.execute())
         return results
 
@@ -186,14 +212,18 @@ class TemporalClient:
     ```
     """
 
-    def __init__(self, server_address: str = "localhost:7233"):
+    def __init__(
+        self, server_address: str = "localhost:7233", *, experimental: bool = False
+    ):
         """Initialize Temporal client.
 
         Args:
             server_address: Temporal server address
         """
+        require_experimental_opt_in("Temporal", experimental)
         self.server_address = server_address
         self.workflows = {}
+        self.experimental = experimental
 
     def start_workflow(
         self,

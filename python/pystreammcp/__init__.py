@@ -71,6 +71,7 @@ from .federation import (
     FederationUnavailable,
     execute_federated,
 )
+from .experimental import ExperimentalIntegrationError
 
 __all__ = [
     # Core
@@ -112,4 +113,5 @@ __all__ = [
     "FederatedResult",
     "FederationUnavailable",
     "execute_federated",
+    "ExperimentalIntegrationError",
 ]

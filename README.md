@@ -31,8 +31,8 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 - **Webhook event server** — `pystreammcp.server.create_flask_app()` exposes an
   HMAC-SHA256-signed event endpoint; unsigned or invalid events are rejected, and the
   endpoint fails closed (`503`) if no secret is configured.
-- **Framework adapters** — LangChain, LlamaIndex, CrewAI, Semantic Kernel, PydanticAI,
-  and Haystack under `pystreammcp.integrations`.
+- **Framework adapters** — real-tested LangChain, LlamaIndex, and Semantic Kernel
+  adapters under `pystreammcp.integrations`.
 - **CLI** — `pystreammcp` with `query` / `server` / `version` / `dashboard`.
 - **OKF integration** — an Open Knowledge Format catalog/discovery/query-planner feature
   (see [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md)).
@@ -58,6 +58,11 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 - **Source discovery is a word-overlap heuristic, not semantic search.**
   `SourceRegistry` uses Jaccard token overlap; wrap it with your own similarity scoring if
   you need embeddings.
+- **Some framework names in the code are experimental helpers, not integrations.**
+  `crewai`, `pydantic_ai`, `haystack`, `temporal`, and `airflow` modules exist under
+  `pystreammcp.integrations`/`pystreammcp.orchestration`, but they never import those
+  vendor SDKs and are not supported. See
+  [Experimental / unsupported integrations](#experimental--unsupported-integrations).
 - **Optional concurrency/framework packages have Python constraints.** The core SDK
   (`Agent`, `SourceRegistry`, `Orchestrator`) supports Python 3.9+, but the `mcp` and
   `semantic-kernel` extras require Python 3.10+ (their upstream packages don't publish
@@ -72,7 +77,7 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 
 ## Project status
 
-**Beta.** Current version **3.3.1** (`Development Status :: 4 - Beta`). The pure-Python
+**Beta.** Current version **3.3.4** (`Development Status :: 4 - Beta`). The pure-Python
 package is the shipped artifact and is under active hardening; the Rust workspace compiles
 and passes its tests but is not shipped. The most recent pass fixed the Rust build,
 Python `ruff` findings, and a stale integration test — see
@@ -92,11 +97,32 @@ pip install "PyStreamMCP[mcp]"              # MCP protocol client library
 pip install "PyStreamMCP[langchain]"        # LangChain adapter
 pip install "PyStreamMCP[llamaindex]"       # LlamaIndex adapter
 pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
-pip install "PyStreamMCP[all-integrations]" # every framework adapter
+pip install "PyStreamMCP[all-integrations]" # all supported framework adapters
 ```
+
+`all-integrations` installs only the supported/tested adapters (LangChain,
+LlamaIndex, Semantic Kernel). There are no extras for experimental modules.
 
 Requires Python 3.9+ for the core SDK; the `mcp` and `semantic-kernel` extras require
 Python 3.10+.
+
+## Experimental / unsupported integrations
+
+These modules are **not supported**, have no optional extra, and are not tested
+against the real vendor SDKs:
+
+- `pystreammcp.integrations.crewai`
+- `pystreammcp.integrations.pydantic_ai`
+- `pystreammcp.integrations.haystack`
+- `pystreammcp.orchestration.temporal`
+- `pystreammcp.orchestration.airflow`
+
+They are in-process PyStreamMCP helpers only: they never import the vendor
+package. Constructing them raises `ExperimentalIntegrationError` unless you
+explicitly opt in with `experimental=True` or
+`PYSTREAMMCP_ENABLE_EXPERIMENTAL=1`. `TemporalClient` is not a Temporal client
+and the Airflow operators are not `BaseOperator` subclasses. See
+[docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) for the tested support matrix.
 
 ## Quick start
 
@@ -220,6 +246,13 @@ request with `503`.
 ```bash
 pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"
 pytest tests/ -v
+```
+
+`tests/test_support_matrix.py` asserts that this documented matrix, the extras in
+`pyproject.toml`, and the runtime guards stay in sync.
+
+```bash
+pytest tests/test_support_matrix.py -v
 ```
 
 ## Documentation

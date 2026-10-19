@@ -1,9 +1,15 @@
-"""Sprint 5 integration tests - Workflow Orchestration Tools.
+"""Contract tests for orchestration helper classes.
 
-Tests for Temporal, Airflow, n8n, Power Automate, UiPath, Automation Anywhere.
+Temporal and Airflow helpers are experimental, unsupported in-process helpers
+(they do not import the vendor SDKs). The n8n/Power Automate/UiPath classes
+model local payloads rather than acting as vendor clients.
 """
 
 import pytest
+from pystreammcp.experimental import (
+    EXPERIMENTAL_ENV_VAR,
+    ExperimentalIntegrationError,
+)
 from pystreammcp.orchestration.temporal import (
     TemporalQueryActivity, TemporalDiscoveryActivity,
     TemporalWorkflow, TemporalClient,
@@ -16,6 +22,42 @@ from pystreammcp.orchestration.nocode_rpa import (
     N8nWebhookTrigger, PowerAutomateConnector, RoboticProcessAdapter,
 )
 from pystreammcp.discovery import SourceRegistry
+
+
+@pytest.fixture(autouse=True)
+def _experimental_opt_in(monkeypatch):
+    monkeypatch.setenv(EXPERIMENTAL_ENV_VAR, "1")
+
+
+class TestExperimentalGuards:
+    """Temporal/Airflow helpers raise unless explicitly opted in."""
+
+    @pytest.mark.parametrize(
+        "factory",
+        [
+            lambda: TemporalQueryActivity(agent_id="a", query_text="q"),
+            lambda: TemporalDiscoveryActivity(agent_id="a", context="c"),
+            lambda: TemporalWorkflow("w", "a"),
+            lambda: TemporalClient(),
+            lambda: PyStreamMCPQueryOperator("t", "a", "q"),
+            lambda: PyStreamMCPDiscoveryOperator("t", "a", "c"),
+            lambda: PyStreamMCPOptimizeOperator("t", "a", "q"),
+            lambda: PyStreamMCPDAGFactory(),
+        ],
+    )
+    def test_raises_without_opt_in(self, monkeypatch, factory):
+        monkeypatch.delenv(EXPERIMENTAL_ENV_VAR, raising=False)
+        with pytest.raises(
+            ExperimentalIntegrationError, match="experimental and unsupported"
+        ):
+            factory()
+
+    def test_explicit_opt_in_argument(self, monkeypatch):
+        monkeypatch.delenv(EXPERIMENTAL_ENV_VAR, raising=False)
+        activity = TemporalQueryActivity(
+            agent_id="explicit", query_text="q", experimental=True
+        )
+        assert activity.execute()["status"] == "completed"
 
 
 class TestTemporalIntegration:
@@ -348,6 +390,7 @@ class TestOrchestrationWorkflows:
         """Test Airflow pipeline execution."""
         factory = PyStreamMCPDAGFactory()
         dag = factory.create_pipeline_dag("test_pipeline", "agent_1")
+        assert dag["dag_id"] == "test_pipeline"
 
         # Simulate task execution
         context = {"execution_date": "2024-01-01"}

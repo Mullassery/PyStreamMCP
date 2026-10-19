@@ -1,6 +1,8 @@
-"""Haystack integration for PyStreamMCP.
+"""Experimental, unsupported Haystack-named helper for PyStreamMCP.
 
-Enables Haystack pipelines to use PyStreamMCP for optimized retrieval.
+This module does not import Haystack and does not implement a Haystack
+component or document store. Constructing it raises unless explicitly opted
+in. It is not an integration.
 """
 
 from typing import List, Dict, Any, Optional
@@ -14,13 +16,15 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.experimental import require_experimental_opt_in
 
 
 class HaystackAdapter(AgentFrameworkAdapter):
     """Haystack adapter for pipeline integration."""
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(self, config: AdapterConfig, *, experimental: bool = False):
         """Initialize Haystack adapter."""
+        require_experimental_opt_in("Haystack", experimental)
         super().__init__(config)
         self.agent = Agent(
             agent_id=config.agent_id,
@@ -96,6 +100,8 @@ class PyStreamMCPRetriever:
         self,
         agent_id: str = "haystack_retriever",
         max_tokens: int = 2000,
+        *,
+        experimental: bool = False,
     ):
         """
         Initialize PyStreamMCP for Haystack pipelines.
@@ -104,6 +110,7 @@ class PyStreamMCPRetriever:
             agent_id: Identifier for the retriever
             max_tokens: Token budget
         """
+        require_experimental_opt_in("Haystack", experimental)
         self.agent = Agent(
             agent_id=agent_id,
             name=f"Haystack: {agent_id}",
@@ -154,12 +161,15 @@ class PyStreamMCPRetriever:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PyStreamMCPRetriever":
+    def from_dict(
+        cls, data: Dict[str, Any], *, experimental: bool = False
+    ) -> "PyStreamMCPRetriever":
         """Deserialize from dict for Haystack."""
         init_params = data.get("init_parameters", {})
         return cls(
             agent_id=init_params.get("agent_id", "haystack_retriever"),
             max_tokens=init_params.get("max_tokens", 2000),
+            experimental=experimental,
         )
 
 
@@ -170,6 +180,8 @@ class PyStreamMCPDocumentStore:
         self,
         agent_id: str = "haystack_docstore",
         max_tokens: int = 2000,
+        *,
+        experimental: bool = False,
     ):
         """
         Initialize PyStreamMCP document store.
@@ -181,6 +193,7 @@ class PyStreamMCPDocumentStore:
         self.retriever = PyStreamMCPRetriever(
             agent_id=agent_id,
             max_tokens=max_tokens,
+            experimental=experimental,
         )
 
     def retrieve_documents(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -205,6 +218,8 @@ class PyStreamMCPDocumentStore:
 def create_pystreammcp_retriever_for_haystack(
     agent_id: str = "haystack_retriever",
     max_tokens: int = 2000,
+    *,
+    experimental: bool = False,
 ) -> PyStreamMCPRetriever:
     """
     Create a PyStreamMCP retriever for Haystack.
@@ -219,6 +234,7 @@ def create_pystreammcp_retriever_for_haystack(
     return PyStreamMCPRetriever(
         agent_id=agent_id,
         max_tokens=max_tokens,
+        experimental=experimental,
     )
 
 

@@ -1,7 +1,8 @@
-"""Apache Airflow integration for PyStreamMCP.
+"""Experimental, unsupported Airflow-named helper for PyStreamMCP.
 
-Enables DAG-based workflows with PyStreamMCP operators for
-query optimization, discovery, and cost reduction in scheduled jobs.
+This module does not import Airflow and its operators are not ``BaseOperator``
+subclasses; the DAG factory returns plain dicts. Constructing anything here
+raises unless explicitly opted in. It is not an integration.
 """
 
 from typing import Dict, Any, Optional
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 
 from pystreammcp import Agent
 from pystreammcp.discovery import SourceRegistry
+from pystreammcp.experimental import require_experimental_opt_in
 
 
 @dataclass
@@ -21,6 +23,10 @@ class AirflowOperatorConfig:
     max_tokens: int = 2000
     retry_count: int = 2
     retry_delay_seconds: int = 60
+    experimental: bool = False
+
+    def __post_init__(self) -> None:
+        require_experimental_opt_in("Airflow", self.experimental)
 
 
 class PyStreamMCPQueryOperator:
@@ -44,6 +50,8 @@ class PyStreamMCPQueryOperator:
         query_text: str,
         optimization_strategy: str = "balanced",
         max_tokens: int = 2000,
+        *,
+        experimental: bool = False,
         **kwargs,
     ):
         """Initialize query operator.
@@ -56,11 +64,13 @@ class PyStreamMCPQueryOperator:
             max_tokens: Token budget
             **kwargs: Additional Airflow operator arguments
         """
+        require_experimental_opt_in("Airflow", experimental)
         self.task_id = task_id
         self.agent_id = agent_id
         self.query_text = query_text
         self.optimization_strategy = optimization_strategy
         self.max_tokens = max_tokens
+        self.experimental = experimental
         self.kwargs = kwargs
 
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -112,6 +122,8 @@ class PyStreamMCPDiscoveryOperator:
         context_text: str,
         max_sources: int = 10,
         registry: Optional[SourceRegistry] = None,
+        *,
+        experimental: bool = False,
         **kwargs,
     ):
         """Initialize discovery operator.
@@ -122,11 +134,13 @@ class PyStreamMCPDiscoveryOperator:
                 endpoint or another operator sharing the same registry).
                 Defaults to a fresh, empty registry.
         """
+        require_experimental_opt_in("Airflow", experimental)
         self.task_id = task_id
         self.agent_id = agent_id
         self.context_text = context_text
         self.max_sources = max_sources
         self.registry = registry if registry is not None else SourceRegistry()
+        self.experimental = experimental
         self.kwargs = kwargs
 
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -167,13 +181,17 @@ class PyStreamMCPOptimizeOperator:
         agent_id: str,
         query_text: str,
         strategy: str = "balanced",
+        *,
+        experimental: bool = False,
         **kwargs,
     ):
         """Initialize optimization operator."""
+        require_experimental_opt_in("Airflow", experimental)
         self.task_id = task_id
         self.agent_id = agent_id
         self.query_text = query_text
         self.strategy = strategy
+        self.experimental = experimental
         self.kwargs = kwargs
 
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -210,9 +228,11 @@ class PyStreamMCPDAGFactory:
     ```
     """
 
-    def __init__(self):
+    def __init__(self, *, experimental: bool = False):
         """Initialize DAG factory."""
+        require_experimental_opt_in("Airflow", experimental)
         self.operators = {}
+        self.experimental = experimental
 
     def create_query_dag(
         self,

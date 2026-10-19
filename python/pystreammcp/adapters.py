@@ -1,7 +1,8 @@
 """Base adapter pattern for LLM framework integrations.
 
-Provides a common interface for all supported frameworks
-(Langchain, Llamaindex, Semantic Kernel, CrewAI, PydanticAI, Haystack).
+Provides a common adapter interface. LangChain, LlamaIndex, and Semantic
+Kernel are supported; the CrewAI/PydanticAI/Haystack identifiers remain for
+experimental helper modules that are not real vendor integrations.
 """
 
 from abc import ABC, abstractmethod

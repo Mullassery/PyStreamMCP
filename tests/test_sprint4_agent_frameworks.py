@@ -1,14 +1,67 @@
-"""Sprint 4 integration tests - CrewAI, PydanticAI, Haystack.
+"""Contract tests for experimental CrewAI/PydanticAI/Haystack helpers.
 
-Tests for all three agent framework adapters.
+These modules do not import or construct the real frameworks and are not
+third-party integration tests. They are experimental and opt-in guarded.
 """
 
 import pytest
 import asyncio
 from pystreammcp.adapters import AdapterConfig, FrameworkType, AdapterRegistry
+from pystreammcp.experimental import (
+    EXPERIMENTAL_ENV_VAR,
+    ExperimentalIntegrationError,
+)
 from pystreammcp.integrations.crewai import CrewAIAdapter, PyStreamMCPTool as CrewAITool
 from pystreammcp.integrations.pydantic_ai import PydanticAIAdapter
 from pystreammcp.integrations.haystack import HaystackAdapter
+
+
+@pytest.fixture(autouse=True)
+def _experimental_opt_in(monkeypatch):
+    monkeypatch.setenv(EXPERIMENTAL_ENV_VAR, "1")
+
+
+class TestExperimentalGuards:
+    """The helpers raise a clear error unless explicitly opted in."""
+
+    @pytest.mark.parametrize(
+        "adapter_cls,framework,agent_id",
+        [
+            (CrewAIAdapter, FrameworkType.CREWAI, "guarded_crewai"),
+            (PydanticAIAdapter, FrameworkType.PYDANTIC_AI, "guarded_pydantic"),
+            (HaystackAdapter, FrameworkType.HAYSTACK, "guarded_haystack"),
+        ],
+    )
+    def test_adapter_raises_without_opt_in(
+        self, monkeypatch, adapter_cls, framework, agent_id
+    ):
+        monkeypatch.delenv(EXPERIMENTAL_ENV_VAR, raising=False)
+        config = AdapterConfig(
+            framework=framework,
+            agent_id=agent_id,
+            name=f"{agent_id} test",
+        )
+        with pytest.raises(
+            ExperimentalIntegrationError, match="experimental and unsupported"
+        ):
+            adapter_cls(config)
+
+    def test_legacy_tool_raises_without_opt_in(self, monkeypatch):
+        monkeypatch.delenv(EXPERIMENTAL_ENV_VAR, raising=False)
+        with pytest.raises(
+            ExperimentalIntegrationError, match="experimental and unsupported"
+        ):
+            CrewAITool(agent_id="guarded_legacy_crewai")
+
+    def test_explicit_opt_in_argument(self, monkeypatch):
+        monkeypatch.delenv(EXPERIMENTAL_ENV_VAR, raising=False)
+        config = AdapterConfig(
+            framework=FrameworkType.CREWAI,
+            agent_id="explicit_opt_in",
+            name="Explicit opt-in",
+        )
+        adapter = CrewAIAdapter(config, experimental=True)
+        assert adapter.query("test").query_id
 
 
 class TestCrewAIAdapter:

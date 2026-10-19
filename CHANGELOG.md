@@ -4,6 +4,25 @@ All notable changes to PyStreamMCP will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Made the integration support matrix honest. Only `langchain`, `llamaindex`,
+  and `semantic-kernel` are supported, real-tested extras. Removed the
+  untested `crewai`, `pydantic-ai`, `haystack`, `temporal`, and `airflow`
+  extras from `pyproject.toml`, and reduced `all-integrations` to the three
+  tested adapters.
+- Marked `pystreammcp.integrations.{crewai,pydantic_ai,haystack}` and
+  `pystreammcp.orchestration.{temporal,airflow}` as experimental/unsupported
+  in `README.md`, `docs/INTEGRATIONS.md`, and module/package docs. They never
+  imported the vendor SDKs; they are in-process helpers, not integrations.
+
+### Added
+- `ExperimentalIntegrationError` and an opt-in guard for experimental helpers.
+  Construction now raises unless you pass `experimental=True` or set
+  `PYSTREAMMCP_ENABLE_EXPERIMENTAL=1`.
+- `tests/test_support_matrix.py`, which asserts the documented matrix,
+  packaging extras, supported-adapter skip behavior, and experimental runtime
+  guards stay in sync.
+
 ### Fixed
 - The MCP connector now actually uses StatGuardian's shared
   `BaseMCPConnector` when `statguardian._mcp_connector` is installed, instead

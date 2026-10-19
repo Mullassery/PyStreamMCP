@@ -1,11 +1,8 @@
-"""CrewAI integration for PyStreamMCP.
+"""Experimental, unsupported CrewAI-named helper for PyStreamMCP.
 
-Enables multi-agent CrewAI systems to use PyStreamMCP for
-intelligent task decomposition and cost optimization.
-
-Provides:
-1. CrewAIAdapter (new, uses AdapterFrameworkAdapter base)
-2. Legacy support for existing CrewAI tools
+This module does not import CrewAI and does not implement a CrewAI tool or
+adapter. It is an in-process PyStreamMCP wrapper kept for experimentation;
+constructing it raises unless explicitly opted in. It is not an integration.
 """
 
 from typing import Optional, Dict, Any
@@ -19,6 +16,7 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.experimental import require_experimental_opt_in
 
 
 class CrewAIAdapter(AgentFrameworkAdapter):
@@ -28,8 +26,9 @@ class CrewAIAdapter(AgentFrameworkAdapter):
     while maintaining multi-agent coordination and task decomposition.
     """
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(self, config: AdapterConfig, *, experimental: bool = False):
         """Initialize CrewAI adapter."""
+        require_experimental_opt_in("CrewAI", experimental)
         super().__init__(config)
         self.agent = Agent(
             agent_id=config.agent_id,
@@ -111,7 +110,13 @@ class CrewAIAdapter(AgentFrameworkAdapter):
 class PyStreamMCPTool:
     """CrewAI tool wrapper (legacy)."""
 
-    def __init__(self, agent_id: str = "crewai_agent", max_tokens: int = 2000):
+    def __init__(
+        self,
+        agent_id: str = "crewai_agent",
+        max_tokens: int = 2000,
+        *,
+        experimental: bool = False,
+    ):
         """Initialize legacy CrewAI tool."""
         config = AdapterConfig(
             framework=FrameworkType.CREWAI,
@@ -120,7 +125,7 @@ class PyStreamMCPTool:
             optimization_strategy="token_efficient",
             max_tokens=max_tokens,
         )
-        self.adapter = CrewAIAdapter(config)
+        self.adapter = CrewAIAdapter(config, experimental=experimental)
         self.name = "optimize_context"
         self.description = (
             "Optimize and retrieve context using PyStreamMCP. "
@@ -146,14 +151,22 @@ class PyStreamMCPTool:
 def create_pystreammcp_tool_for_crewai(
     agent_id: str = "crewai_agent",
     max_tokens: int = 2000,
+    *,
+    experimental: bool = False,
 ) -> PyStreamMCPTool:
     """Create a PyStreamMCP tool for CrewAI agents."""
-    return PyStreamMCPTool(agent_id=agent_id, max_tokens=max_tokens)
+    return PyStreamMCPTool(
+        agent_id=agent_id, max_tokens=max_tokens, experimental=experimental
+    )
 
 
-def add_pystreammcp_to_agent(agent, agent_id: str = "crewai_agent"):
+def add_pystreammcp_to_agent(
+    agent, agent_id: str = "crewai_agent", *, experimental: bool = False
+):
     """Add PyStreamMCP optimization to a CrewAI agent."""
-    tool = create_pystreammcp_tool_for_crewai(agent_id=agent_id)
+    tool = create_pystreammcp_tool_for_crewai(
+        agent_id=agent_id, experimental=experimental
+    )
     if hasattr(agent, "tools"):
         agent.tools.append(tool)
     else:
