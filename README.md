@@ -183,6 +183,16 @@ pytest tests/ -v
 - [`CHANGELOG.md`](CHANGELOG.md) — release history
 - [`examples/`](examples/) — runnable examples, including framework integrations and the MCP orchestrator
 
+## Known issues and deferred work
+
+**Blocked / failed:**
+- Semantic retrieval/Graphify integration and MCP hardening.
+
+**Rejected / deferred:**
+- The Rust backend; not shipped.
+
+Full shipped/blocked/rejected detail: [`QUEUE_STATUS.md`](QUEUE_STATUS.md).
+
 ## Queue status
 
 Shipped, blocked/failed, and rejected work for this repository is documented in
