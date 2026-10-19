@@ -21,7 +21,7 @@ Verified **2026-10-19**.
 | **Haystack** | ✅ `[haystack]` extra | ❌ **not tested** | no test |
 | **Temporal** | ✅ `[temporal]` extra | ❌ **not tested** | no test |
 | **Airflow** | ✅ `[airflow]` extra | ❌ **not tested** | no test |
-| **StatGuardian `_mcp_connector` shared base** | ⚠️ import attempted, local fallback | ❌ **not wired** | StatGuardian does not ship `_mcp_connector`; each consumer defines its own fallback |
+| **StatGuardian `_mcp_connector` shared base** | ✅ imports the shared base when StatGuardian is installed; local fallback retained | ✅ `tests/test_shared_mcp_base.py` (asserts the shared class is the one in use and its secure config) | Older StatGuardian installs still use the embedded fallback |
 
 ## StatGuardian modes
 

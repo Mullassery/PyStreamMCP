@@ -1,5 +1,6 @@
 """MCP Connector for PyStreamMCP - Multi-Project Orchestration"""
 
+import ipaddress
 import json
 import logging
 import re
@@ -55,9 +56,36 @@ try:
 except ImportError:
 
     class BaseMCPConnector(ABC):
-        def __init__(self, project_name: str, port: int = 8765):
+        def __init__(
+            self,
+            project_name: str,
+            port: int = 8765,
+            host: str = "127.0.0.1",
+            allow_remote: bool = False,
+            cors_origins: Optional[list] = None,
+            allowed_origins: Optional[list] = None,
+        ):
+            if not allow_remote:
+                try:
+                    is_loopback = ipaddress.ip_address(host).is_loopback
+                except ValueError:
+                    is_loopback = host == "localhost"
+                if not is_loopback:
+                    raise ValueError(
+                        "Binding the MCP/DAB connector to a non-loopback host "
+                        f"(host={host!r}) requires allow_remote=True. By default the "
+                        "connector only binds to 127.0.0.1."
+                    )
             self.project_name = project_name
             self.port = port
+            self.host = host
+            self.allow_remote = allow_remote
+            if cors_origins is None and allowed_origins is not None:
+                cors_origins = list(allowed_origins)
+            if cors_origins is None:
+                cors_origins = [] if not allow_remote else ["*"]
+            self.cors_origins = list(cors_origins)
+            self.allowed_origins = self.cors_origins
             self.dab_process: Optional[subprocess.Popen] = None
             self._ready = False
 
@@ -92,24 +120,40 @@ except ImportError:
                     pass
                 self._ready = False
 
-        def _generate_dab_config(self, tools: Dict[str, Any]) -> Dict:
-            # Bind to localhost only, with no cross-origin access and
-            # read-only anonymous permissions by default. This launches a
-            # local subprocess for MCP tool serving; it isn't meant to be
-            # reachable from other hosts or origins out of the box. Callers
-            # that need broader access (e.g. a container with its own
-            # network boundary) should override these explicitly rather
-            # than getting an open-to-everyone server by default.
+        def _generate_dab_config(
+            self,
+            tools: Dict[str, Any],
+            allowed_origins: Optional[list] = None,
+            allowed_roles: Optional[list] = None,
+        ) -> Dict:
+            # Bind to the configured host (loopback by default), with no
+            # cross-origin access and read-only permissions unless the caller
+            # explicitly opted into remote exposure. This launches a local
+            # subprocess for MCP tool serving; it isn't meant to be reachable
+            # from other hosts or origins out of the box. Callers that need
+            # broader access should override these explicitly rather than
+            # getting an open-to-everyone server by default.
+            origins = (
+                list(allowed_origins)
+                if allowed_origins is not None
+                else list(self.cors_origins)
+            )
+            if allowed_roles is not None:
+                roles = list(allowed_roles)
+                actions = ["read"]
+            else:
+                roles = ["*"] if self.allow_remote else ["local"]
+                actions = ["*"] if self.allow_remote else ["read"]
             return {
                 "runtime": {
-                    "host": "127.0.0.1",
+                    "host": self.host,
                     "port": self.port,
-                    "cors": {"origins": []},
+                    "cors": {"origins": origins},
                 },
                 "entities": {
                     k: {
                         "source": k,
-                        "permissions": [{"actions": ["read"], "roles": ["anonymous"]}],
+                        "permissions": [{"actions": actions, "roles": roles}],
                     }
                     for k in tools.keys()
                 },

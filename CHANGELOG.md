@@ -4,6 +4,15 @@ All notable changes to PyStreamMCP will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- The MCP connector now actually uses StatGuardian's shared
+  `BaseMCPConnector` when `statguardian._mcp_connector` is installed, instead
+  of always falling through to the embedded copy. The fallback was aligned
+  with the shared base (host/`allow_remote`/CORS handling) and still works
+  without StatGuardian. Non-loopback binds now require `allow_remote=True`;
+  the default DAB permission role is read-only `local`. Verified by
+  `tests/test_shared_mcp_base.py`.
+
 ### Added
 - `QualityValidator(statguardian_url=...)` calls a live StatGuardian
   `/validate` service (fails closed as `UNKNOWN` when unreachable). The no-URL
