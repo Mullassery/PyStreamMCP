@@ -1,9 +1,16 @@
-"""PyStreamMCP ↔ StatGuardian Integration - Context Quality Validation
+"""Context quality validation gates.
 
-This module provides quality validation gates for discovered context using StatGuardian.
-Ensures all context included in queries has passed data quality checks.
+Two modes:
+
+- ``statguardian_url`` set: POST each dataset to a live StatGuardian
+  ``/validate`` service (real cross-repo integration).
+- no URL: local in-process heuristics shaped like StatGuardian results. These
+  are **not** a StatGuardian client; see ``docs/INTEGRATIONS.md``.
 """
 
+import json
+import urllib.error
+import urllib.request
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -104,14 +111,24 @@ class ValidationGate:
 class QualityValidator:
     """Validates data source quality using StatGuardian contracts."""
 
-    def __init__(self, statguardian_enabled: bool = True):
+    def __init__(
+        self,
+        statguardian_enabled: bool = True,
+        statguardian_url: Optional[str] = None,
+        statguardian_timeout: float = 10.0,
+    ):
         """
         Initialize quality validator.
 
         Args:
-            statguardian_enabled: Whether StatGuardian validation is enabled
+            statguardian_enabled: Whether quality validation is enabled.
+            statguardian_url: Optional base URL of a running StatGuardian
+                service. When set, validation calls its ``/validate`` endpoint.
+            statguardian_timeout: HTTP timeout for the StatGuardian service.
         """
         self.statguardian_enabled = statguardian_enabled
+        self.statguardian_url = statguardian_url.rstrip("/") if statguardian_url else None
+        self.statguardian_timeout = statguardian_timeout
         self._validation_cache: Dict[str, ValidationResult] = {}
         self._gates: Dict[str, ValidationGate] = {}
         logger.info(
@@ -178,14 +195,10 @@ class QualityValidator:
             return result
 
         try:
-            # Try to import StatGuardian
-            try:
-                import statguardian
-            except ImportError:
-                logger.warning("StatGuardian not installed, skipping validation")
-                result.status = QualityStatus.UNKNOWN
-                return result
+            if self.statguardian_url:
+                return self._validate_with_statguardian(dataset_id, source_data, gate)
 
+            # No service configured: local heuristics (not a StatGuardian client).
             # Validate schema
             checks = self._validate_schema(source_data)
             for check in checks:
@@ -219,6 +232,54 @@ class QualityValidator:
             result.status = QualityStatus.UNKNOWN
             result.add_error(str(e))
 
+        return result
+
+    def _validate_with_statguardian(
+        self,
+        dataset_id: str,
+        source_data: Dict[str, Any],
+        gate: ValidationGate,
+    ) -> ValidationResult:
+        """Call the real StatGuardian ``/validate`` endpoint (fail closed)."""
+        result = ValidationResult(
+            dataset_id=dataset_id, status=QualityStatus.UNKNOWN, quality_score=0.0
+        )
+        url = f"{self.statguardian_url}/validate"
+        body = json.dumps({"entity": {"attributes": source_data}}).encode("utf-8")
+        request = urllib.request.Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.statguardian_timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            result.add_error(f"StatGuardian unavailable: {exc}")
+            return result
+
+        passed = payload.get("passed") is True
+        score = float(payload.get("quality_score", 0.0) or 0.0)
+        result.quality_score = max(0.0, min(1.0, score))
+        if passed and result.quality_score >= gate.min_quality_score:
+            result.status = QualityStatus.VALID
+        elif result.quality_score >= 0.7:
+            result.status = QualityStatus.DEGRADED
+        else:
+            result.status = QualityStatus.INVALID
+
+        for issue in payload.get("issues", []) or []:
+            result.add_check(
+                QualityCheck(
+                    check_name="statguardian",
+                    passed=passed,
+                    score=result.quality_score,
+                    message=str(issue),
+                )
+            )
+        if not passed:
+            result.add_error(f"StatGuardian rejected {dataset_id}")
         return result
 
     def _validate_schema(self, source_data: Dict[str, Any]) -> List[QualityCheck]:

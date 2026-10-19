@@ -224,6 +224,8 @@ pytest tests/ -v
 
 ## Documentation
 
+- [Documentation index](docs/README.md)
+- [Cross-repo integrations](docs/INTEGRATIONS.md) — wired / real-tested / not tested
 - [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) — full, unhedged status: what's tested, what's fabricated/broken, technical debt, what's explicitly not built
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the shipped package is structured, with a diagram
 - [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md) — the OKF catalog/discovery/query-planner feature

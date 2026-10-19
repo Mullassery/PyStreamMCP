@@ -2,6 +2,18 @@
 
 All notable changes to PyStreamMCP will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- `QualityValidator(statguardian_url=...)` calls a live StatGuardian
+  `/validate` service (fails closed as `UNKNOWN` when unreachable). The no-URL
+  mode is explicitly local heuristics, not a StatGuardian client.
+- Real cross-repo tests: `tests/test_statguardian_live.py` (live service) and
+  `tests/test_mudfish_live.py` (real MudFish engine; SSRF-skips loopback).
+- `docs/INTEGRATIONS.md` + `docs/README.md`: documented which integrations are
+  wired, real-tested, or not tested.
+
+
 ## [3.3.3] - 2026-10-18
 
 ### Added

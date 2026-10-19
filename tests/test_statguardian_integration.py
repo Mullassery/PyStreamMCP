@@ -1,4 +1,6 @@
-"""Tests for PyStreamMCP ↔ StatGuardian integration."""
+"""Tests for local quality heuristics and gates.
+
+The live StatGuardian service mode is tested in test_statguardian_live.py."""
 
 import pytest
 from datetime import datetime, timedelta, timezone
