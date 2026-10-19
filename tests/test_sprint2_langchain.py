@@ -129,6 +129,7 @@ class TestLangchainAdapter:
 
     def test_adapter_get_tool_for_langchain(self):
         """Test Langchain tool creation."""
+        pytest.importorskip("langchain_core", reason="langchain-core is an optional extra")
         config = AdapterConfig(
             framework=FrameworkType.LANGCHAIN,
             agent_id="tool_test",
@@ -144,6 +145,7 @@ class TestLangchainAdapter:
 
     def test_adapter_get_retriever(self):
         """Test Langchain retriever creation."""
+        pytest.importorskip("langchain_core", reason="langchain-core is an optional extra")
         config = AdapterConfig(
             framework=FrameworkType.LANGCHAIN,
             agent_id="retriever_test",
@@ -186,6 +188,7 @@ class TestLegacyInterfaces:
 
     def test_pystreammcp_tool_langchain_wrapper(self):
         """Test legacy tool Langchain wrapper."""
+        pytest.importorskip("langchain_core", reason="langchain-core is an optional extra")
         tool = PyStreamMCPTool()
         langchain_tool = tool.get_tool_for_langchain()
 
@@ -208,6 +211,7 @@ class TestLegacyInterfaces:
 
     def test_pystreammcp_retriever_langchain_wrapper(self):
         """Test legacy retriever Langchain wrapper."""
+        pytest.importorskip("langchain_core", reason="langchain-core is an optional extra")
         retriever = PyStreamMCPRetriever()
         langchain_retriever = retriever.get_retriever_for_langchain()
 

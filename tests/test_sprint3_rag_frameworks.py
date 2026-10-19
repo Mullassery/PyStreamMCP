@@ -114,6 +114,7 @@ class TestLlamaIndexAdapter:
 
     def test_adapter_get_retriever(self):
         """Test LlamaIndex retriever creation."""
+        pytest.importorskip("llama_index.core", reason="llama-index is an optional extra")
         config = AdapterConfig(
             framework=FrameworkType.LLAMAINDEX,
             agent_id="llamaindex_retriever_test",
@@ -235,6 +236,7 @@ class TestSemanticKernelAdapter:
     @pytest.mark.asyncio
     async def test_adapter_get_native_plugin(self):
         """Test SK native plugin creation."""
+        pytest.importorskip("semantic_kernel", reason="semantic-kernel is an optional extra")
         config = AdapterConfig(
             framework=FrameworkType.SEMANTIC_KERNEL,
             agent_id="sk_plugin_test",
