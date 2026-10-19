@@ -187,7 +187,12 @@ class PyStreamMCPServer:
             for tool in self.tools.values()
         ]
 
-    def call_tool(self, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def call_tool(
+        self,
+        name: str,
+        arguments: Dict[str, Any],
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Call a tool by name.
 
         Validates `arguments` against the tool's Pydantic arg model before
@@ -210,6 +215,17 @@ class PyStreamMCPServer:
         Raises:
             ValueError: If tool not found
         """
+        import hmac
+        import os
+
+        expected = os.environ.get("PYSTREAMMCP_API_KEY")
+        if expected and (not auth_token or not hmac.compare_digest(auth_token, expected)):
+            return {
+                "status": "error",
+                "message": "invalid or missing MCP auth token",
+                "error_type": "AuthenticationError",
+            }
+
         model = _TOOL_ARG_MODELS.get(name)
         if model is None:
             raise ValueError(f"Unknown tool: {name}")

@@ -473,8 +473,9 @@ class PyStreamMCPHandler:
     so explicitly rather than fabricating a plausible-looking result.
     """
 
-    def __init__(self, orchestrator: Any):
+    def __init__(self, orchestrator: Any, federation_engine: Any = None):
         self.orchestrator = orchestrator
+        self.federation_engine = federation_engine
 
     async def discover_mcp_projects(
         self, include_metadata: bool = False, filter_by_capability: Optional[str] = None
@@ -610,8 +611,16 @@ class PyStreamMCPHandler:
         join_key: str,
         join_type: str = "inner",
     ) -> Dict[str, Any]:
-        """Cross-database joins are not implemented yet (honest "not_implemented",
-        not a fabricated row count)."""
+        """Execute a read-only federated join when an engine is configured.
+
+        Without a ``FederationQueryEngine`` the original honest
+        ``not_implemented`` response is preserved.
+        """
+        if self.federation_engine is not None:
+            result = self.federation_engine.execute_join(
+                left_source, right_source, join_key, join_type=join_type
+            )
+            return {"status": "ok", "join_type": join_type, **result.to_dict()}
         result = self.orchestrator.handle_cross_database_join(
             left_source, right_source, join_key
         )

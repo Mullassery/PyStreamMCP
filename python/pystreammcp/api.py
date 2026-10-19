@@ -145,6 +145,23 @@ class PyStreamMCPAPI:
             description="Intelligence layer for AI agents - query planning, discovery, cost optimization",
             lifespan=lifespan,
         )
+        from .auth import check_request
+
+        @app.middleware("http")
+        async def _auth_guard(request, call_next):
+            if request.url.path == "/health":
+                return await call_next(request)
+            ok, message = check_request(
+                request.client.host if request.client else None,
+                request.headers.get("X-API-Key"),
+                request.headers.get("Authorization"),
+            )
+            if not ok:
+                from fastapi.responses import JSONResponse
+
+                status = 401 if __import__("os").environ.get("PYSTREAMMCP_API_KEY") else 403
+                return JSONResponse({"error": message}, status_code=status)
+            return await call_next(request)
 
         # Health & Info Endpoints
         @app.get("/health", response_model=HealthResponse)

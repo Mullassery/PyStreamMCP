@@ -121,6 +121,53 @@ Token counts are estimated from the actual query text (a ~4-characters-per-token
 heuristic) and the reduction is computed from the selected strategy — not a fixed number.
 See [`examples/basic_usage.py`](examples/basic_usage.py) for a full walkthrough.
 
+## HTTP authentication
+
+Every non-health HTTP route now enforces authentication:
+
+- Set `PYSTREAMMCP_API_KEY` and send `X-API-Key` or `Authorization: Bearer`.
+- If unset, only loopback clients are accepted; a network-exposed server fails
+  closed rather than serving queries/sources anonymously.
+- `/health` stays open for probes.
+
+This applies to both the Flask and FastAPI server factories. The MCP tool
+transport is separate and should be placed behind your MCP host's auth.
+
+## Changelog
+
+### 3.3.4
+- Added API-key/Bearer auth to both Flask/FastAPI factories.
+- Added token enforcement to MCP `call_tool`.
+- Added DuckDB/SQLGlot federation (`pystreammcp[federation]`).
+
+## Federated execution (DuckDB + SQLGlot)
+
+Cross-source joins are no longer only a `not_implemented` response. Install
+the optional backend and register sources:
+
+```bash
+pip install "pystreammcp[federation]"
+```
+
+```python
+from pystreammcp import FederatedQueryEngine
+
+with FederatedQueryEngine() as engine:
+    engine.register_sqlite("crm", "crm.db")
+    engine.register_parquet("warehouse", "orders.parquet")
+    result = engine.execute_join(
+        "crm.customers", "warehouse.orders", "l.id = r.customer_id",
+        columns="l.id, l.name, r.total",
+    )
+print(result.columns, result.rows[:5])
+```
+
+Supported sources: SQLite, Parquet and CSV. Queries are read-only, bounded by
+a row limit, and dialect SQL is transpiled with SQLGlot. An MCP handler created
+with `PyStreamMCPHandler(orchestrator, federation_engine=engine)` uses this
+path for `handle_cross_database_join`; otherwise the original honest
+`not_implemented` behavior remains.
+
 ## Usage
 
 **Data source discovery:**

@@ -7,7 +7,7 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "3.3.3"
+__version__ = "3.3.4"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
@@ -65,6 +65,12 @@ except ImportError:
 
 # MCP 2.0 Support (v0.3+) — Multi-project orchestration & federation
 from ._mcp_connector import Orchestrator
+from .federation import (
+    FederatedQueryEngine,
+    FederatedResult,
+    FederationUnavailable,
+    execute_federated,
+)
 
 __all__ = [
     # Core
@@ -102,4 +108,8 @@ __all__ = [
     *((["create_app"]) if create_app else []),
     # MCP 2.0 (v0.3+)
     "Orchestrator",
+    "FederatedQueryEngine",
+    "FederatedResult",
+    "FederationUnavailable",
+    "execute_federated",
 ]

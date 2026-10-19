@@ -3,10 +3,11 @@
 This file records what was shipped, what is blocked/failed, and what is rejected for this repository. It complements `AUDIT_FINDINGS.md`.
 
 ## Shipped
-- No code changes; audit/bundle docs added.
+- Federated DuckDB/SQLGlot read-only execution (`pystreammcp[federation]`).
+- API-key/Bearer HTTP auth for Flask/FastAPI plus MCP `call_tool` token enforcement.
 
 ## Blocked / failed
-- Semantic retrieval/Graphify integration and MCP hardening.
+- Semantic retrieval/Graphify integration.
 
 ## Rejected / deferred
 - The Rust backend; not shipped.

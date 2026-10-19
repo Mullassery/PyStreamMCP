@@ -368,6 +368,9 @@ def create_flask_app(
         )
 
     app = Flask(__name__)
+    from .auth import install_flask_auth
+
+    install_flask_auth(app)
     srv = server or PyStreamMCPServer()
     secret = webhook_secret if webhook_secret is not None else os.environ.get(
         WEBHOOK_SECRET_ENV_VAR
