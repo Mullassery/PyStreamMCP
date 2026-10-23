@@ -42,6 +42,11 @@ All notable changes to PyStreamMCP will be documented in this file.
   wired, real-tested, or not tested.
 
 
+## [3.3.5] - 2026-10-23
+
+### Fixed
+- Imported `BaseMCPConnector` from the public `statguardian` API and handled missing optional integration parents.
+
 ## [3.3.3] - 2026-10-18
 
 ### Added

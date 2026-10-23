@@ -77,7 +77,7 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 
 ## Project status
 
-**Beta.** Current version **3.3.4** (`Development Status :: 4 - Beta`). The pure-Python
+**Beta.** Current version **3.3.5** (`Development Status :: 4 - Beta`). The pure-Python
 package is the shipped artifact and is under active hardening; the Rust workspace compiles
 and passes its tests but is not shipped. The most recent pass fixed the Rust build,
 Python `ruff` findings, and a stale integration test — see
