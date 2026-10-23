@@ -52,7 +52,7 @@ class DiscoveredProject:
     checked_at: float = field(default_factory=time.time)
 
 try:
-    from statguardian._mcp_connector import BaseMCPConnector
+    from statguardian import BaseMCPConnector
 except ImportError:
 
     class BaseMCPConnector(ABC):

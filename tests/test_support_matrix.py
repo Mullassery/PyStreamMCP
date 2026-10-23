@@ -135,7 +135,11 @@ def test_packaging_advertises_only_supported_extras():
 def test_supported_adapters_skip_only_on_missing_dependency(
     module, adapter_import, adapter_name, factory_name
 ):
-    if importlib.util.find_spec(module) is None:
+    try:
+        module_spec = importlib.util.find_spec(module)
+    except ModuleNotFoundError:
+        module_spec = None
+    if module_spec is None:
         pytest.skip(f"{module} is an optional dependency and is not installed")
 
     adapter_module = importlib.import_module(adapter_import)
