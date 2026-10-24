@@ -7,6 +7,7 @@ import time
 import signal
 import sys
 from pathlib import Path
+from typing import Optional
 
 _PACKAGE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -68,7 +69,7 @@ class DashboardDaemon:
         sys.exit(0)
 
 
-def start_persistent_dashboard(package_name: str, cmd: str = None):
+def start_persistent_dashboard(package_name: str, cmd: Optional[str] = None):
     """Start dashboard that persists across terminal sessions"""
     if cmd is None:
         cmd = f"{package_name.lower()} dashboard"

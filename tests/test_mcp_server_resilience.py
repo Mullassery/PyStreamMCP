@@ -12,6 +12,8 @@
    crash when whatever it's orchestrating fails).
 """
 
+from typing import Any, Dict
+
 import pytest
 
 from pystreammcp.mcp_server import PyStreamMCPServer

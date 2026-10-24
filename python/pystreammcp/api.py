@@ -264,9 +264,10 @@ class PyStreamMCPAPI:
             }
 
         @app.post("/query/batch")
-        async def batch_query(agent_id: Optional[str] = None, texts: List[str] = []):
+        async def batch_query(agent_id: Optional[str] = None, texts: Optional[List[str]] = None):
             """Execute multiple queries."""
             agent = self._get_agent(agent_id)
+            texts = texts or []
 
             results = []
             for text in texts:

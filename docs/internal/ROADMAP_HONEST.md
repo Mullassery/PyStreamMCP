@@ -298,24 +298,20 @@ core next.
     datetimes break comparisons against aware ones. Not concentrated in
     the files listed in the previous version of this doc — recheck with
     `ruff check --select DTZ005` for current locations.
-  - **11× `BLE001`** blind `except Exception` + **1× `E722`/`S110`** bare
-    `except: pass` at `python/pystreammcp/integrations/langsmith.py:150`
-    (silently swallows any error computing span duration — no logging,
-    no re-raise).
-  - `B006` mutable default argument: `python/pystreammcp/api.py:250`,
-    `async def batch_query(agent_id: Optional[str] = None, texts:
-    List[str] = [])` — classic shared-mutable-default bug risk.
-  - `RUF013` implicit Optional: `python/pystreammcp/cli_daemon.py:59`,
-    `def start_persistent_dashboard(package_name: str, cmd: str = None)`.
-  - `F821` undefined names (forward-reference type hints that were never
-    imported, so they're just wrong at introspection time, e.g.
-    `typing.get_type_hints`):
-    `python/pystreammcp/integrations/langchain.py:161,198,295`
-    (`"LangchainTool"`, `"BaseRetriever"`),
-    `python/pystreammcp/integrations/llamaindex.py:154`
-    (`"BaseRetriever"`),
-    `python/pystreammcp/integrations/semantic_kernel.py:156`
-    (`"KernelPlugin"`).
+  - **11× `BLE001`** blind `except Exception` at API/tool boundaries —
+    still open (each needs a deliberate narrow-or-log decision).
+  - ~~**`E722`/`S110`** bare `except: pass` in
+    `integrations/langsmith.py`~~ — fixed 2026-10-25: now catches
+    `(TypeError, ValueError)` and records `duration_ms = 0.0`.
+  - ~~`B006` mutable default argument in `api.py` `batch_query`~~ —
+    fixed 2026-10-25 (`texts: Optional[List[str]] = None`, normalized to
+    an empty list inside).
+  - ~~`RUF013` implicit Optional in `cli_daemon.py`~~ — fixed 2026-10-25
+    (`cmd: Optional[str] = None`).
+  - ~~`F821` undefined names in
+    `tests/test_mcp_server_resilience.py`~~ — fixed 2026-10-25 by
+    importing `Any`/`Dict`. The forward-reference hints in
+    `integrations/{langchain,llamaindex,semantic_kernel}.py` remain open.
   - ~~`F841` unused variable `python/pystreammcp/orchestration/temporal.py:61`~~
     FIXED — removed along with the §2.1 fabrication fix; the unused
     `agent = Agent(agent_id=self.agent_id)` was the lint's tell that
