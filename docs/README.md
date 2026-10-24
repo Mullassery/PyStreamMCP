@@ -7,8 +7,8 @@
 | [README](../README.md) | Overview, install, quick start, usage |
 | [Architecture](ARCHITECTURE.md) | Shipped package structure |
 | [Cross-repo integrations](INTEGRATIONS.md) | What is wired, real-tested, and not tested |
-| [Honest roadmap](../ROADMAP_HONEST.md) | Implemented/partial/missing |
-| [Known issues / queue](../QUEUE_STATUS.md) | Shipped/blocked/rejected |
+| [Honest roadmap](internal/ROADMAP_HONEST.md) | Implemented/partial/missing |
+| [Known issues / queue](internal/QUEUE_STATUS.md) | Shipped/blocked/rejected |
 
 ## Reference
 

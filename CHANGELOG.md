@@ -140,7 +140,7 @@ All notable changes to PyStreamMCP will be documented in this file.
 - `pyproject.toml` classifier downgraded from `Development Status :: 5 -
   Production/Stable` to `4 - Beta` — not honest given the known-broken
   CLI, fabricated orchestration-adapter discovery, and non-compiling Rust
-  workspace documented in `ROADMAP_HONEST.md`.
+  workspace documented in `docs/internal/ROADMAP_HONEST.md`.
 - Replaced the broken `Dockerfile` (invalid `"""` comment syntax at the
   top, built the non-compiling Rust workspace via `maturin`, and its
   runtime `CMD` never actually started a server since `pystreammcp.api`
@@ -159,13 +159,13 @@ All notable changes to PyStreamMCP will be documented in this file.
   doc.
 
 ### Added
-- `ROADMAP_HONEST.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+- `docs/internal/ROADMAP_HONEST.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
   `.github/pull_request_template.md`.
-- `!ROADMAP_HONEST.md` negation in `.gitignore` — its broad `ROADMAP_*`
+- `!docs/internal/ROADMAP_HONEST.md` negation in `.gitignore` — its broad `ROADMAP_*`
   "don't expose internal strategy docs" pattern was silently matching
   this file too.
 
-### Found, not fixed (see `ROADMAP_HONEST.md` for full detail)
+### Found, not fixed (see `docs/internal/ROADMAP_HONEST.md` for full detail)
 - `pip-audit` found 7 known CVEs in transitive dependencies (`werkzeug`
   via the `api` extra's `flask`, `nltk` via `llama-index`), unpinned —
   left unpinned this pass; needs compatibility testing against the

@@ -4,8 +4,8 @@ Last verified: 2026-09-22, against commit `7bbda43` + this pass's changes
 (quick-fix pass: fabricated orchestration-adapter discovery, dead CLI
 entry point, `datetime.utcnow()` migration where safe). Every claim below
 was checked against the actual code/tests in this repo, not against what
-a doc says. See [`README.md`](README.md) for the user-facing quickstart
-and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the shipped
+a doc says. See [`README.md`](../../README.md) for the user-facing quickstart
+and [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) for how the shipped
 package is structured.
 
 ## 1. What works (tested by me, this pass)

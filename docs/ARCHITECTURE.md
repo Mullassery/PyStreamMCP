@@ -102,7 +102,7 @@ the discovery `execute()` in `airflow.py`, and the equivalent in
 returns a hardcoded list of `source_0..source_4` with a fabricated
 `relevance = 0.95 - i*0.05` regardless of the registry's actual contents,
 behind a `# In production, use actual discovery logic` comment. This is
-tracked in [`../ROADMAP_HONEST.md`](../ROADMAP_HONEST.md) rather than
+tracked in [`../ROADMAP_HONEST.md`](internal/ROADMAP_HONEST.md) rather than
 fixed in this pass.
 
 ## Testing
@@ -119,5 +119,5 @@ raised during tool execution and return a structured
 see `tests/test_mcp_server_resilience.py`.
 
 375 Python tests pass as of this pass (`pytest tests/ -v`, Python 3.11).
-See [`../ROADMAP_HONEST.md`](../ROADMAP_HONEST.md) for what is *not*
+See [`../ROADMAP_HONEST.md`](internal/ROADMAP_HONEST.md) for what is *not*
 tested or known to be broken.

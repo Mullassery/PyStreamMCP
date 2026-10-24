@@ -69,7 +69,7 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
   3.9-compatible releases). CI tests 3.10, 3.11, and 3.12 only.
 - **Known dependency CVEs.** `pip-audit` (run 2026-09-20) found 7 known CVEs in
   transitive dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`). See
-  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §4.
+  [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) §4.
 - **The HTTP servers have no auth layer of their own.** They bind to `127.0.0.1`
   (localhost-only) by default; pass `host="0.0.0.0"` explicitly only inside a network
   boundary you control. The event endpoint requires HMAC-SHA256 signatures. See
@@ -81,7 +81,7 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 package is the shipped artifact and is under active hardening; the Rust workspace compiles
 and passes its tests but is not shipped. The most recent pass fixed the Rust build,
 Python `ruff` findings, and a stale integration test — see
-[`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) for the unhedged status.
+[`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) for the unhedged status.
 
 ## Installation
 
@@ -259,7 +259,7 @@ pytest tests/test_support_matrix.py -v
 
 - [Documentation index](docs/README.md)
 - [Cross-repo integrations](docs/INTEGRATIONS.md) — wired / real-tested / not tested
-- [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) — full, unhedged status: what's tested, what's fabricated/broken, technical debt, what's explicitly not built
+- [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) — full, unhedged status: what's tested, what's fabricated/broken, technical debt, what's explicitly not built
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the shipped package is structured, with a diagram
 - [`OKF_INTEGRATION.md`](OKF_INTEGRATION.md) — the OKF catalog/discovery/query-planner feature
 - [`CHANGELOG.md`](CHANGELOG.md) — release history
@@ -273,7 +273,7 @@ pytest tests/test_support_matrix.py -v
 **Rejected / deferred:**
 - The Rust backend; not shipped.
 
-Full shipped/blocked/rejected detail: [`QUEUE_STATUS.md`](QUEUE_STATUS.md).
+Full shipped/blocked/rejected detail: [`docs/internal/QUEUE_STATUS.md`](docs/internal/QUEUE_STATUS.md).
 
 ## Contributing
 

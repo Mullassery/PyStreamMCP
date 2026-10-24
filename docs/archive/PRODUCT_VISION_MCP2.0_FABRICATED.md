@@ -3,7 +3,7 @@
 > dependency on "All 18 projects", and "Status: Production Ready
 > (v2.0.0)" — none of which exists in this repo (current version 3.3.0;
 > no such platform/port/dependency in the real manifest or code). See
-> [`../../ROADMAP_HONEST.md`](../../ROADMAP_HONEST.md) §2.4.
+> [`../../ROADMAP_HONEST.md`](../internal/ROADMAP_HONEST.md) §2.4.
 
 # PyStreamMCP v2.0.0: Product Vision
 

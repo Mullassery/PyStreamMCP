@@ -28,6 +28,6 @@ response SLA. You should get an acknowledgment within a few days.
 - As of the 2026-09 audit, `pip-audit` found known CVEs in transitive
   dependencies (`werkzeug` via the `api` extra's `flask`, and `nltk` via
   `llama-index`) that are not yet pinned/patched — see
-  [`ROADMAP_HONEST.md`](ROADMAP_HONEST.md) §4 for exact versions and CVE
+  [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) §4 for exact versions and CVE
   IDs. If you depend on this package's `api`/`llamaindex` extras in a
   security-sensitive context, check `pip-audit` yourself before deploying.
