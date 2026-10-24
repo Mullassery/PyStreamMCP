@@ -57,7 +57,7 @@ jobs:
 
   # Non-blocking: the codebase currently has ~950 pre-existing ruff
   # findings (mostly typing.Dict/List/Optional -> dict/list/X|None
-  # modernization, plus a handful of real issues — see ROADMAP_HONEST.md
+  # modernization, plus a handful of real issues — see docs/internal/ROADMAP_HONEST.md
   # "Technical debt"). continue-on-error keeps this visible without
   # blocking merges until that backlog is worked down; promote to
   # blocking once the count is at/near zero.
