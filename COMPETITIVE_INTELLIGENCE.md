@@ -56,6 +56,8 @@ starts, and record the decision in the PR or changelog.
 
 ## OSS gap analysis — 2026-10-24
 
+**What matters most here:** be an actual MCP server, and measure token savings. A bespoke envelope with no stdio/SSE/HTTP binding cannot be used by Claude Desktop or Cursor, and `len//4` arithmetic is not context optimization; fix the protocol and benchmark real assembly.
+
 Scope: Compared PyStreamMCP's shipped pure-Python SDK/MCP tool surface against four actively maintained MCP frameworks and gateways, focusing on wire compatibility, transport/auth, federation, and token-cost handling.
 
 ### Comparable OSS projects
