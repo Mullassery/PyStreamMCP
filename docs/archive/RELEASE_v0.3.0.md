@@ -74,7 +74,7 @@ This release delivers enterprise-grade observability, ML-powered optimization, a
 
 ### From Source (Development)
 ```bash
-git clone https://github.com/Mullassery/PyStreamMCP.git
+git clone ../PyStreamMCP
 cd PyStreamMCP
 pip install -e ".[dev]"
 ```
@@ -127,7 +127,7 @@ git push origin v0.3.0
 ```
 
 ### Create Release Notes on GitHub
-1. Go to https://github.com/Mullassery/PyStreamMCP/releases/new
+1. Go to ../PyStreamMCP/releases/new
 2. Select tag: v0.3.0
 3. Title: "v0.3.0: Advanced Optimization with ML & Observability"
 4. Description: Copy features from ROADMAP.md Phase 3 section
@@ -228,9 +228,9 @@ None planned until v1.0.0.
 
 ## Support
 
-- 📖 [Full Documentation](https://github.com/Mullassery/PyStreamMCP)
-- 🐛 [Report Issues](https://github.com/Mullassery/PyStreamMCP/issues)
-- 💬 [Discussions](https://github.com/Mullassery/PyStreamMCP/discussions)
+- 📖 [Full Documentation](../PyStreamMCP)
+- 🐛 [Report Issues](../PyStreamMCP/issues)
+- 💬 [Discussions](../PyStreamMCP/discussions)
 - 📧 Contact: mullassery@gmail.com
 
 ---

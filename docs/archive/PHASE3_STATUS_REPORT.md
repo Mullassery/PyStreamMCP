@@ -338,7 +338,7 @@ Total: 18/18 passing ✅
 # Day 1: Setup & Deploy
 mkdir -p /staging/pystreammcp
 cd /staging/pystreammcp
-git clone https://github.com/Mullassery/PyStreamMCP.git .
+git clone ../PyStreamMCP .
 python -m venv venv
 source venv/bin/activate
 pip install -e .

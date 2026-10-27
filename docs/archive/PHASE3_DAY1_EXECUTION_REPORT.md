@@ -94,7 +94,7 @@ psql -h localhost -U postgres -d statguardian_staging -c "SELECT 1"
 cd /staging/pystreammcp
 
 # Clone latest main branch
-git clone https://github.com/Mullassery/PyStreamMCP.git .
+git clone ../PyStreamMCP .
 
 # Verify main branch (should show v2.1.0)
 git log --oneline -1

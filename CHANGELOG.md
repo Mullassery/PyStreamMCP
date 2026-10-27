@@ -50,7 +50,7 @@ All notable changes to PyStreamMCP will be documented in this file.
 ## [3.3.3] - 2026-10-18
 
 ### Added
-- **New `pystreammcp_crawl` MCP tool**, backed by the [MudFish](https://github.com/Mullassery/MudFish)
+- **New `pystreammcp_crawl` MCP tool**, backed by the [MudFish](../MudFish)
   engine, giving agents SSRF-safe, budget-bounded web access: crawl a seed URL
   to a chosen depth/URL cap with optional headless-Chrome rendering for
   JS-dependent pages, returning each page's URL, status, title and link count
@@ -342,8 +342,8 @@ None - fully backward compatible
 - OKF native support
 - StatGuardian integration
 
-[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.1...HEAD
-[3.3.1]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.0...v3.3.1
-[3.3.0]: https://github.com/Mullassery/PyStreamMCP/compare/v3.2.0...v3.3.0
-[1.1.0]: https://github.com/Mullassery/PyStreamMCP/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/Mullassery/PyStreamMCP/releases/tag/v1.0.0
+[Unreleased]: ../PyStreamMCP/compare/v3.3.1...HEAD
+[3.3.1]: ../PyStreamMCP/compare/v3.3.0...v3.3.1
+[3.3.0]: ../PyStreamMCP/compare/v3.2.0...v3.3.0
+[1.1.0]: ../PyStreamMCP/compare/v1.0.0...v1.1.0
+[1.0.0]: ../PyStreamMCP/releases/tag/v1.0.0

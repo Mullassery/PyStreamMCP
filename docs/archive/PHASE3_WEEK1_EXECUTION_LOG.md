@@ -52,7 +52,7 @@ mkdir -p /staging/pystreammcp
 cd /staging/pystreammcp
 
 # Step 2: Clone repository
-git clone https://github.com/Mullassery/PyStreamMCP.git .
+git clone ../PyStreamMCP .
 
 # Step 3: Setup isolated Python environment
 python -m venv venv

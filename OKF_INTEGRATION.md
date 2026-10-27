@@ -383,5 +383,5 @@ Example PR: "Improve PostgreSQL cost estimates based on Q3 usage data"
 ## References
 
 - **Google OKF Spec:** https://github.com/GoogleCloudPlatform/knowledge-catalog
-- **PyStreamMCP Docs:** https://github.com/Mullassery/PyStreamMCP
+- **PyStreamMCP Docs:** ../PyStreamMCP
 - **OKF Format Guide:** See strategic rationale document

@@ -30,7 +30,7 @@ mkdir -p /staging/pystreammcp
 cd /staging/pystreammcp
 
 # 2. Clone repository
-git clone https://github.com/Mullassery/PyStreamMCP.git .
+git clone ../PyStreamMCP .
 
 # 3. Setup Python environment
 python -m venv venv
