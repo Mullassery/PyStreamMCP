@@ -29,6 +29,7 @@ NON_INTEGRATION_EXTRAS = {
     "api",
     "mcp",
     "crawl",
+    "rag-anything",
     "all-integrations",
 }
 EXPERIMENTAL_EXTRAS = {"crewai", "pydantic-ai", "haystack", "temporal", "airflow"}

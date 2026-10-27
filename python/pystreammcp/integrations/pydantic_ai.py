@@ -16,13 +16,20 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.discovery import SourceRegistry
 from pystreammcp.experimental import require_experimental_opt_in
 
 
 class PydanticAIAdapter(AgentFrameworkAdapter):
     """PydanticAI adapter with native async support."""
 
-    def __init__(self, config: AdapterConfig, *, experimental: bool = False):
+    def __init__(
+        self,
+        config: AdapterConfig,
+        *,
+        experimental: bool = False,
+        registry: Optional[SourceRegistry] = None,
+    ):
         """Initialize PydanticAI adapter."""
         require_experimental_opt_in("Pydantic AI", experimental)
         super().__init__(config)
@@ -32,6 +39,7 @@ class PydanticAIAdapter(AgentFrameworkAdapter):
             optimization_strategy=config.optimization_strategy,
             max_tokens=config.max_tokens,
         )
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def query(
         self, text: str, intent: str = "retrieve", **kwargs
@@ -57,8 +65,14 @@ class PydanticAIAdapter(AgentFrameworkAdapter):
         return await loop.run_in_executor(None, self.query, text, intent)
 
     def discover(self, context: str, **kwargs) -> Dict[str, Any]:
-        """Discover context sources."""
-        return {"sources": [{"name": "source", "relevance": 0.95}], "total_sources": 1}
+        """Discover sources registered with this adapter's SourceRegistry."""
+        max_results = kwargs.get("max_results", kwargs.get("limit", 10))
+        sources = self.registry.discover(context, limit=max_results)
+        return {
+            "sources": sources,
+            "total_sources": len(sources),
+            "search_context": context,
+        }
 
     async def discover_async(self, context: str, **kwargs) -> Dict[str, Any]:
         """Discover asynchronously."""

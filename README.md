@@ -25,6 +25,9 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 - **MCP tool server** — `PyStreamMCPHandler` wires the MCP tool-call surface directly to a
   live `Orchestrator`/`EventRouter`; MCP tool args are validated with Pydantic and the
   advertised schema is generated from the same models.
+- **Optional retrieval adapters** — normalized QMD and RAG-Anything search with grouped
+  provenance, plus guarded local RAG ingestion, exposed through MCP tools and the
+  `pystreammcp retrieval` CLI. No silent backend fallback or score fusion.
 - **MCP orchestration & federation** — `Orchestrator` probes each configured endpoint's
   real `tools/list` MCP method, with lexical tool-relevance ranking and capability
   matching.
@@ -52,9 +55,11 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
   Rust workspace intended as a future performance backend; the wheel built from
   `pyproject.toml` is pure Python. The workspace compiles and its tests pass, but it is
   tracked separately and not part of the published package.
-- **Some orchestration capabilities are not fully implemented.** Cross-project federated
-  query *execution* and cross-database joins currently report
-  `"status": "not_implemented"` with an explanation, rather than fabricated result rows.
+- **Some orchestration capabilities are optional or not implemented.** Cross-database
+  joins work when `pystreammcp[federation]` is installed and a
+  `FederatedQueryEngine` is configured; otherwise they report
+  `"status": "not_implemented"` rather than fabricated rows. Cross-project federated
+  query execution remains unimplemented and reports the same honest status.
 - **Source discovery is a word-overlap heuristic, not semantic search.**
   `SourceRegistry` uses Jaccard token overlap; wrap it with your own similarity scoring if
   you need embeddings.
@@ -70,6 +75,10 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 - **Known dependency CVEs.** `pip-audit` (run 2026-09-20) found 7 known CVEs in
   transitive dependencies (`werkzeug` via `flask`, `nltk` via `llama-index`). See
   [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) §4.
+- **Retrieval adapters are optional and do not silently fall back.** QMD is an external
+  HTTP service; RAG-Anything requires Python 3.10+ and the `rag-anything` extra. There is
+  no cross-backend fusion, no score normalization, no deletion API, and no runtime
+  dependency update/download. See [`docs/retrieval.md`](docs/retrieval.md).
 - **The HTTP servers have no auth layer of their own.** They bind to `127.0.0.1`
   (localhost-only) by default; pass `host="0.0.0.0"` explicitly only inside a network
   boundary you control. The event endpoint requires HMAC-SHA256 signatures. See
@@ -77,10 +86,10 @@ layer for coordinating multiple MCP endpoints. The published package is **pure P
 
 ## Project status
 
-**Beta.** Current version **3.3.5** (`Development Status :: 4 - Beta`). The pure-Python
-package is the shipped artifact and is under active hardening; the Rust workspace compiles
-and passes its tests but is not shipped. The most recent pass fixed the Rust build,
-Python `ruff` findings, and a stale integration test — see
+**Beta.** Current version **3.3.6** (`Development Status :: 4 - Beta`). The pure-Python
+package is the shipped artifact and is under active hardening. The Rust workspace
+compiles and passes `cargo +stable test --workspace` (138 + 29 tests) but is not shipped;
+its pinned 1.81 toolchain and two assertion-free Rust test files remain open. See
 [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) for the unhedged status.
 
 ## Installation
@@ -97,6 +106,7 @@ pip install "PyStreamMCP[mcp]"              # MCP protocol client library
 pip install "PyStreamMCP[langchain]"        # LangChain adapter
 pip install "PyStreamMCP[llamaindex]"       # LlamaIndex adapter
 pip install "PyStreamMCP[semantic-kernel]"  # Semantic Kernel adapter
+pip install "PyStreamMCP[rag-anything]"     # RAG-Anything retrieval/ingest (Python 3.10+)
 pip install "PyStreamMCP[all-integrations]" # all supported framework adapters
 ```
 
@@ -146,6 +156,29 @@ print(f"Reduction:        {result.cost_reduction_percent:.1f}%")
 Token counts are estimated from the actual query text (a ~4-characters-per-token
 heuristic) and the reduction is computed from the selected strategy — not a fixed number.
 See [`examples/basic_usage.py`](examples/basic_usage.py) for a full walkthrough.
+
+## Retrieval adapters
+
+Retrieval is opt-in. QMD is reached over HTTP (Node.js plus `@tobilu/qmd`,
+started with `qmd mcp --http`); RAG-Anything runs in-process with the
+`rag-anything` extra on Python 3.10+.
+
+```bash
+export PYSTREAMMCP_QMD_ENABLED=true
+export PYSTREAMMCP_QMD_COLLECTIONS=notes,docs
+pystreammcp retrieval search "deployment notes" --json
+
+export PYSTREAMMCP_RAG_ENABLED=true
+export PYSTREAMMCP_RAG_ALLOWED_ROOTS="$HOME/docs"
+pystreammcp retrieval ingest ~/docs/runbook.md --json
+```
+
+The same surface is available as MCP tools:
+`pystreammcp_retrieval_search`, `pystreammcp_retrieval_capabilities`, and
+`pystreammcp_rag_ingest`. Search results are grouped per backend with no
+silent fallback and no cross-backend fusion. See
+[`docs/retrieval.md`](docs/retrieval.md) for the full environment table,
+routing, security boundaries, and vendored-source behavior.
 
 ## HTTP authentication
 

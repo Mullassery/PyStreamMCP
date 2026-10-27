@@ -4,7 +4,8 @@ Breaks down complex queries into simpler sub-queries
 for better optimization and parallel execution.
 """
 
-from typing import Dict, List, Any, Optional, Tuple
+import re
+from typing import Dict, List
 from dataclasses import dataclass
 from enum import Enum
 
@@ -99,138 +100,102 @@ class QueryDecomposer:
         else:
             return self._decompose_complex(query_text)
 
-    def _decompose_simple(self, query_text: str) -> DecompositionPlan:
-        """Decompose simple query."""
+    @staticmethod
+    def _estimate_tokens(query_text: str) -> int:
+        """Character-based token estimate, floored at one."""
+        return max(1, len(query_text) // 4)
+
+    @classmethod
+    def _extract_tables(cls, query_text: str) -> List[str]:
+        """Extract physical table names following FROM/JOIN.
+
+        This is intentionally a small lexical helper, not a SQL parser. It
+        ignores subqueries (``FROM (``) and returns each table once.
+        """
+        pattern = re.compile(
+            r"\b(?:from|join)\s+([`\"\[]?[A-Za-z_][\w.]*[`\"\]]?)",
+            re.IGNORECASE,
+        )
+        tables: List[str] = []
+        for match in pattern.finditer(query_text):
+            table = match.group(1).strip("`\"[]")
+            if table and table not in tables:
+                tables.append(table)
+        return tables
+
+    def _single_query_plan(
+        self, query_text: str, query_type: QueryType
+    ) -> DecompositionPlan:
+        """Return an honest one-step plan (no measurable reduction claimed)."""
         sub_query = SubQuery(
             id="q1",
             query_text=query_text,
             depends_on=[],
-            estimated_tokens=len(query_text.split()) * 1.5,
+            estimated_tokens=self._estimate_tokens(query_text),
             parallelizable=False,
         )
-
         return DecompositionPlan(
             original_query=query_text,
-            query_type=QueryType.SIMPLE,
+            query_type=query_type,
             sub_queries=[sub_query],
             execution_graph={"q1": []},
-            estimated_total_tokens=int(sub_query.estimated_tokens),
-            estimated_reduction=60.0,
+            estimated_total_tokens=sub_query.estimated_tokens,
+            estimated_reduction=0.0,
         )
 
+    def _decompose_simple(self, query_text: str) -> DecompositionPlan:
+        """Simple queries are already a single step."""
+        return self._single_query_plan(query_text, QueryType.SIMPLE)
+
     def _decompose_joined(self, query_text: str) -> DecompositionPlan:
-        """Decompose joined query."""
-        # Simulate breaking into table fetches + join
-        sub_queries = [
-            SubQuery(
-                id="q1_fetch",
-                query_text="SELECT * FROM table1 WHERE ...",
-                depends_on=[],
-                estimated_tokens=150,
-                parallelizable=True,
-                priority=1,
-            ),
-            SubQuery(
-                id="q2_fetch",
-                query_text="SELECT * FROM table2 WHERE ...",
-                depends_on=[],
-                estimated_tokens=180,
-                parallelizable=True,
-                priority=1,
-            ),
-            SubQuery(
-                id="q3_join",
-                query_text="JOIN results from q1 and q2",
-                depends_on=["q1_fetch", "q2_fetch"],
-                estimated_tokens=100,
-                parallelizable=False,
-                priority=2,
-            ),
-        ]
+        """Split a join into real table fetches plus the original join query."""
+        tables = self._extract_tables(query_text)
+        if len(tables) < 2:
+            return self._single_query_plan(query_text, QueryType.JOINED)
+
+        fetch_queries = []
+        for index, table in enumerate(tables, start=1):
+            fetch_text = f"SELECT * FROM {table}"
+            fetch_queries.append(
+                SubQuery(
+                    id=f"q{index}_fetch",
+                    query_text=fetch_text,
+                    depends_on=[],
+                    estimated_tokens=self._estimate_tokens(fetch_text),
+                    parallelizable=True,
+                    priority=1,
+                )
+            )
+
+        fetch_ids = [sub.id for sub in fetch_queries]
+        join_query = SubQuery(
+            id=f"q{len(fetch_queries) + 1}_join",
+            query_text=query_text,
+            depends_on=fetch_ids,
+            estimated_tokens=self._estimate_tokens(query_text),
+            parallelizable=False,
+            priority=2,
+        )
+        sub_queries = [*fetch_queries, join_query]
 
         return DecompositionPlan(
             original_query=query_text,
             query_type=QueryType.JOINED,
             sub_queries=sub_queries,
-            execution_graph={
-                "q1_fetch": [],
-                "q2_fetch": [],
-                "q3_join": ["q1_fetch", "q2_fetch"],
-            },
-            estimated_total_tokens=430,
-            estimated_reduction=70.0,
+            execution_graph={sub.id: list(sub.depends_on) for sub in sub_queries},
+            estimated_total_tokens=sum(
+                sub.estimated_tokens for sub in sub_queries
+            ),
+            estimated_reduction=0.0,
         )
 
     def _decompose_aggregated(self, query_text: str) -> DecompositionPlan:
-        """Decompose aggregated query."""
-        sub_queries = [
-            SubQuery(
-                id="q1_filter",
-                query_text="SELECT * FROM table WHERE filters",
-                depends_on=[],
-                estimated_tokens=120,
-                parallelizable=True,
-            ),
-            SubQuery(
-                id="q2_group",
-                query_text="GROUP BY and aggregate",
-                depends_on=["q1_filter"],
-                estimated_tokens=100,
-                parallelizable=False,
-            ),
-        ]
-
-        return DecompositionPlan(
-            original_query=query_text,
-            query_type=QueryType.AGGREGATED,
-            sub_queries=sub_queries,
-            execution_graph={
-                "q1_filter": [],
-                "q2_group": ["q1_filter"],
-            },
-            estimated_total_tokens=220,
-            estimated_reduction=72.0,
-        )
+        """Aggregations cannot be safely split without a SQL parser."""
+        return self._single_query_plan(query_text, QueryType.AGGREGATED)
 
     def _decompose_complex(self, query_text: str) -> DecompositionPlan:
-        """Decompose complex query with CTEs."""
-        # Complex: break into CTE fragments + final query
-        sub_queries = [
-            SubQuery(
-                id="cte1",
-                query_text="WITH cte1 AS ...",
-                depends_on=[],
-                estimated_tokens=200,
-                parallelizable=True,
-            ),
-            SubQuery(
-                id="cte2",
-                query_text="WITH cte2 AS ...",
-                depends_on=["cte1"],
-                estimated_tokens=180,
-                parallelizable=False,
-            ),
-            SubQuery(
-                id="final",
-                query_text="SELECT FROM cte1, cte2",
-                depends_on=["cte1", "cte2"],
-                estimated_tokens=150,
-                parallelizable=False,
-            ),
-        ]
-
-        return DecompositionPlan(
-            original_query=query_text,
-            query_type=QueryType.COMPLEX,
-            sub_queries=sub_queries,
-            execution_graph={
-                "cte1": [],
-                "cte2": ["cte1"],
-                "final": ["cte1", "cte2"],
-            },
-            estimated_total_tokens=530,
-            estimated_reduction=75.0,
-        )
+        """CTE/subquery rewrites require a real SQL parser; stay one-step."""
+        return self._single_query_plan(query_text, QueryType.COMPLEX)
 
     def get_execution_order(self, plan: DecompositionPlan) -> List[str]:
         """Get optimal execution order for sub-queries.

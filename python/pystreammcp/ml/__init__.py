@@ -1,13 +1,15 @@
-"""Machine learning module for PyStreamMCP.
+"""Machine-learning and heuristic prompt/relevance helpers.
 
-Advanced optimization using learned models:
-- Relevance scoring
-- Intent detection
-- Query classification
-- Auto prompt tagging
-- Cost-quality tradeoffs
+- Relevance scoring and model training
+- Prompt intent/complexity classification and tagging
 """
 
+from .relevance import (
+    QueryFeatures,
+    QueryResult,
+    RelevanceModel,
+    ModelTrainer,
+)
 from .tagging import (
     PromptClassifier,
     PromptIntent,
@@ -17,13 +19,13 @@ from .tagging import (
 )
 
 __all__ = [
+    "QueryFeatures",
+    "QueryResult",
+    "RelevanceModel",
+    "ModelTrainer",
     "PromptClassifier",
     "PromptIntent",
     "PromptComplexity",
     "PromptAnalysis",
     "PromptTag",
-    "RelevanceModel",
-    "IntentDetector",
-    "QueryClassifier",
-    "ModelTrainer",
 ]

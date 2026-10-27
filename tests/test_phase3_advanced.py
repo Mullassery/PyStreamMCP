@@ -7,6 +7,8 @@ Tests for:
 - Observability
 """
 
+import json
+
 import pytest
 from pystreammcp.ml.relevance import (
     RelevanceModel, QueryFeatures, QueryResult, ModelTrainer,
@@ -179,6 +181,35 @@ class TestRelevanceModel:
         assert model2.accuracy == model1.accuracy
 
 
+def _write_training_jsonl(path, count: int = 30) -> str:
+    records = []
+    for i in range(count):
+        records.append(
+            {
+                "query_id": f"q{i}",
+                "features": {
+                    "query_text": f"SELECT * FROM table_{i % 4}",
+                    "query_length": 30 + i,
+                    "intent": "retrieve",
+                    "has_filters": i % 2 == 0,
+                    "has_joins": i % 3 == 0,
+                    "has_aggregates": i % 5 == 0,
+                    "estimated_data_size": ["small", "medium", "large"][i % 3],
+                    "time_sensitivity": "daily",
+                },
+                "baseline_tokens": 1000 + i * 10,
+                "optimized_tokens": 400 + i * 5,
+                "cost_reduction_percent": 60.0 + (i % 10),
+                "execution_time_ms": 100.0 + i,
+                "sources_used": [f"source_{i % 3}"],
+            }
+        )
+    path.write_text(
+        "\n".join(json.dumps(record) for record in records), encoding="utf-8"
+    )
+    return str(path)
+
+
 class TestModelTrainer:
     """Test model trainer."""
 
@@ -188,32 +219,36 @@ class TestModelTrainer:
         trainer = ModelTrainer(model)
         assert trainer.model == model
 
-    def test_load_production_data(self):
-        """Test loading production data."""
+    def test_load_production_data(self, tmp_path):
+        """Test loading real JSONL training data."""
         model = RelevanceModel()
         trainer = ModelTrainer(model)
+        data_file = _write_training_jsonl(tmp_path / "training.jsonl")
 
-        samples = trainer.load_production_data("mock_data")
-        assert samples > 0
+        samples = trainer.load_production_data(data_file)
+        assert samples == 30
         assert len(model.training_data) == samples
+        assert model.training_data[0].features.query_text.startswith("SELECT")
 
-    def test_train_and_validate(self):
+    def test_train_and_validate(self, tmp_path):
         """Test training and validation."""
         model = RelevanceModel()
         trainer = ModelTrainer(model)
+        data_file = _write_training_jsonl(tmp_path / "training.jsonl")
 
-        trainer.load_production_data("mock_data")
+        trainer.load_production_data(data_file)
         result = trainer.train_and_validate()
 
         assert result["status"] == "trained"
         assert "best_accuracy" in result
 
-    def test_training_history(self):
+    def test_training_history(self, tmp_path):
         """Test training history tracking."""
         model = RelevanceModel()
         trainer = ModelTrainer(model)
+        data_file = _write_training_jsonl(tmp_path / "training.jsonl")
 
-        trainer.load_production_data("mock_data")
+        trainer.load_production_data(data_file)
         trainer.train_and_validate()
 
         history = trainer.get_training_history()
@@ -306,14 +341,15 @@ class TestMetricsCollector:
 class TestPhase3Integration:
     """Test Phase 3 integration scenarios."""
 
-    def test_ml_observability_pipeline(self):
+    def test_ml_observability_pipeline(self, tmp_path):
         """Test ML model training with observability."""
         # Create model and trainer
         model = RelevanceModel("v1.0")
         trainer = ModelTrainer(model)
 
         # Load data
-        samples = trainer.load_production_data("prod")
+        data_file = _write_training_jsonl(tmp_path / "training.jsonl")
+        samples = trainer.load_production_data(data_file)
         assert samples > 0
 
         # Create metrics collector

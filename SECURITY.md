@@ -31,3 +31,30 @@ response SLA. You should get an acknowledgment within a few days.
   [`docs/internal/ROADMAP_HONEST.md`](docs/internal/ROADMAP_HONEST.md) §4 for exact versions and CVE
   IDs. If you depend on this package's `api`/`llamaindex` extras in a
   security-sensitive context, check `pip-audit` yourself before deploying.
+
+## Retrieval adapters
+
+- QMD defaults to a loopback URL. Non-loopback QMD URLs require
+  `PYSTREAMMCP_QMD_ALLOW_REMOTE=true`, and credentials embedded in the URL
+  are rejected. QMD collections are an explicit allowlist; requests may
+  select a subset but never a collection outside it.
+- RAG ingestion is limited to `PYSTREAMMCP_RAG_ALLOWED_ROOTS` (an
+  `os.pathsep`-separated list). Path traversal, symlinks, extensions outside
+  the allowlist, and files over `PYSTREAMMCP_RAG_MAX_FILE_MB` are rejected.
+  HTML is not ingested. Markdown local-image references are checked before
+  ingestion. The adapter has no deletion API and does not remove source files.
+- Remote model egress is opt-in: when an OpenAI-compatible provider is
+  configured, document text or images are sent to the configured LLM,
+  embedding, or vision endpoints. With no provider and no injected engine,
+  RAG retrieval/ingestion is unavailable.
+- Vendored QMD, RAG-Anything, and LightRAG snapshots are pinned by tag,
+  commit, and tree checksum in `vendor/deps.lock.json`. Trees are verified
+  offline; missing, corrupted, or symlinked trees are rejected. Installed and
+  vendored RAG pairs are never mixed.
+- There is no runtime dependency update, download, install, or automatic QMD
+  start. `pystreammcp retrieval deps status` is read-only and never mutates
+  the lock file. Upstream checks may use `GITHUB_TOKEN`; token and API-key
+  values are redacted from errors and are not printed.
+
+See [`docs/retrieval.md`](docs/retrieval.md) for the complete environment and
+routing contract.

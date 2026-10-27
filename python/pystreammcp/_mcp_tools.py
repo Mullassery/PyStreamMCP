@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 
 class PyStreamMCPTools:
-    """12 MCP tools for intelligent multi-project orchestration & optimization"""
+    """MCP tools for intelligent multi-project orchestration & optimization."""
 
     @staticmethod
     def get_tools() -> Dict[str, Any]:

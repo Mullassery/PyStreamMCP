@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "dependencies": {
+    "qmd": {
+      "repo": "https://github.com/tobi/qmd.git",
+      "tag": "v2.8.3",
+      "commit": "facd35e01359e59d938bc9418e93fb9318addee3",
+      "path": "vendor/qmd",
+      "ecosystem": "npm",
+      "license": "MIT",
+      "tree_sha256": "0e06e00b1aa0959dd71e3b270a1ce9f12c532d8b359a94a652d57f05b63c3cb2"
+    },
+    "rag-anything": {
+      "repo": "https://github.com/HKUDS/RAG-Anything.git",
+      "tag": "v1.4.3",
+      "commit": "afb67c43d391b1b1008a6fee9f020a232067b9e5",
+      "path": "vendor/rag-anything",
+      "ecosystem": "python",
+      "license": "MIT",
+      "tree_sha256": "58337d6fa3678ee59737e8feefbb89df880a2e641c7e342758c9520eb3229a2d"
+    },
+    "lightrag": {
+      "repo": "https://github.com/HKUDS/LightRAG.git",
+      "tag": "v1.4.16",
+      "commit": "964f26e9a9239c1316045913328e863ec35492e4",
+      "path": "vendor/lightrag",
+      "ecosystem": "python",
+      "license": "MIT",
+      "tree_sha256": "ce7c25877d4c65fea08a01aa5999888043870896e8392f688f673460a3977f0b"
+    }
+  }
+}

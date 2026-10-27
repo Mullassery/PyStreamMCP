@@ -6,6 +6,7 @@
 |---|---|
 | [README](../README.md) | Overview, install, quick start, usage |
 | [Architecture](ARCHITECTURE.md) | Shipped package structure |
+| [Retrieval adapters](retrieval.md) | QMD / RAG-Anything setup, routing, MCP/CLI, security |
 | [Cross-repo integrations](INTEGRATIONS.md) | What is wired, real-tested, and not tested |
 | [Honest roadmap](internal/ROADMAP_HONEST.md) | Implemented/partial/missing |
 | [Known issues / queue](internal/QUEUE_STATUS.md) | Shipped/blocked/rejected |

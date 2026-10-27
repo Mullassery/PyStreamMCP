@@ -21,6 +21,7 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.discovery import SourceRegistry
 
 if TYPE_CHECKING:
     from llama_index.core.retrievers import BaseRetriever
@@ -33,11 +34,15 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
     Supports both sync and async execution for context retrieval.
     """
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(
+        self, config: AdapterConfig, registry: Optional[SourceRegistry] = None
+    ):
         """Initialize LlamaIndex adapter.
 
         Args:
             config: Adapter configuration
+            registry: Optional shared SourceRegistry. A new, empty registry is
+                created if not given.
         """
         super().__init__(config)
         self.agent = Agent(
@@ -46,6 +51,7 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
             optimization_strategy=config.optimization_strategy,
             max_tokens=config.max_tokens,
         )
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def query(
         self, text: str, intent: str = "retrieve", **kwargs
@@ -87,29 +93,16 @@ class LlamaIndexAdapter(AgentFrameworkAdapter):
         return await loop.run_in_executor(None, self.query, text, intent)
 
     def discover(self, context: str, **kwargs) -> Dict[str, Any]:
-        """Discover relevant data sources for RAG context.
+        """Discover sources registered with this adapter's SourceRegistry.
 
-        Args:
-            context: Context for discovery
-            **kwargs: Additional arguments (max_results, min_relevance)
-
-        Returns:
-            Dictionary with discovered sources ranked by relevance
+        Returns an empty list when nothing is registered or nothing overlaps;
+        it never invents concatenated document names.
         """
-        max_results = kwargs.get("max_results", 10)
-        min_relevance = kwargs.get("min_relevance", 0.7)
-
+        max_results = kwargs.get("max_results", kwargs.get("limit", 10))
+        sources = self.registry.discover(context, limit=max_results)
         return {
-            "sources": [
-                {
-                    "name": f"document_{i}",
-                    "relevance": max(min_relevance, 0.95 - (i * 0.08)),
-                    "type": "document",
-                    "estimated_tokens": 200 + (i * 50),
-                }
-                for i in range(min(max_results, 5))
-            ],
-            "total_sources": min(max_results, 5),
+            "sources": sources,
+            "total_sources": len(sources),
             "search_context": context,
         }
 

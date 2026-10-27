@@ -6,4 +6,6 @@ experimental in-process helpers that do not import those frameworks; using
 them requires an explicit opt-in.
 """
 
+from . import langchain, llamaindex, semantic_kernel
+
 __all__ = ["langchain", "llamaindex", "semantic_kernel"]

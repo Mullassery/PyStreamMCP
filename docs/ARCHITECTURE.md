@@ -2,8 +2,9 @@
 
 This describes what actually ships (the pure-Python package under
 `python/pystreammcp/`, built via `setuptools` per `pyproject.toml`). The
-`core/`/`python/src` Rust workspace at the repo root is a separate,
-currently-non-compiling, unshipped experiment — see the README's
+`core/`/`python/src` Rust workspace at the repo root is a separate, unshipped
+experiment. It compiles and passes tests under a current stable toolchain, but its
+pinned 1.81 toolchain cannot resolve current dependencies — see the README's
 "Rust workspace (not shipped)" section and
 [`docs/archive/ARCHITECTURE_RUST_CORE_ASPIRATIONAL.md`](archive/ARCHITECTURE_RUST_CORE_ASPIRATIONAL.md)
 for why the old root-level `ARCHITECTURE.md` was archived instead of kept.
@@ -22,9 +23,10 @@ Python objects (`Agent`, `SourceRegistry`, `Orchestrator`):
    search.
 3. **`Orchestrator`** — probes configured MCP endpoints' real `tools/list`
    method, does lexical tool-relevance ranking, and capability matching.
-   Federated query *execution* and cross-database joins are accepted at
-   the API level but return `{"status": "not_implemented"}` — there is no
-   query engine behind them.
+   Cross-database joins use the optional DuckDB/SQLGlot
+   `FederatedQueryEngine` when one is injected; without it they return
+   `{"status": "not_implemented"}`. Cross-project federated query
+   *execution* remains unimplemented.
 
 ## Three surfaces, one implementation
 
@@ -68,6 +70,38 @@ verified by reading `_mcp_tools.py`'s handler methods and `api.py`'s route
 bodies, and covered by `tests/test_mcp_tools_handler.py`,
 `tests/test_discovery.py`, `tests/test_okf_discovery.py`.
 
+## Optional retrieval adapters
+
+Retrieval is a separate, opt-in path. It does not change the core objects
+above and loads no RAG-Anything, LightRAG, or OpenAI modules unless RAG is
+configured or an engine is injected.
+
+```mermaid
+flowchart LR
+    MCP["MCP tools\npystreammcp_retrieval_search\npystreammcp_retrieval_capabilities\npystreammcp_rag_ingest"]
+    CLI["CLI\npystreammcp retrieval search\ncapabilities / health / ingest / deps status"]
+    Service["RetrievalService\nconfig + backend registration"]
+    Router["router.route\nexplicit / all / auto"]
+    QMD["QmdBackend\nHTTP"]
+    RAG["RAGAnythingBackend\nworker loop"]
+    Groups["grouped RetrievalResponse\nno fusion"]
+
+    MCP --> Service
+    CLI --> Service
+    Service --> Router
+    Router --> QMD
+    Router --> RAG
+    QMD --> Groups
+    RAG --> Groups
+```
+
+`RetrievalService.from_env()` registers configured backends and leaves
+unconfigured ones out. Explicit requests never fall back to another backend.
+Results are grouped by backend with per-group status and provenance; there is
+no cross-backend fusion or score normalization. RAG ingestion is a guarded,
+separate operation bounded by configured roots, extensions, symlinks, and
+file-size checks. See [`retrieval.md`](retrieval.md).
+
 ## Webhook / event flow
 
 `server.py`'s Flask app exposes `POST /orchestration/webhooks/events` for
@@ -91,19 +125,15 @@ cheapest tool-call path across a catalog. See
 `tests/test_okf_core.py`, `tests/test_okf_discovery.py`,
 `tests/test_okf_query_planner.py`.
 
-## Orchestration-tool adapters — a known gap
+## Orchestration-tool adapters
 
 `python/pystreammcp/orchestration/{temporal,airflow,nocode_rpa}.py` wrap
-`Agent.query()` correctly for the *query* activity/operator in each of
-Temporal, Airflow, n8n/Power Automate/RPA. Their **discovery**
-activity/operator (`TemporalDiscoveryActivity.execute()` in `temporal.py`,
-the discovery `execute()` in `airflow.py`, and the equivalent in
-`nocode_rpa.py`) does **not** call `SourceRegistry` — each independently
-returns a hardcoded list of `source_0..source_4` with a fabricated
-`relevance = 0.95 - i*0.05` regardless of the registry's actual contents,
-behind a `# In production, use actual discovery logic` comment. This is
-tracked in [`../ROADMAP_HONEST.md`](internal/ROADMAP_HONEST.md) rather than
-fixed in this pass.
+`Agent.query()` for the *query* activity/operator in each of Temporal,
+Airflow, n8n/Power Automate/RPA. Their **discovery** activity/operator now
+accepts an optional `SourceRegistry` and calls `registry.discover()` instead
+of synthesizing `source_0..source_4`; with no registered sources they return
+an empty list. The same pattern applies to the supported and experimental
+framework adapters under `pystreammcp.integrations`.
 
 ## Testing
 

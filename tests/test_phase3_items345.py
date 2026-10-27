@@ -137,7 +137,8 @@ class TestQueryDecomposition:
 
         assert plan.query_type == QueryType.SIMPLE
         assert len(plan.sub_queries) == 1
-        assert plan.estimated_reduction >= 60.0
+        assert plan.sub_queries[0].query_text == "SELECT * FROM users"
+        assert plan.estimated_reduction == 0.0
 
     def test_decompose_joined(self):
         """Test decomposing joined query."""

@@ -1,8 +1,9 @@
 # PyStreamMCP — Honest Status & Roadmap
 
-Last verified: 2026-09-22, against commit `7bbda43` + this pass's changes
-(quick-fix pass: fabricated orchestration-adapter discovery, dead CLI
-entry point, `datetime.utcnow()` migration where safe). Every claim below
+Last verified: 2026-10-27, against the `feature/retrieval-adapters` worktree
+(design-integrity pass: shadowed modules, broken package exports, fabricated
+adapter discovery, simulated ML loading/decomposition, and fake API
+metrics/techniques). Every claim below
 was checked against the actual code/tests in this repo, not against what
 a doc says. See [`README.md`](../../README.md) for the user-facing quickstart
 and [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) for how the shipped
@@ -10,12 +11,11 @@ package is structured.
 
 ## 1. What works (tested by me, this pass)
 
-- `pytest tests/ -v --tb=short` on Python 3.11 with
-  `pip install -e ".[dev,api,mcp,langchain,llamaindex,semantic-kernel]"`:
-  **383 passed, 0 failed** (was 375; +8 from this pass's new/updated
-  orchestration-discovery and CLI tests), 1 unrelated deprecation warning
-  (`anyio.abc.BlockingPortal`, from `starlette`'s test client, not this
-  project's code).
+- `.venv/bin/python -m pytest tests -q` on Python 3.11 with the dev extras:
+  **561 passed, 16 skipped, 0 failed** (the skips are opt-in live QMD/RAG
+  tests), 5 warnings (all `datetime.utcnow()` deprecations in a local test
+  helper). The design-integrity pass added 17 package/design tests and
+  updated stale expectations that asserted fabricated behavior.
 - `Agent.query()`, `SourceRegistry.discover()`, `Orchestrator` federation
   discovery/ranking, the HMAC-SHA256 webhook auth, and the Pydantic
   validation on the four MCP tools all match what the README claims —
@@ -28,9 +28,17 @@ package is structured.
   `test_okf_query_planner.py` all pass) — not fabricated, not previously
   documented in the README (now cross-linked from
   `docs/ARCHITECTURE.md`).
+- Optional retrieval adapters are implemented and covered by offline tests:
+  normalized QMD and RAG-Anything search, routing without silent fallback,
+  guarded RAG ingestion, MCP tools, CLI/JSON output, public exports, the
+  `rag-anything` extra, and read-only `deps status`. QMD `v2.8.3`,
+  RAG-Anything `v1.4.3`, and LightRAG `v1.4.16` are vendored with tree
+  checksums. Default tests use fake engines/HTTP transports; live QMD and
+  RAG-Anything calls are opt-in and were not run unless explicitly enabled.
+  See [`docs/retrieval.md`](../retrieval.md).
 - `actionlint .github/workflows/ci.yml`: clean after this pass's fixes.
-- `ruff check python/ tests/`: runs, does not crash (951 findings — see
-  Technical Debt below; not previously wired into CI at all).
+- `.venv/bin/ruff check python/ tests/` (ruff 0.8.6, default rules):
+  64 findings, mostly `F401` unused imports — see Technical Debt below.
 
 ## 2. Confirmed bugs / fabrications found this pass (not fixed — documented per the disclosure-first policy)
 
@@ -208,7 +216,7 @@ shipped package.
 ### 2.5. `pyproject.toml` classifier overclaimed maturity (fixed this pass)
 
 `Development Status :: 5 - Production/Stable` was the PyPI classifier
-before this pass. Given items 2.1-2.3 above, plus the unshipped/broken
+before this pass. Given items 2.1-2.3 above, plus the then-unshipped/broken
 Rust workspace and `"not_implemented"` federation/join endpoints, "5 -
 Production/Stable" is not honest. Changed to `4 - Beta`.
 
@@ -227,33 +235,16 @@ file you're reading, which is meant to be public. Added a `!ROADMAP_HONEST.md`
 negation immediately after that block; without it, `git add
 ROADMAP_HONEST.md` would have been a silent no-op.
 
-## 3. Rust workspace: confirmed broken, not attempted
+## 3. Rust workspace: compiles and tests on stable, pinned toolchain still broken
 
-`cargo build --workspace` (`rustup run stable`, since the pinned
-`rust-toolchain.toml` channel 1.81 can't resolve current registry
-dependencies at all — `idna_adapter v1.2.2` requires the `edition2024`
-cargo feature) fails with **43 compile errors** in `pystreammcp-core`,
-including:
+`cargo +stable test --workspace` now **passes: 138 + 29 tests** (19 warnings,
+mostly dead-code/unused-variable suggestions). This supersedes the earlier
+"43 compile errors" finding for the stable toolchain.
 
-- 12× `E0308` mismatched types
-- 6× `E0599` — `error::Error::Generic` variant doesn't exist
-- 4× `E0609` — `no field 'source' on RankedCandidate`
-- 6× `E0277` — `FusionMethod`/`RankingStrategy`
-  (`core/src/orchestration/multimodal.rs`) missing `Serialize`/
-  `Deserialize` derives
-- 4× `E0533` — `BudgetTier::{Standard,Minimal,Large,Comprehensive}`
-  referenced as unit variants but defined as struct variants
-- `E0432` unresolved imports `orchestration::{UserContext,
-  ExpertiseLevel}`; `E0425` — `stage2_decisions` not in scope; `E0603` —
-  `IntentScore`/`QueryIntent` imported but private; `E0252` — `TokenBudget`
-  defined twice; `E0502` borrow conflict in `core/src/.../multiplier.rs`
-  or similar.
-
-This matches what the README/CHANGELOG already say ("does not currently
-compile"), independently reverified this pass rather than taken on faith.
-Not fixed — 43 errors across a workspace that isn't shipped is out of
-scope for a documentation/disclosure pass; tracked here for whoever picks
-up the Rust core next.
+The pinned `rust-toolchain.toml` channel 1.81 still cannot resolve current
+registry dependencies (`idna_adapter v1.2.2` requires the `edition2024` cargo
+feature), so `cargo check` without `+stable` fails before compilation. The
+workspace remains unshipped; the wheel from `pyproject.toml` is pure Python.
 
 ### 3.1. Rust "tests" that are empty stubs (no fake stubs policy violation)
 
@@ -264,25 +255,21 @@ just comments describing what it would test (e.g. "Authority = SSL (30%)
 + domain age (30%) + wayback depth (40%)") with no actual assertion. Even
 if the workspace compiled, these would vacuously pass regardless of
 correctness. `core/tests/phase_v05_metadata_tests.rs` (530 lines) is real
-by contrast — 43 real `assert!`/`assert_eq!` calls. Not fixed (part of
-the non-compiling, unshipped workspace); flagged because it's a clean
-example of the "no fake stubs" anti-pattern for whoever fixes the Rust
-core next.
+by contrast — 43 real `assert!`/`assert_eq!` calls. Not fixed (part of the
+unshipped workspace); flagged because it's a clean example of the "no fake
+stubs" anti-pattern for whoever works on the Rust core next.
 
 ## 4. Technical debt (concrete, file:line, not fixed this pass)
 
-- **910 ruff findings** across `python/` + `tests/` (was 951; the
-  41-finding drop is the `datetime.utcnow()` fixes below — see
-  `CHANGELOG.md`) (`ruff check python/ tests/`), never previously run in
-  CI (now added as a non-blocking `lint` job in
-  `.github/workflows/ci.yml`). Breakdown:
-  - 468× `UP006` (`typing.Dict`/`List` instead of `dict`/`list`) + 144×
-    `FA100` + 76× `UP035` (deprecated `typing` imports) — cosmetic/
-    modernization, safe to bulk-fix with `ruff check --fix`, but 688
-    findings is enough churn that it deserves its own PR, not folding
-    into a docs pass.
-  - 71× `I001` unsorted imports, 55× `F401` unused imports — safe
-    autofixes, same reasoning.
+- **64 `ruff` findings** across `python/` + `tests/` under ruff 0.8.6's
+  default rules (`ruff check python/ tests/`), never previously wired into
+  CI (now a non-blocking `lint` job in `.github/workflows/ci.yml`). The
+  earlier 910/951 counts were from a full `--select ALL`-style run, not the
+  configured/default rule set. Current breakdown:
+  - 50× `F401` unused imports, 8× `F541` f-strings without placeholders,
+    3× `E402` imports not at top of file, 3× `F841` unused variables.
+  - 36 are safe `ruff check --fix` candidates; the rest need a small manual
+    pass. Not bulk-applied in this pass.
   - **2× `DTZ003`** (`datetime.utcnow()`, was 43 — FIXED in the
     quick-fix pass, 2026-09-22, in `webhook_handlers.py` (29),
     `webhook_router.py` (7, incl. the `MCPEndpoint.last_heartbeat`
@@ -316,11 +303,10 @@ core next.
     FIXED — removed along with the §2.1 fabrication fix; the unused
     `agent = Agent(agent_id=self.agent_id)` was the lint's tell that
     `execute()` never actually used real discovery logic.
-  - No `[tool.ruff]` section in `pyproject.toml` at all — the 910 count is
-    against ruff's full default rule set, not a set the project has
-    actually opted into. Whoever does the lint-cleanup pass should also
-    decide which rules to actually enable/ignore intentionally rather
-    than leave it un-configured.
+  - No `[tool.ruff]` section in `pyproject.toml`, so ruff 0.8.6 uses its
+    default rule set (64 current findings). Whoever does the lint-cleanup
+    pass should decide which rules to enable/ignore intentionally rather
+    than leave it unconfigured.
 - **Dependency vulnerabilities** (real `pip-audit` run this pass, not
   simulated): 7 known CVEs across `nltk==3.10.3` (pulled in transitively
   by `llama-index`/`llama-index-core` — `PYSEC-2026-3740`, no fix version
@@ -354,35 +340,32 @@ core next.
 
 - **Cross-project federated query execution**: accepted at the API/MCP
   level, returns `{"status": "not_implemented", "message": "Federated
-  query execution across projects is not yet implemented; ..."}`
-  (`_mcp_connector.py:362-365`). Does not exist. Not partially built —
-  fully absent.
-- **Cross-database joins**: same — `_mcp_connector.py:448-459`,
-  `{"status": "not_implemented", "message": "Cross-database join
-  execution is not yet implemented."}`. Does not exist.
+  query execution across projects is not yet implemented; ..."}`. Does
+  not exist. Not partially built — fully absent.
+- **Cross-database joins**: implemented as an optional DuckDB/SQLGlot
+  backend (`FederatedQueryEngine`, `pystreammcp[federation]`). A handler
+  created with `PyStreamMCPHandler(orchestrator, federation_engine=engine)`
+  uses it; without an engine the original honest `not_implemented`
+  response remains.
 - ~~**`SourceRegistry` discovery in Temporal/Airflow/RPA adapters**~~
   FIXED — see §2.1.
 - ~~**`pystreammcp` CLI as an installed command**~~ FIXED — see §2.2.
-- **Rust performance backend** (`core/`, `python/src/lib.rs`): does not
-  compile (§3), not shipped, no timeline. Anyone relying on it should
-  not.
+- **Rust performance backend** (`core/`, `python/src/lib.rs`): compiles and
+  tests pass with a current stable toolchain, but the pinned 1.81 toolchain
+  fails and the workspace is not shipped. Do not rely on it.
 
 ## 6. Explicitly out of scope for this pass (and why)
 
-- **Fixing the remaining 910 ruff findings**: mixing a 688-cosmetic-finding
-  autofix PR into a quick-fix pass would make the diff unreviewable and
-  bury the real findings (`DTZ005`, `BLE001`, `B006`, `F821`) in noise.
-  Left as a dedicated follow-up; CI now surfaces the count via the
-  non-blocking `lint` job so it can't silently grow further unnoticed.
-  (§2.1's fabricated-discovery fix and the `DTZ003` `datetime.utcnow()`
-  migration *were* done this pass — see §2.1/§2.2 and `CHANGELOG.md`;
-  turned out to be mechanical, not the non-trivial follow-up originally
-  estimated.)
+- **Clearing the remaining 64 default-rule ruff findings**: mostly unused
+  imports and two f-string/import-order clusters. Left as a dedicated
+  follow-up so this pass's behavioral changes stay reviewable; CI surfaces
+  the count via the non-blocking `lint` job.
 - **Pinning `werkzeug`/investigating `nltk`**: needs compatibility testing
   against the `flask>=2.3.0` floor and confirming `llama-index` still
   works with a patched `nltk`; not a same-session change.
-- **Rust core compile errors (§3)**: 43 errors across an unshipped
-  workspace; substantial, dedicated follow-up if the Rust backend is ever
-  revived.
+- **Rust pinned-toolchain upgrade (§3)**: the stable toolchain compiles and
+  passes tests, but `rust-toolchain.toml` still pins 1.81, which cannot
+  resolve current dependencies. Raise the pin only when the Rust backend is
+  actually revived.
 - **CODE_OF_CONDUCT.md / SECURITY.md**: added in this pass (see repo
   root) — not skipped.

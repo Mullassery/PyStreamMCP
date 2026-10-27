@@ -10,6 +10,7 @@ Tests for:
 import pytest
 import asyncio
 from pystreammcp.adapters import AdapterConfig, FrameworkType, AdapterRegistry
+from pystreammcp.discovery import SourceRegistry
 from pystreammcp.integrations.llamaindex import (
     LlamaIndexAdapter, StreamMCPRetriever,
 )
@@ -59,12 +60,18 @@ class TestLlamaIndexAdapter:
             agent_id="llamaindex_discover_test",
             name="Discovery Test",
         )
-        adapter = LlamaIndexAdapter(config)
+        registry = SourceRegistry()
+        registry.register(
+            name="research_documents",
+            description="Research documents and findings",
+        )
+        adapter = LlamaIndexAdapter(config, registry=registry)
 
         result = adapter.discover("research documents", max_results=5)
 
         assert "sources" in result
-        assert result["total_sources"] > 0
+        assert result["total_sources"] == 1
+        assert result["sources"][0]["name"] == "research_documents"
         assert all("relevance" in s for s in result["sources"])
 
     def test_adapter_optimize(self):
@@ -183,12 +190,17 @@ class TestSemanticKernelAdapter:
             agent_id="sk_discover_test",
             name="Discovery Test",
         )
-        adapter = SemanticKernelAdapter(config)
+        registry = SourceRegistry()
+        registry.register(
+            name="business_documents",
+            description="Business documents and reports",
+        )
+        adapter = SemanticKernelAdapter(config, registry=registry)
 
         result = adapter.discover("business documents")
 
         assert "sources" in result
-        assert len(result["sources"]) > 0
+        assert result["sources"][0]["name"] == "business_documents"
 
     def test_adapter_optimize(self):
         """Test query optimization."""

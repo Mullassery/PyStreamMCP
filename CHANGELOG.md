@@ -4,6 +4,8 @@ All notable changes to PyStreamMCP will be documented in this file.
 
 ## [Unreleased]
 
+## [3.3.6] - 2026-10-27
+
 ### Changed
 - Made the integration support matrix honest. Only `langchain`, `llamaindex`,
   and `semantic-kernel` are supported, real-tested extras. Removed the
@@ -16,6 +18,10 @@ All notable changes to PyStreamMCP will be documented in this file.
   imported the vendor SDKs; they are in-process helpers, not integrations.
 
 ### Added
+- Optional retrieval adapters for QMD and RAG-Anything, with normalized
+  grouped search, explicit/auto routing without silent fallback, guarded RAG
+  ingestion, MCP tools, CLI commands, and pinned/vendored dependency snapshots
+  (QMD v2.8.3, RAG-Anything v1.4.3, LightRAG v1.4.16). See `docs/retrieval.md`.
 - `ExperimentalIntegrationError` and an opt-in guard for experimental helpers.
   Construction now raises unless you pass `experimental=True` or set
   `PYSTREAMMCP_ENABLE_EXPERIMENTAL=1`.
@@ -24,6 +30,25 @@ All notable changes to PyStreamMCP will be documented in this file.
   guards stay in sync.
 
 ### Fixed
+- Removed shadow modules (`pystreammcp/ml.py`, `pystreammcp/optimization.py`)
+  that Python silently ignored in favor of their same-named packages. Legacy
+  optimization types now live in `pystreammcp/optimization/types.py`, and the
+  package-level `OptimizationStrategy`/`StrategyType`/`OptimizationTechnique`/
+  `CostMetrics` exports are real instead of `None`.
+- Repaired stale `__all__` entries in `pystreammcp.ml`, `observability`, `qa`,
+  and `integrations`; `integrations` now imports its three supported modules.
+- LlamaIndex, Semantic Kernel, CrewAI, PydanticAI, and Haystack adapters now
+  accept a shared `SourceRegistry` and return registered sources from
+  `discover()` instead of fabricating documents. CrewAI's result key is now
+  `sources` (was `resources`).
+- `ModelTrainer.load_production_data()` reads real JSON/JSONL files, raises
+  `FileNotFoundError`/`ValueError` instead of inventing samples, and
+  `train()` honors `test_size` and reports train/test counts.
+- `QueryDecomposer` uses the query's actual table names, keeps the original
+  join as the final step, and reports `estimated_reduction = 0.0` rather than
+  claiming an unmeasured 60-75% reduction.
+- REST `/health` reports the package version; `/metrics` aggregates real
+  `Agent` metrics; `/optimize` reports only techniques actually applied.
 - The MCP connector now actually uses StatGuardian's shared
   `BaseMCPConnector` when `statguardian._mcp_connector` is installed, instead
   of always falling through to the embedded copy. The fallback was aligned
@@ -342,7 +367,8 @@ None - fully backward compatible
 - OKF native support
 - StatGuardian integration
 
-[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.1...HEAD
+[Unreleased]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.6...HEAD
+[3.3.6]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.5...v3.3.6
 [3.3.1]: https://github.com/Mullassery/PyStreamMCP/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/Mullassery/PyStreamMCP/compare/v3.2.0...v3.3.0
 [1.1.0]: https://github.com/Mullassery/PyStreamMCP/compare/v1.0.0...v1.1.0

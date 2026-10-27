@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass, field
 import json
 from datetime import datetime
+from pathlib import Path
 
 
 @dataclass
@@ -91,13 +92,14 @@ class RelevanceModel:
         self.training_data.append(result)
 
     def train(self, test_size: float = 0.2) -> Dict[str, Any]:
-        """Train the model on accumulated data.
+        """Fit the heuristic model and evaluate it on a held-out split.
 
         Args:
-            test_size: Fraction of data to use for testing
+            test_size: Fraction of accumulated samples held out for evaluation
+                (0 means evaluate on the same samples used to fit).
 
         Returns:
-            Training metrics
+            Training metrics, including the train/test split sizes.
         """
         if len(self.training_data) < 10:
             return {
@@ -105,27 +107,33 @@ class RelevanceModel:
                 "samples": len(self.training_data),
                 "minimum_required": 10,
             }
+        if not 0.0 <= test_size < 1.0:
+            raise ValueError("test_size must be >= 0 and < 1")
 
-        # Simulate ML training
-        # In production, use scikit-learn, TensorFlow, etc.
-        correct = 0
         total = len(self.training_data)
+        test_count = int(total * test_size)
+        train_count = total - test_count
+        train_data = self.training_data[:train_count]
+        test_data = self.training_data[train_count:] if test_count else train_data
 
-        for result in self.training_data:
+        # Refit from scratch so repeated training calls are reproducible.
+        self.source_relevance_cache = {}
+        self._learn_source_weights(train_data)
+
+        correct = 0
+        for result in test_data:
             predicted = self.predict_relevance(result.features, result.sources_used)
             actual = result.cost_reduction_percent
-
-            if abs(predicted - actual) < 10:  # Within 10% is "correct"
+            if abs(predicted - actual) < 10:
                 correct += 1
 
-        self.accuracy = correct / total if total > 0 else 0.0
-
-        # Learn source weights
-        self._learn_source_weights()
+        self.accuracy = correct / len(test_data) if test_data else 0.0
 
         return {
             "status": "trained",
             "samples": total,
+            "train_samples": len(train_data),
+            "test_samples": len(test_data),
             "accuracy": self.accuracy,
             "model_version": self.model_version,
             "timestamp": datetime.now().isoformat(),
@@ -143,11 +151,11 @@ class RelevanceModel:
         Returns:
             Predicted cost reduction percentage
         """
-        if not self.learned_weights:
-            return 65.0  # Default if model not trained
+        if not self.source_relevance_cache:
+            return 65.0  # Default before any source weights have been learned
 
-        # Simulate prediction
-        # In production, use trained model to score
+        # Feature-weighted heuristic prediction. This is deliberately a small,
+        # dependency-free model rather than a trained neural network.
         base_score = 60.0
 
         # Adjust based on features
@@ -215,11 +223,13 @@ class RelevanceModel:
         ranked.sort(key=lambda x: x["learned_relevance"], reverse=True)
         return ranked
 
-    def _learn_source_weights(self) -> None:
-        """Learn source weights from training data."""
+    def _learn_source_weights(
+        self, training_data: Optional[List[QueryResult]] = None
+    ) -> None:
+        """Learn source weights from the supplied training samples."""
         source_scores: Dict[str, List[float]] = {}
 
-        for result in self.training_data:
+        for result in training_data if training_data is not None else self.training_data:
             for source in result.sources_used:
                 if source not in source_scores:
                     source_scores[source] = []
@@ -272,43 +282,79 @@ class ModelTrainer:
         self.training_history = []
 
     def load_production_data(self, data_source: str) -> int:
-        """Load training data from production queries.
+        """Load training samples from a JSON array or JSONL file.
 
         Args:
-            data_source: Path to data (file, database, API endpoint)
+            data_source: Path to a UTF-8 JSON/JSONL file containing query
+                results. Each record must include ``query_id``, ``features``,
+                ``baseline_tokens``, ``optimized_tokens``,
+                ``cost_reduction_percent``, ``execution_time_ms``, and
+                ``sources_used``.
 
         Returns:
-            Number of samples loaded
+            Number of samples loaded.
+
+        Raises:
+            FileNotFoundError: If ``data_source`` is not an existing file.
+            ValueError: If the file is not valid JSON/JSONL or a record is
+                missing required fields.
         """
-        # In production, load from actual data source
-        # For now, simulate
-        sample_results = [
-            QueryResult(
-                query_id=f"prod_query_{i}",
-                features=QueryFeatures(
-                    query_text=f"Sample query {i}",
-                    query_length=100 + (i * 10),
-                    intent=["retrieve", "discover", "aggregate"][i % 3],
-                    has_filters=i % 2 == 0,
-                    has_joins=i % 3 == 0,
-                    has_aggregates=i % 4 == 0,
-                    estimated_data_size=["small", "medium", "large"][i % 3],
-                    time_sensitivity=["realtime", "hourly", "daily"][i % 3],
-                ),
-                baseline_tokens=1000 + (i * 100),
-                optimized_tokens=400 + (i * 50),
-                cost_reduction_percent=60.0 + (i % 15),
-                execution_time_ms=100.0 + (i * 10),
-                sources_used=[f"source_{j}" for j in range(i % 5 + 1)],
-                user_satisfaction=0.7 + (0.3 * (i % 10) / 10),
-            )
-            for i in range(50)
-        ]
+        path = Path(data_source)
+        text = path.read_text(encoding="utf-8")
+        stripped = text.lstrip()
+        if not stripped:
+            return 0
 
-        for result in sample_results:
+        try:
+            if stripped.startswith("["):
+                records = json.loads(stripped)
+                if not isinstance(records, list):
+                    raise ValueError("JSON training file must contain an array")
+            else:
+                records = [
+                    json.loads(line)
+                    for line in text.splitlines()
+                    if line.strip()
+                ]
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON in {path}: {exc}") from exc
+
+        parsed: List[QueryResult] = []
+        for index, record in enumerate(records):
+            if not isinstance(record, dict):
+                raise ValueError(f"Training record {index} must be an object")
+            try:
+                features_data = record["features"]
+                if not isinstance(features_data, dict):
+                    raise TypeError("features must be an object")
+                parsed.append(
+                    QueryResult(
+                        query_id=str(record["query_id"]),
+                        features=QueryFeatures(**features_data),
+                        baseline_tokens=int(record["baseline_tokens"]),
+                        optimized_tokens=int(record["optimized_tokens"]),
+                        cost_reduction_percent=float(
+                            record["cost_reduction_percent"]
+                        ),
+                        execution_time_ms=float(record["execution_time_ms"]),
+                        sources_used=list(record["sources_used"]),
+                        user_satisfaction=record.get("user_satisfaction"),
+                        actual_quality=record.get("actual_quality"),
+                        **(
+                            {"timestamp": record["timestamp"]}
+                            if "timestamp" in record
+                            else {}
+                        ),
+                    )
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid training record {index} in {path}: {exc}"
+                ) from exc
+
+        for result in parsed:
             self.model.add_training_sample(result)
-
-        return len(sample_results)
+        return len(parsed)
 
     def train_and_validate(self) -> Dict[str, Any]:
         """Train model and validate performance.

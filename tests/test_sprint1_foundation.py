@@ -163,7 +163,7 @@ class TestMCPServer:
         server = PyStreamMCPServer()
         tools = server.get_tools()
 
-        assert len(tools) == 5
+        assert len(tools) == 8
         tool_names = [t["name"] for t in tools]
         assert "pystreammcp_query" in tool_names
         assert "pystreammcp_discover" in tool_names
@@ -220,7 +220,7 @@ class TestMCPServer:
         msg = {"type": "list_tools"}
         response = server.process_message(msg)
         assert response["type"] == "tools"
-        assert len(response["tools"]) == 5
+        assert len(response["tools"]) == 8
 
         # Info message
         msg = {"type": "get_info"}

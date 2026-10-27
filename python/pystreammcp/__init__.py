@@ -7,33 +7,28 @@ Reduces token usage by 60-75% while maintaining quality.
 Includes StatGuardian integration for data quality validation.
 """
 
-__version__ = "3.3.5"
+__version__ = "3.3.6"
 
 from .agent import Agent, QueryResult
 from .query import Query, QueryIntent, QueryConstraints
 from .context import Context, ContextType, ContextWindow
 from .discovery import Discovery, DiscoveredSource, SourceType, SourceRegistry, DataSource
+from .retrieval import (
+    BackendName,
+    RequestedBackend,
+    RetrievalError,
+    RetrievalRequest,
+    RetrievalResponse,
+    RetrievalService,
+)
 
-# Optimization imports
-try:
-    from .optimization import (
-        OptimizationStrategy,
-        StrategyType,
-        OptimizationTechnique,
-        CostMetrics,
-    )
-except (ImportError, AttributeError):
-    # Fallback: Phase 3+ uses new optimization module structure
-    try:
-        from .optimization import StrategyType, OptimizationTechnique
-
-        OptimizationStrategy = None
-        CostMetrics = None
-    except (ImportError, AttributeError):
-        OptimizationStrategy = None
-        StrategyType = None
-        OptimizationTechnique = None
-        CostMetrics = None
+# Optimization types
+from .optimization import (
+    OptimizationStrategy,
+    StrategyType,
+    OptimizationTechnique,
+    CostMetrics,
+)
 from .quality import (
     QualityValidator,
     ValidationGate,
@@ -48,7 +43,6 @@ from .adapters import (
     AdapterConfig,
     AdapterRegistry,
     FrameworkType,
-    QueryResult as AdapterQueryResult,
 )
 
 # Optional: MCP and API servers (require additional dependencies)
@@ -88,11 +82,18 @@ __all__ = [
     "SourceType",
     "SourceRegistry",
     "DataSource",
-    # Legacy optimization (optional, phase 1-2)
-    *((["OptimizationStrategy"]) if OptimizationStrategy else []),
-    *((["StrategyType"]) if StrategyType else []),
-    *((["OptimizationTechnique"]) if OptimizationTechnique else []),
-    *((["CostMetrics"]) if CostMetrics else []),
+    # Retrieval adapters
+    "BackendName",
+    "RequestedBackend",
+    "RetrievalError",
+    "RetrievalRequest",
+    "RetrievalResponse",
+    "RetrievalService",
+    # Optimization types
+    "OptimizationStrategy",
+    "StrategyType",
+    "OptimizationTechnique",
+    "CostMetrics",
     # Quality Validation (StatGuardian integration)
     "QualityValidator",
     "ValidationGate",

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 import logging
 
+from . import __version__
 from .adapters import AdapterRegistry, AdapterConfig, FrameworkType, QueryResult
 from .agent import Agent
 from .discovery import SourceRegistry
@@ -122,10 +123,10 @@ class HealthResponse(BaseModel):
 class PyStreamMCPAPI:
     """PyStreamMCP REST API server."""
 
-    def __init__(self, title: str = "PyStreamMCP", version: str = "0.2.0"):
+    def __init__(self, title: str = "PyStreamMCP", version: Optional[str] = None):
         """Initialize API server."""
         self.title = title
-        self.version = version
+        self.version = version or __version__
         self.agents: Dict[str, Agent] = {}
         self.registry = SourceRegistry()
         self.app = self._create_app()
@@ -349,25 +350,46 @@ class PyStreamMCPAPI:
                 "baseline_tokens": result.baseline_tokens,
                 "optimized_tokens": result.optimized_tokens,
                 "cost_reduction_percent": result.cost_reduction_percent,
-                "techniques": ["pruning", "summarization", "caching"],
+                "techniques": list(result.optimization_applied),
             }
 
         # Metrics Endpoints
         @app.get("/metrics")
         async def metrics(agent_id: Optional[str] = QueryParam(None)):
-            """Get performance metrics."""
+            """Get metrics accumulated from real Agent.query() calls."""
             if agent_id and agent_id not in self.agents:
                 raise HTTPException(
                     status_code=404, detail=f"Agent {agent_id} not found"
                 )
 
+            selected = (
+                [self.agents[agent_id]]
+                if agent_id
+                else list(self.agents.values())
+            )
+            total_queries = sum(
+                agent.metrics["queries_executed"] for agent in selected
+            )
+            baseline = sum(
+                agent.metrics["total_baseline_tokens"] for agent in selected
+            )
+            optimized = sum(
+                agent.metrics["total_optimized_tokens"] for agent in selected
+            )
+            tokens_saved = baseline - optimized
+            cost_saved = sum(
+                agent.metrics["total_cost_saved"] for agent in selected
+            )
             return {
                 "status": "success",
                 "agents": len(self.agents),
                 "metrics": {
-                    "total_queries": 0,
-                    "avg_reduction_percent": 0.0,
-                    "total_tokens_saved": 0,
+                    "total_queries": total_queries,
+                    "avg_reduction_percent": (
+                        (tokens_saved / baseline) * 100 if baseline else 0.0
+                    ),
+                    "total_tokens_saved": tokens_saved,
+                    "total_cost_saved": cost_saved,
                 },
             }
 

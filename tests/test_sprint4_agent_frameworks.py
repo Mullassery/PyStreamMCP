@@ -7,6 +7,7 @@ third-party integration tests. They are experimental and opt-in guarded.
 import pytest
 import asyncio
 from pystreammcp.adapters import AdapterConfig, FrameworkType, AdapterRegistry
+from pystreammcp.discovery import SourceRegistry
 from pystreammcp.experimental import (
     EXPERIMENTAL_ENV_VAR,
     ExperimentalIntegrationError,
@@ -166,10 +167,15 @@ class TestHaystackAdapter:
             agent_id="haystack_discover",
             name="Haystack Discover",
         )
-        adapter = HaystackAdapter(config)
+        registry = SourceRegistry()
+        registry.register(
+            name="documents",
+            description="Relevant documents and knowledge base entries",
+        )
+        adapter = HaystackAdapter(config, registry=registry)
         sources = adapter.discover("relevant documents")
         assert "sources" in sources
-        assert len(sources["sources"]) > 0
+        assert sources["sources"][0]["name"] == "documents"
 
 
 class TestMultiAgentWorkflows:

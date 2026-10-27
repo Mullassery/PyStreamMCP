@@ -16,6 +16,7 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.discovery import SourceRegistry
 from pystreammcp.experimental import require_experimental_opt_in
 
 
@@ -26,7 +27,13 @@ class CrewAIAdapter(AgentFrameworkAdapter):
     while maintaining multi-agent coordination and task decomposition.
     """
 
-    def __init__(self, config: AdapterConfig, *, experimental: bool = False):
+    def __init__(
+        self,
+        config: AdapterConfig,
+        *,
+        experimental: bool = False,
+        registry: Optional[SourceRegistry] = None,
+    ):
         """Initialize CrewAI adapter."""
         require_experimental_opt_in("CrewAI", experimental)
         super().__init__(config)
@@ -36,6 +43,7 @@ class CrewAIAdapter(AgentFrameworkAdapter):
             optimization_strategy=config.optimization_strategy,
             max_tokens=config.max_tokens,
         )
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def query(
         self, text: str, intent: str = "retrieve", **kwargs
@@ -65,12 +73,13 @@ class CrewAIAdapter(AgentFrameworkAdapter):
         return await loop.run_in_executor(None, self.query, text, intent)
 
     def discover(self, context: str, **kwargs) -> Dict[str, Any]:
-        """Discover relevant resources for multi-agent tasks."""
+        """Discover sources registered with this adapter's SourceRegistry."""
+        max_results = kwargs.get("max_results", kwargs.get("limit", 10))
+        sources = self.registry.discover(context, limit=max_results)
         return {
-            "resources": [
-                {"name": "data_resource", "relevance": 0.95, "type": "query_result"}
-            ],
-            "total_resources": 1,
+            "sources": sources,
+            "total_sources": len(sources),
+            "search_context": context,
         }
 
     async def discover_async(self, context: str, **kwargs) -> Dict[str, Any]:

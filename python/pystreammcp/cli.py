@@ -132,5 +132,10 @@ def dashboard(
         sys.exit(1)
 
 
+from pystreammcp.retrieval.cli import retrieval  # noqa: E402
+
+cli.add_command(retrieval)
+
+
 if __name__ == "__main__":
     cli()

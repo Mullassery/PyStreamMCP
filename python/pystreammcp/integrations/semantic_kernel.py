@@ -21,6 +21,7 @@ from pystreammcp import (
 )
 
 from pystreammcp.adapters import QueryResult as AdapterQueryResult
+from pystreammcp.discovery import SourceRegistry
 
 if TYPE_CHECKING:
     from semantic_kernel.functions import KernelPlugin
@@ -33,11 +34,15 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
     Native async support for SK's async-first design.
     """
 
-    def __init__(self, config: AdapterConfig):
+    def __init__(
+        self, config: AdapterConfig, registry: Optional[SourceRegistry] = None
+    ):
         """Initialize Semantic Kernel adapter.
 
         Args:
             config: Adapter configuration
+            registry: Optional shared SourceRegistry. A new, empty registry is
+                created if not given.
         """
         super().__init__(config)
         self.agent = Agent(
@@ -46,6 +51,7 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
             optimization_strategy=config.optimization_strategy,
             max_tokens=config.max_tokens,
         )
+        self.registry = registry if registry is not None else SourceRegistry()
 
     def query(
         self, text: str, intent: str = "retrieve", **kwargs
@@ -93,25 +99,16 @@ class SemanticKernelAdapter(AgentFrameworkAdapter):
         return await loop.run_in_executor(None, self.query, text, intent)
 
     def discover(self, context: str, **kwargs) -> Dict[str, Any]:
-        """Discover relevant context and sources.
+        """Discover sources registered with this adapter's SourceRegistry.
 
-        Args:
-            context: Context for discovery
-            **kwargs: Additional arguments
-
-        Returns:
-            Dictionary with discovered sources
+        Returns an empty list when nothing is registered or nothing overlaps;
+        it never returns a hardcoded ``context_source``.
         """
+        max_results = kwargs.get("max_results", kwargs.get("limit", 10))
+        sources = self.registry.discover(context, limit=max_results)
         return {
-            "sources": [
-                {
-                    "name": "context_source",
-                    "relevance": 0.95,
-                    "type": "semantic",
-                    "tokens": 500,
-                }
-            ],
-            "total_sources": 1,
+            "sources": sources,
+            "total_sources": len(sources),
             "context": context,
         }
 

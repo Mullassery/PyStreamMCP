@@ -5,6 +5,7 @@ query planning, discovery, and optimization as MCP tools.
 """
 
 import logging
+import os
 from typing import Any, Dict, List, Literal, Optional, Type
 from dataclasses import dataclass
 
@@ -80,12 +81,48 @@ class CrawlToolArgs(BaseModel):
     )
 
 
+class RetrievalSearchToolArgs(BaseModel):
+    query: str = Field(..., min_length=1, max_length=8000)
+    backend: Literal["auto", "qmd", "rag_anything", "all"] = "auto"
+    mode: Optional[str] = Field(None, max_length=32)
+    collections: List[str] = Field(default_factory=list, max_length=32)
+    content_type: Optional[
+        Literal[
+            "text",
+            "image",
+            "table",
+            "equation",
+            "document",
+            "pdf",
+            "audio",
+            "video",
+        ]
+    ] = None
+    limit: int = Field(5, ge=1, le=50)
+    include_content: bool = False
+    max_content_chars: int = Field(2000, ge=0, le=20000)
+    time_budget_ms: int = Field(30000, ge=1, le=300000)
+    intent: Optional[str] = Field(None, max_length=1000)
+
+
+class RetrievalCapabilitiesToolArgs(BaseModel):
+    include_health: bool = True
+
+
+class RagIngestToolArgs(BaseModel):
+    path: str = Field(..., min_length=1)
+    force_multimodal: bool = False
+
+
 _TOOL_ARG_MODELS: Dict[str, Type[BaseModel]] = {
     "pystreammcp_query": QueryToolArgs,
     "pystreammcp_discover": DiscoverToolArgs,
     "pystreammcp_register_source": RegisterSourceToolArgs,
     "pystreammcp_optimize": OptimizeToolArgs,
     "pystreammcp_crawl": CrawlToolArgs,
+    "pystreammcp_retrieval_search": RetrievalSearchToolArgs,
+    "pystreammcp_retrieval_capabilities": RetrievalCapabilitiesToolArgs,
+    "pystreammcp_rag_ingest": RagIngestToolArgs,
 }
 
 
@@ -104,6 +141,18 @@ def _validation_error_response(name: str, error: ValidationError) -> Dict[str, A
     }
 
 
+def _retrieval_error_response(error: Any) -> Dict[str, Any]:
+    backend = getattr(error, "backend", None)
+    return {
+        "status": "error",
+        "error_type": "RetrievalError",
+        "code": error.code,
+        "message": error.message,
+        "backend": getattr(backend, "value", backend),
+        "retryable": error.retryable,
+    }
+
+
 @dataclass
 class MCPTool:
     """MCP tool definition."""
@@ -116,7 +165,12 @@ class MCPTool:
 class PyStreamMCPServer:
     """MCP server implementing PyStreamMCP protocol."""
 
-    def __init__(self, agent_id: str = "mcp_agent", agent: Optional[Agent] = None):
+    def __init__(
+        self,
+        agent_id: str = "mcp_agent",
+        agent: Optional[Agent] = None,
+        retrieval_service: Optional[Any] = None,
+    ):
         """Initialize MCP server.
 
         Args:
@@ -126,6 +180,9 @@ class PyStreamMCPServer:
                 constructing a default one. Mainly for tests that need to
                 inject controlled failure behavior (rate limits, malformed
                 responses, etc.) into the tool-execution path.
+            retrieval_service: Optional pre-built `RetrievalService` (or
+                compatible object) to use instead of constructing one from
+                the environment on first retrieval call.
         """
         self.agent_id = agent_id
         self.agent = agent or Agent(
@@ -135,6 +192,8 @@ class PyStreamMCPServer:
             max_tokens=2000,
         )
         self.registry = SourceRegistry()
+        self._retrieval_service = retrieval_service
+        self._retrieval_closed = False
         self.tools = self._define_tools()
 
     def _define_tools(self) -> Dict[str, MCPTool]:
@@ -169,6 +228,27 @@ class PyStreamMCPServer:
                     "pages and links. Optional headless-Chrome rendering for JS pages."
                 ),
                 input_schema=CrawlToolArgs.model_json_schema(),
+            ),
+            "retrieval_search": MCPTool(
+                name="pystreammcp_retrieval_search",
+                description=(
+                    "Search the configured QMD and RAG-Anything retrieval backends "
+                    "with normalized provenance."
+                ),
+                input_schema=RetrievalSearchToolArgs.model_json_schema(),
+            ),
+            "retrieval_capabilities": MCPTool(
+                name="pystreammcp_retrieval_capabilities",
+                description=(
+                    "Report retrieval backend capabilities and optionally health "
+                    "without loading models."
+                ),
+                input_schema=RetrievalCapabilitiesToolArgs.model_json_schema(),
+            ),
+            "rag_ingest": MCPTool(
+                name="pystreammcp_rag_ingest",
+                description="Ingest an allowed local document into the RAG-Anything index.",
+                input_schema=RagIngestToolArgs.model_json_schema(),
             ),
         }
 
@@ -241,6 +321,9 @@ class PyStreamMCPServer:
             "pystreammcp_register_source": self._tool_register_source,
             "pystreammcp_optimize": self._tool_optimize,
             "pystreammcp_crawl": self._tool_crawl,
+            "pystreammcp_retrieval_search": self._tool_retrieval_search,
+            "pystreammcp_retrieval_capabilities": self._tool_retrieval_capabilities,
+            "pystreammcp_rag_ingest": self._tool_rag_ingest,
         }[name]
 
         try:
@@ -376,6 +459,73 @@ class PyStreamMCPServer:
             },
         }
 
+    def _get_retrieval_service(self) -> Any:
+        if self._retrieval_service is None:
+            from .retrieval.service import RetrievalService
+
+            self._retrieval_service = RetrievalService.from_env()
+        return self._retrieval_service
+
+    def _retrieval_capability_configured(self) -> bool:
+        if self._retrieval_service is not None:
+            return True
+        truthy = {"1", "true", "yes", "on"}
+        return any(
+            os.environ.get(name, "").strip().lower() in truthy
+            for name in (
+                "PYSTREAMMCP_QMD_ENABLED",
+                "PYSTREAMMCP_RAG_ENABLED",
+            )
+        )
+
+    def _tool_retrieval_search(self, args: RetrievalSearchToolArgs) -> Dict[str, Any]:
+        from .retrieval.errors import RetrievalError
+        from .retrieval.models import RequestedBackend, RetrievalRequest
+
+        request = RetrievalRequest(
+            query=args.query,
+            backend=RequestedBackend(args.backend),
+            mode=args.mode,
+            collections=tuple(args.collections),
+            content_type=args.content_type,
+            limit=args.limit,
+            include_content=args.include_content,
+            max_content_chars=args.max_content_chars,
+            time_budget_ms=args.time_budget_ms,
+            intent=args.intent,
+        )
+        try:
+            return self._get_retrieval_service().search(request).to_dict()
+        except RetrievalError as error:
+            return _retrieval_error_response(error)
+
+    def _tool_retrieval_capabilities(
+        self, args: RetrievalCapabilitiesToolArgs
+    ) -> Dict[str, Any]:
+        from .retrieval.errors import RetrievalError
+
+        try:
+            return self._get_retrieval_service().capabilities(
+                include_health=args.include_health
+            )
+        except RetrievalError as error:
+            return _retrieval_error_response(error)
+
+    def _tool_rag_ingest(self, args: RagIngestToolArgs) -> Dict[str, Any]:
+        from .retrieval.errors import RetrievalError
+
+        try:
+            return self._get_retrieval_service().ingest(
+                args.path, force_multimodal=args.force_multimodal
+            ).to_dict()
+        except RetrievalError as error:
+            return _retrieval_error_response(error)
+
+    def close(self) -> None:
+        if self._retrieval_service is not None and not self._retrieval_closed:
+            self._retrieval_closed = True
+            self._retrieval_service.close()
+
     def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Process an MCP message.
 
@@ -408,11 +558,14 @@ class PyStreamMCPServer:
             }
 
         elif message_type == "get_info":
+            capabilities = ["query", "discover", "optimize", "crawl"]
+            if self._retrieval_capability_configured():
+                capabilities.append("retrieval")
             return {
                 "type": "info",
                 "name": "PyStreamMCP",
                 "version": "0.2.0",
-                "capabilities": ["query", "discover", "optimize", "crawl"],
+                "capabilities": capabilities,
             }
 
         else:
